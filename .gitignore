@@ -10,9 +10,9 @@ ENV/
 
 # Data 
 # Ignore all files in data except the folder structure
-data/raw/*
-data/processed/*
-data/synthetic/*
+# data/raw/*
+# data/processed/*
+# data/synthetic/*
 
 # Python bytecode
 __pycache__/
