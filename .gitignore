@@ -1,0 +1,24 @@
+# Virtual Environment
+.venv/
+env/
+venv/
+ENV/
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/*
+
+# Data 
+# Ignore all files in data except the folder structure
+data/raw/*
+data/processed/*
+data/synthetic/*
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# OS generated files
+.DS_Store
+Thumbs.db

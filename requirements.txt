@@ -1,0 +1,22 @@
+# Data Manipulation & Math
+numpy           
+pandas          
+scipy           
+
+# Visualization
+matplotlib      
+seaborn         
+plotly          
+
+# Geometry & Image Analysis
+scikit-image    
+trimesh         
+
+# Development & Testing
+ipykernel      
+pytest          
+black           
+
+# Machine Learning & Deep Learning
+# scikit-learn
+# torch
