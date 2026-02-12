@@ -19,3 +19,16 @@ This work builds upon previous contributions from the collaborative framework, i
 - Adrià Cortés Cugat
 - Universitat Pompeu Fabra (UPF)
 - Mathematical Engineering In Data Science
+
+## Running Instructions
+
+- Activate Virtual Environment .venv: .\.venv\Scripts\Activate
+- Upgrade PIP & Install Requirements: º
+    - python -m pip install --upgrade 
+    - pip python -m pip install -r requirements.txt
+- Verification Check:
+    - pip list
+    - where.exe python
+- To Run a Scrpit: 
+    - python src/_pipeline.py 
+    - python -m src._pipeline
