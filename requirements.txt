@@ -12,12 +12,13 @@ plotly
 scikit-image    
 trimesh         
 pynrrd          # NRRD volume/label reading (.nrrd)
-# VTK / PolyData (.vtp) read and 3D visualization
 vtk             # PyVista core backend
 pyvista         # depends on vtk, numpy, matplotlib
-pyvista[trame]  # interactive 3D in Jupyter (optional but recommended)
 pillow          # PyVista static/screenshot export
 imageio         # PyVista image I/O         
+SimpleITK       # SimpleITK is a library for image processing
+nibabel         # nibabel is a library for reading and writing NIfTI files
+networkx        # networkx is a library for creating and manipulating networks
 
 # Development & Testing
 ipykernel      
