@@ -14,6 +14,7 @@ trimesh
 pynrrd          # NRRD volume/label reading (.nrrd)
 vtk             # PyVista core backend
 pyvista         # depends on vtk, numpy, matplotlib
+pyvista[trame]  # for the interactive visualization
 pillow          # PyVista static/screenshot export
 imageio         # PyVista image I/O         
 SimpleITK       # SimpleITK is a library for image processing

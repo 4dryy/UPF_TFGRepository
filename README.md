@@ -6,10 +6,14 @@ Welcome to the main repository for my Final Degree Project (Treball de Fi de Gra
 This project focuses on developing interpretable, automated computational support for Coronary Artery Disease (CAD) assessment. Working in collaboration with the **Dimension Lab / PhySense at Hospital de la Santa Creu i Sant Pau**, this work aims to create robust and transparent tools for stenosis quantification from Coronary Computed Tomography Angiography (CCTA) data.
 
 ### Main Objectives:
-* **Geometric Pipeline:** Implement a stenosis quantification pipeline based on geometric formulations (e.g., extracting 3D centerlines and computing cross-sectional areas).
-* **Anatomical Analysis:** Analyze and aggregate measurements at different anatomical levels (point, segment, and vessel).
-* **Clinical Mapping:** Support CAD-RADS score assignment through quantitative measurements and exploratory machine learning approaches.
-* **Visualization & Integration:** Develop interactive 3D visualization tools to facilitate clinical interpretation and structure the quantitative outputs for seamless integration with existing patient prioritization systems.
+* **Automate Clinical Workflow:** Implement an automated workflow to go from raw segmentation data to a visualization tool that helps the clinicians decision making with CADs.
+
+* **Geometric Stenosis Quantification:** Explore and implement stenosis quanitifcation techniques as a key metric to add to the visualization tool
+
+
+* **CAD-RADS Prediction:** Create CAD-RADS score assignment through quantitative predictions using and exploring machine learning approaches.
+
+* **Visualization & Integration:** Develop interactive visualization tools to facilitate clinical interpretation and structure the quantitative outputs for seamless integration with existing patient prioritization systems.
 
 This work builds upon previous contributions from the hospital's collaborative AI framework—including automatic coronary artery segment labeling and patient prioritization systems—bridging the gap between raw medical images and actionable clinical reports.
 

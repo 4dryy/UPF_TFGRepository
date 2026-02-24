@@ -22,17 +22,17 @@ This project does not exist in a vacuum; it is the "missing link" in a larger AI
 ## 4. Proposed Technical Workflow (The Pipeline)
 The project is divided into the following sequential modules:
 1. **Input Data Ingestion:** Reading binary segmentation masks from the ASOCA dataset in `.nrrd` format.
-2. **Centerline & Geometry Extraction:** Transforming the 3D voxel mask into a continuous mathematical representation, extracting the centerline coordinates $\{P_x, P_y, P_z\}$, and computing the maximum inscribed sphere radii.
+2. **Centerline & Geometry Extraction:** There are several methods to explore, such as using vmtk and also the technique that Maren implemented in his work. The goal is to transform the 3D voxel mask into a continuous mathematical representation, extracting the centerline coordinates $\{P_x, P_y, P_z\}$, that will be used as inpt for the stanosis quantification. 
 3. **Area Computation:** Generating cross-sectional planes perpendicular to the centerline to calculate local vessel areas and diameters along the artery. 
 
-4. **Stenosis Quantification:** Applying geometric heuristics (referencing healthy vs. narrowed sections) to calculate the %DS.
-5. **CAD-RADS Scoring:** Mapping the %DS to the standardized CAD-RADS clinical scale (e.g., 50-69% stenosis = CAD-RADS 3).
+4. **Stenosis Quantification:** Applying geometric heuristics (referencing healthy vs. narrowed sections) to calculate the %DS. Using Ela's methods. Other methods for quantification can be explored. 
+5. **CAD-RADS Scoring:** Mapping the %DS to the standardized CAD-RADS clinical scale (e.g., 50-69% stenosis = CAD-RADS 3) using machine learning. 
 6. **Visualization Dashboard:** Creating a 3D interactive tool (using PyVista/Trimesh/Streamlit) for clinicians to visualize the 3D artery mesh, the centerline, and highlight the stenosis locations. 
 
 
 ## 5. Dataset Information: ASOCA
 * **Source:** MICCAI 2020 Challenge (Automated Segmentation of Coronary Arteries).
-* **Cohort:** 40 cases (20 Healthy "Normal", 20 with CAD "Diseased").
+* **Data:** 40 cases (20 Healthy "Normal", 20 with CAD "Diseased").
 * **Target Files:** We are specifically using the **Annotations** files (e.g., `Normal_1.nrrd`). These are binary masks where the coronary artery tree is labeled as `1` and the background is `0`.
 
 ## 6. Current Development Phase: Centerline Extraction
