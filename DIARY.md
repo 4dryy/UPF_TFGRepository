@@ -48,3 +48,14 @@ Every work session must be recorded using the following structure:
   * *Issue:* `pv.Plotter()` crashed with `ModuleNotFoundError: No module named 'vtkmodules.vtkRenderingMatplotlib'` — the vmtk conda-forge build strips this VTK module.
   * *Fix:* Injected a dummy module in the imports cell via `sys.modules.setdefault("vtkmodules.vtkRenderingMatplotlib", types.ModuleType(...))` so PyVista skips it gracefully.
 * **⏭️ Next Steps:** Continue with the remaining sections of `01_centerline_extraction_1.ipynb` (Steps 5–6): select seed points on the smoothed mesh, run `vmtkCenterlines`, inspect the extracted centerline data, and produce the final 3D visualization. Add explanatory markdown cells for those sections.
+
+---
+
+### 2026-03-01 - Smoothing Optimization & Automation Strategy
+* **✅ Progress & Tasks Completed:** * Reviewed the `vmtkSurfaceSmoothing` step with the tutor.
+  * Corrected the `NumberOfIterations` from 500 down to 20 to prevent over-smoothing and artificial shrinking of the distal branches, preserving true anatomical volume.
+* **🧠 Strategic Pivot (Seed Point Automation):**
+  * Discarded the manual, visual-based coordinate selection for VMTK seed points.
+  * Decided to implement a fully automated hybrid approach combining VMTK's mathematical precision with topological skeletonization and graph theory.
+* **⏭️ Next Steps:** * Tomorrow: Review Maren's original Python notebooks to confirm how she implemented the 3D voxel skeletonization ("peeling"), graph node degree calculation, and radius-based ostium identification.
+  * Adapt her logic to automatically feed the `Source` and `Target` coordinates directly into the VMTK centerline extraction algorithm.
