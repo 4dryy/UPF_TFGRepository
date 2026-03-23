@@ -66,16 +66,45 @@ conda list vmtk
 python --version
 ```
 
-**Executing Code:**
-* **Jupyter Notebooks:** Select the `tfg_adria` kernel in the top right corner of your VS Code / Cursor editor.
-* **Python Scripts:** Run via the terminal using `python path/to/script.py` (e.g., `python src/_pipeline.py`).
+**Running the Pipeline:**
+From the project root, execute:
+```bash
+python -m src._pipeline
+```
+The pipeline will prompt you for a Patient ID (e.g., `Normal_1`). It then runs all implemented blocks sequentially and saves results under `results/`.
+
+**Jupyter Notebooks:** Select the `tfg_adria` kernel in the top right corner of your VS Code / Cursor editor.
 
 ---
 
 ## 📂 Project Structure
-*(To be populated as the codebase expands)*
-* `data/` - Placeholder for dataset inputs (e.g., ASOCA `.nrrd` files).
-* `notebooks/` - Isolated Jupyter notebooks for methodology testing (e.g., `Method_1.ipynb`).
-* `src/` - Core Python modules and pipeline scripts.
-* `PROJECT_CONTEXT.md` - Detailed architectural and clinical context for AI assistance.
-* `DIARY.md` - Chronological development logbook.
+
+```
+UPF_TFGRepository/
+├── data/
+│   └── ASOCA Normal/
+│       ├── Annotations/          # Input .nrrd binary masks (Normal_1.nrrd, ...)
+│       └── Centerlines/          # ASOCA ground-truth centerlines (.vtp)
+├── notebooks/
+│   ├── 00_data_exploration.ipynb
+│   ├── 01_centerline_extraction_1.ipynb   # Method 1: Manual VMTK
+│   ├── 02_centerline_extraction_2.ipynb   # Method 2: Maren's skeletonization
+│   └── 03_centerline_extraction_hybrid.ipynb  # Hybrid approach (research prototype)
+├── src/
+│   ├── _pipeline.py              # Main entrypoint — chains all blocks
+│   └── blocks/
+│       ├── __init__.py
+│       ├── _01_extraction.py     # Block 1: Hybrid centerline extraction
+│       ├── _02_stenosis.py       # Block 2: Stenosis quantification (planned)
+│       ├── _03_.py               # Block 3: CAD-RADS scoring (planned)
+│       └── _04_.py               # Block 4: Visualization (planned)
+├── results/
+│   └── block1_results/
+│       ├── dataframes/           # df_<PatientID>_<YYYYMMDD>.xlsx
+│       └── centerlines/          # centerline_<PatientID>_<ArteryType>_<YYYYMMDD>.vtp
+├── maren work/                   # Reference notebooks from Maren Clapers
+├── CONTEXT.md                    # Architectural and clinical context for AI assistance
+├── DIARY.md                      # Chronological development logbook
+├── requirements.txt              # Python dependencies
+└── README.md
+```

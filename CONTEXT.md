@@ -19,15 +19,13 @@ This project does not exist in a vacuum; it is the "missing link" in a larger AI
 * **The "Algorithmic" Baseline (Ela Burrull, 2024):** Defined the mathematical formulas for stenosis quantification, specifically calculating the Percentage Diameter Stenosis (%DS) using proximal/distal reference diameters ($D_{fit}$, $D_{min}$, $Area$).
 * **The "Output" Layer (Eva Ferrer, 2024):** Developed a prioritization reporting system that takes clinical data and CAD-RADS scores to organize the patient queue. *Takeaway for my TFG:* My pipeline must output data compatible with Eva's system.
 
-## 4. Proposed Technical Workflow (The Pipeline)
-The project is divided into the following sequential modules:
-1. **Input Data Ingestion:** Reading binary segmentation masks from the ASOCA dataset in `.nrrd` format.
-2. **Centerline & Geometry Extraction:** There are several methods to explore, such as using vmtk and also the technique that Maren implemented in his work. The goal is to transform the 3D voxel mask into a continuous mathematical representation, extracting the centerline coordinates $\{P_x, P_y, P_z\}$, that will be used as inpt for the stanosis quantification. 
-3. **Area Computation:** Generating cross-sectional planes perpendicular to the centerline to calculate local vessel areas and diameters along the artery. 
+## 4. Technical Workflow (The Pipeline)
+The project is implemented as a modular pipeline (`src/_pipeline.py`) where each block is a self-contained Python module under `src/blocks/`. Each block receives the output of the previous one and produces versioned, timestamped results.
 
-4. **Stenosis Quantification:** Applying geometric heuristics (referencing healthy vs. narrowed sections) to calculate the %DS. Using Ela's methods. Other methods for quantification can be explored. 
-5. **CAD-RADS Scoring:** Mapping the %DS to the standardized CAD-RADS clinical scale (e.g., 50-69% stenosis = CAD-RADS 3) using machine learning. 
-6. **Visualization Dashboard:** Creating a 3D interactive tool (using PyVista/Trimesh/Streamlit) for clinicians to visualize the 3D artery mesh, the centerline, and highlight the stenosis locations. 
+1. **Block 1 — Centerline Extraction (`_01_extraction.py`):** *(Implemented)* Loads the `.nrrd` binary mask, separates RCA/LCA via center-of-mass, discovers seed points through 3D skeletonization (Maren's "Scout"), and extracts VMTK Voronoi centerlines with maximum inscribed sphere radii. Outputs a DataFrame (`Patient_ID`, `Artery_Type`, `Px`, `Py`, `Pz`, `Radius`) and `.vtp` centerline files.
+2. **Block 2 — Stenosis Quantification (`_02_stenosis.py`):** *(Planned)* Generates cross-sectional planes perpendicular to the centerline to calculate local vessel areas and diameters, then applies geometric heuristics to compute %DS.
+3. **Block 3 — CAD-RADS Scoring:** *(Planned)* Maps the %DS to the standardized CAD-RADS clinical scale (e.g., 50-69% stenosis = CAD-RADS 3), exploring machine learning approaches.
+4. **Block 4 — Visualization Dashboard:** *(Planned)* Interactive 3D tool (using PyVista/Trimesh/Streamlit) for clinicians to visualize the artery mesh, centerline, and stenosis locations.
 
 
 ## 5. Dataset Information: ASOCA
@@ -35,14 +33,17 @@ The project is divided into the following sequential modules:
 * **Data:** 40 cases (20 Healthy "Normal", 20 with CAD "Diseased").
 * **Target Files:** We are specifically using the **Annotations** files (e.g., `Normal_1.nrrd`). These are binary masks where the coronary artery tree is labeled as `1` and the background is `0`.
 
-## 6. Current Development Phase: Centerline Extraction
-We are currently at **Step 2** of the pipeline: extracting the centerline from a single ASOCA `.nrrd` annotation. 
-We are taking a scientific approach by implementing and comparing two distinct methodologies in isolated Jupyter Notebooks:
+## 6. Current Development Phase: Pipeline Refactoring & Validation
+**Block 1 (Centerline Extraction) is implemented and operational.** The research phase compared two methodologies in isolated notebooks, and the conclusion was a **Hybrid Approach** that combines both:
 
-* **Method 1 (Oscar's Recommended Method - Mesh/VMTK):**
-  Uses the Vascular Modeling Toolkit (`vmtk`). It reads the `.nrrd` file, converts the discrete voxels into a continuous 3D surface mesh using Marching Cubes, smooths it, and uses Voronoi diagrams to extract a mathematically smooth centerline and maximum inscribed radii. This requires user interaction to select source/target points.
-* **Method 2 (Maren's Method - Voxel Skeletonization):**
-  Uses pure Python image processing (`scikit-image`). It relies on 3D morphological thinning (skeletonization) directly on the voxel grid to peel away the artery until a 1-voxel thick line remains, then maps the matrix indices to physical coordinates using the affine matrix.
+* **The "Scout" (Maren's Voxel Skeletonization):** Uses `scikit-image` 3D morphological thinning to automatically discover all skeleton endpoints and identify the ostium (deepest endpoint via EDT). This eliminates the need for manual seed selection.
+* **The "Math" (VMTK Voronoi Centerlines):** Uses the Vascular Modeling Toolkit to compute sub-millimeter smooth centerlines with maximum inscribed sphere radii from the automated seed points.
+
+The hybrid approach has been refactored from `notebooks/03_centerline_extraction_hybrid.ipynb` into a production-ready module at `src/blocks/_01_extraction.py`. The pipeline is executed via `python -m src._pipeline`, which prompts for a Patient ID at runtime.
+
+**Output convention:** Results are stored under `results/block1_results/` with naming `centerline_<PatientID>_<ArteryType>_<YYYYMMDD>.vtp` and `df_<PatientID>_<YYYYMMDD>.xlsx`. Re-running the same patient overwrites previous results.
+
+**Current focus:** Validating the pipeline across multiple ASOCA patients and investigating VMTK "steepest descent" failures caused by seed snapping on narrow vessel tips. A surface-normal-aware inward nudging strategy has been implemented to mitigate this.
 
 ## 7. Instructions for Cursor AI
 When assisting with this repository, Cursor must adhere strictly to the following rules:

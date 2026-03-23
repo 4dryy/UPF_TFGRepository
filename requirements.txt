@@ -24,7 +24,8 @@ networkx        # networkx is a library for creating and manipulating networks
 # Development & Testing
 ipykernel      
 pytest          
-black           
+black   
+openpyxl        
 
 # Machine Learning & Deep Learning
 # scikit-learn
