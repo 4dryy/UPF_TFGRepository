@@ -8,6 +8,7 @@ ENV/
 .ipynb_checkpoints/
 */.ipynb_checkpoints/*
 /maren_work/*
+maren work/
 
 # Data 
 # Ignore all files in data except the folder structure
