@@ -145,11 +145,11 @@ Every work session must be recorded using the following structure:
 
 * **💡 Key Decisions:**
   * The workflow diagrams are now the single source of truth for the project's architecture. All documentation files reference and align with these diagrams.
-  * The Development Progress Dashboard in the README is designed as a living table — phases will be colored green as they are implemented, providing immediate visibility to anyone continuing the project.
+  * The Development Progress Dashboard in the README is designed as a living table.
   * Documentation uses an "academic yet engineering-focused" tone with professional medical imaging terminology (CCTA, PACS, CAD-RADS, %DS) while remaining accessible to non-specialist readers through acronym legends and contextual explanations.
 
 * **⏭️ Next Steps:**
-  * Begin experimental work on Block 2 (Geometric Stenosis Quantification): implement cross-sectional area computation along the centerline using perpendicular planes.
+  * Begin experimental work on Block 2 (Geometric Stenosis Quantification).
   * Define the interpolated healthy reference methodology for %DS calculation.
   * Create the `notebooks/block2_stenosis/` exploration notebooks before refactoring into `src/blocks/_02_stenosis.py`.
 

@@ -20,6 +20,7 @@
     <td>Hospital de la Santa Creu i Sant Pau — Dimension Lab / PhySense</td>
   </tr>
   <tr>
+    <td bgcolor="#E3F2FD"><strong>Tutors</strong></td>
     <td>Pr. Oscar Camara Rey (UPF), César Acebes Pinilla (Hospital de Sant Pau)</td>
   </tr>
 </table>
@@ -63,65 +64,71 @@ The system follows a strict **4-block modular architecture**. Each block is a se
 
 ---
 
-## Development Progress Dashboard
+## Development Progress
 
 The table below details the internal phases of each block. This table serves as a living roadmap — anyone continuing this project can immediately see what has been completed and what remains.
 
+### B1 — Automated Anatomy Extraction
+
 <table>
   <tr>
-    <th style="width:120px">Block</th>
-    <th colspan="9">Internal Phases</th>
-  </tr>
-  <tr>
-    <td rowspan="2"><strong>B1</strong><br>Automated Anatomy<br>Extraction</td>
-    <td bgcolor="#4CAF50"><strong>Image Loading</strong></td>
-    <td bgcolor="#4CAF50"><strong>RCA/LCA Separation</strong></td>
-    <td bgcolor="#4CAF50"><strong>Skeletonization</strong></td>
-    <td bgcolor="#4CAF50"><strong>Endpoint Detection</strong></td>
-    <td bgcolor="#4CAF50"><strong>Mesh Creation &amp; Smoothing</strong></td>
-    <td bgcolor="#4CAF50"><strong>Centerline Extraction</strong></td>
-    <td bgcolor="#4CAF50"><strong>Build DataFrame</strong></td>
+    <td bgcolor="#4CAF50">Image Loading</td>
+    <td bgcolor="#4CAF50">RCA/LCA Separation</td>
+    <td bgcolor="#4CAF50">Skeletonization</td>
+    <td bgcolor="#4CAF50">Endpoint Detection</td>
+    <td bgcolor="#4CAF50">Mesh Creation &amp; Smoothing</td>
+    <td bgcolor="#4CAF50">Centerline Extraction</td>
+    <td bgcolor="#4CAF50">Build DataFrame</td>
     <td>Validation</td>
     <td>Optimization</td>
   </tr>
   <tr>
     <td colspan="9"><em>Status: Implementation complete. Validation and optimization pending.</em></td>
   </tr>
+</table>
+
+### B2 — Geometric Stenosis Quantification
+
+<table>
   <tr>
-    <td rowspan="2"><strong>B2</strong><br>Geometric Stenosis<br>Quantification</td>
     <td>Area Computation</td>
     <td>Reference Value Computation</td>
     <td>Stenosis % Computation</td>
     <td>Data Aggregation</td>
-    <td colspan="3"></td>
     <td>Validation</td>
     <td>Optimization</td>
   </tr>
   <tr>
-    <td colspan="9"><em>Status: Experimental — methodology defined, implementation next.</em></td>
+    <td colspan="6"><em>Status: Experimental — methodology defined, implementation next.</em></td>
   </tr>
+</table>
+
+### B3 — CAD-RADS Scoring Prediction
+
+<table>
   <tr>
-    <td rowspan="2"><strong>B3</strong><br>CAD-RADS Scoring<br>Prediction</td>
-    <td colspan="5"><em>Internal phases to be defined</em></td>
-    <td colspan="2"></td>
+    <td colspan="3"><em>Internal phases to be defined</em></td>
     <td>Validation</td>
     <td>Optimization</td>
   </tr>
   <tr>
-    <td colspan="9"><em>Status: Pending — depends on Block 2 output.</em></td>
+    <td colspan="5"><em>Status: Pending — depends on Block 2 output.</em></td>
   </tr>
+</table>
+
+### B4 — Visualization Dashboard
+
+<table>
   <tr>
-    <td rowspan="2"><strong>B4</strong><br>Visualization<br>Dashboard</td>
     <td>3D Artery Mesh</td>
     <td>Stenosis Visualizations</td>
     <td>CAD-RADS Visualizations</td>
     <td>Patient Information</td>
-    <td colspan="3"></td>
     <td>Validation</td>
     <td>Optimization</td>
   </tr>
   <tr>
-    <td colspan="9"><em>Status: Pending — prototype concept designed.</em></td>
+    <td colspan="6"><em>Status: Pending — prototype concept designed.</em></td>
   </tr>
 </table>
 
