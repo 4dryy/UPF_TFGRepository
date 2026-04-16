@@ -20,7 +20,6 @@
     <td>Hospital de la Santa Creu i Sant Pau — Dimension Lab / PhySense</td>
   </tr>
   <tr>
-    <td bgcolor="#E3F2FD"><strong>Tutors</strong></td>
     <td>Pr. Oscar Camara Rey (UPF), César Acebes Pinilla (Hospital de Sant Pau)</td>
   </tr>
 </table>
@@ -55,109 +54,74 @@ The system follows a strict **4-block modular architecture**. Each block is a se
   + .vtp centerlines      artery segment          score per patient       clinical dashboard
 ```
 
-<table>
-  <tr>
-    <th bgcolor="#37474F" align="center"><strong>Block</strong></th>
-    <th bgcolor="#37474F" align="center"><strong>Name</strong></th>
-    <th bgcolor="#37474F" align="center"><strong>Status</strong></th>
-  </tr>
-  <tr>
-    <td align="center"><strong>B1</strong></td>
-    <td>Automated Anatomy Extraction</td>
-    <td bgcolor="#C8E6C9" align="center">Completed / Refactored</td>
-  </tr>
-  <tr>
-    <td align="center"><strong>B2</strong></td>
-    <td>Geometric Stenosis Quantification</td>
-    <td bgcolor="#FFF9C4" align="center">Experimental</td>
-  </tr>
-  <tr>
-    <td align="center"><strong>B3</strong></td>
-    <td>CAD-RADS Scoring Prediction</td>
-    <td bgcolor="#EEEEEE" align="center">Pending</td>
-  </tr>
-  <tr>
-    <td align="center"><strong>B4</strong></td>
-    <td>Visualization Dashboard</td>
-    <td bgcolor="#EEEEEE" align="center">Pending</td>
-  </tr>
-</table>
+| Block | Name | Status |
+|-------|------|--------|
+| **B1** | Automated Anatomy Extraction | Completed / Refactored |
+| **B2** | Geometric Stenosis Quantification | Experimental |
+| **B3** | CAD-RADS Scoring Prediction | Pending |
+| **B4** | Visualization Dashboard | Pending |
 
 ---
 
 ## Development Progress Dashboard
 
-The table below details the internal phases of each block. Phases highlighted in green have been implemented; phases in white remain pending. This table serves as a living roadmap — anyone continuing this project can immediately see what has been completed and what remains.
+The table below details the internal phases of each block. This table serves as a living roadmap — anyone continuing this project can immediately see what has been completed and what remains.
 
 <table>
   <tr>
-    <th bgcolor="#37474F" align="center"><strong>Block</strong></th>
-    <th bgcolor="#37474F" align="center" colspan="9"><strong>Internal Phases</strong></th>
-  </tr>
-  <!-- ── BLOCK 1 ── -->
-  <tr>
-    <td rowspan="2" bgcolor="#E3F2FD" align="center"><strong>B1<br>Automated Anatomy<br>Extraction</strong></td>
-    <td bgcolor="#C8E6C9" align="center">Image Loading</td>
-    <td bgcolor="#C8E6C9" align="center">RCA/LCA Separation</td>
-    <td bgcolor="#C8E6C9" align="center">Skeletonization</td>
-    <td bgcolor="#C8E6C9" align="center">Endpoint Detection</td>
-    <td bgcolor="#C8E6C9" align="center">Mesh Creation &amp; Smoothing</td>
-    <td bgcolor="#C8E6C9" align="center">Centerline Extraction</td>
-    <td bgcolor="#C8E6C9" align="center">Build DataFrame</td>
-    <td align="center">Validation</td>
-    <td align="center">Optimization</td>
+    <th style="width:120px">Block</th>
+    <th colspan="9">Internal Phases</th>
   </tr>
   <tr>
-    <td colspan="9" bgcolor="#F5F5F5"><em>Implementation complete. Validation and optimization pending.</em></td>
+    <td rowspan="2"><strong>B1</strong><br>Automated Anatomy<br>Extraction</td>
+    <td bgcolor="#4CAF50"><strong>Image Loading</strong></td>
+    <td bgcolor="#4CAF50"><strong>RCA/LCA Separation</strong></td>
+    <td bgcolor="#4CAF50"><strong>Skeletonization</strong></td>
+    <td bgcolor="#4CAF50"><strong>Endpoint Detection</strong></td>
+    <td bgcolor="#4CAF50"><strong>Mesh Creation &amp; Smoothing</strong></td>
+    <td bgcolor="#4CAF50"><strong>Centerline Extraction</strong></td>
+    <td bgcolor="#4CAF50"><strong>Build DataFrame</strong></td>
+    <td>Validation</td>
+    <td>Optimization</td>
   </tr>
-  <!-- ── BLOCK 2 ── -->
   <tr>
-    <td rowspan="2" bgcolor="#FFF9C4" align="center"><strong>B2<br>Geometric Stenosis<br>Quantification</strong></td>
-    <td align="center">Area Computation</td>
-    <td align="center">Reference Value Computation</td>
-    <td align="center">Stenosis % Computation</td>
-    <td align="center">Data Aggregation</td>
+    <td colspan="9"><em>Status: Implementation complete. Validation and optimization pending.</em></td>
+  </tr>
+  <tr>
+    <td rowspan="2"><strong>B2</strong><br>Geometric Stenosis<br>Quantification</td>
+    <td>Area Computation</td>
+    <td>Reference Value Computation</td>
+    <td>Stenosis % Computation</td>
+    <td>Data Aggregation</td>
     <td colspan="3"></td>
-    <td align="center">Validation</td>
-    <td align="center">Optimization</td>
+    <td>Validation</td>
+    <td>Optimization</td>
   </tr>
   <tr>
-    <td colspan="9" bgcolor="#F5F5F5"><em>Experimental — methodology defined, implementation next.</em></td>
+    <td colspan="9"><em>Status: Experimental — methodology defined, implementation next.</em></td>
   </tr>
-  <!-- ── BLOCK 3 ── -->
   <tr>
-    <td rowspan="2" bgcolor="#EEEEEE" align="center"><strong>B3<br>CAD-RADS Scoring<br>Prediction</strong></td>
-    <td align="center" colspan="5"><em>Internal phases to be defined</em></td>
+    <td rowspan="2"><strong>B3</strong><br>CAD-RADS Scoring<br>Prediction</td>
+    <td colspan="5"><em>Internal phases to be defined</em></td>
     <td colspan="2"></td>
-    <td align="center">Validation</td>
-    <td align="center">Optimization</td>
+    <td>Validation</td>
+    <td>Optimization</td>
   </tr>
   <tr>
-    <td colspan="9" bgcolor="#F5F5F5"><em>Pending — depends on Block 2 output.</em></td>
+    <td colspan="9"><em>Status: Pending — depends on Block 2 output.</em></td>
   </tr>
-  <!-- ── BLOCK 4 ── -->
   <tr>
-    <td rowspan="2" bgcolor="#EEEEEE" align="center"><strong>B4<br>Visualization<br>Dashboard</strong></td>
-    <td align="center">3D Artery Mesh</td>
-    <td align="center">Stenosis Visualizations</td>
-    <td align="center">CAD-RADS Visualizations</td>
-    <td align="center">Patient Information</td>
+    <td rowspan="2"><strong>B4</strong><br>Visualization<br>Dashboard</td>
+    <td>3D Artery Mesh</td>
+    <td>Stenosis Visualizations</td>
+    <td>CAD-RADS Visualizations</td>
+    <td>Patient Information</td>
     <td colspan="3"></td>
-    <td align="center">Validation</td>
-    <td align="center">Optimization</td>
+    <td>Validation</td>
+    <td>Optimization</td>
   </tr>
   <tr>
-    <td colspan="9" bgcolor="#F5F5F5"><em>Pending — prototype concept designed.</em></td>
-  </tr>
-</table>
-
-<table>
-  <tr>
-    <td bgcolor="#C8E6C9" width="20" align="center"></td>
-    <td>Implemented</td>
-    <td width="30"></td>
-    <td bgcolor="#FFFFFF" width="20" align="center" border="1"></td>
-    <td>Pending</td>
+    <td colspan="9"><em>Status: Pending — prototype concept designed.</em></td>
   </tr>
 </table>
 
@@ -175,28 +139,16 @@ VMTK's Voronoi-based centerline extraction produces sub-millimeter smooth center
 
 The hybrid approach decouples the problem into two phases:
 
-<table>
-  <tr>
-    <th bgcolor="#37474F" align="left"><strong>Phase</strong></th>
-    <th bgcolor="#37474F" align="left"><strong>Description</strong></th>
-  </tr>
-  <tr>
-    <td bgcolor="#E3F2FD" align="center"><strong>Phase 1</strong><br>Pre-processing</td>
-    <td>The <code>.nrrd</code> binary mask is loaded and split into Right Coronary Artery (RCA) and Left Coronary Artery (LCA) using connected component analysis and center-of-mass spatial sorting. The component with the smaller physical X-coordinate is assigned as RCA (anatomical convention).</td>
-  </tr>
-  <tr>
-    <td bgcolor="#E3F2FD" align="center"><strong>Phase 2</strong><br>The "Scout"<br><em>(Maren's Voxel Skeletonization)</em></td>
-    <td>For each artery component, <code>scikit-image</code> 3D morphological thinning reduces the binary volume to a one-voxel-wide skeleton. Degree-1 nodes (endpoints) are detected via neighbor counting. The <strong>ostium</strong> (proximal inlet) is identified as the endpoint deepest inside the vessel using the Euclidean Distance Transform (EDT). All remaining endpoints become distal branch targets. This eliminates the need for any manual seed selection.</td>
-  </tr>
-  <tr>
-    <td bgcolor="#E3F2FD" align="center"><strong>Phase 3</strong><br>The "Math"<br><em>(VMTK Voronoi Centerlines)</em></td>
-    <td>The binary mask is converted to a surface mesh via Marching Cubes, smoothed with Taubin passband filtering (20 iterations), and fed into VMTK's centerline extraction algorithm. The automated seed points from the Scout phase are projected onto the mesh surface using a <strong>surface-normal-aware inward nudging strategy</strong> to prevent VMTK "steepest descent" failures. VMTK then computes smooth centerlines with maximum inscribed sphere radii along the entire artery tree.</td>
-  </tr>
-  <tr>
-    <td bgcolor="#C8E6C9" align="center"><strong>Output</strong></td>
-    <td>A DataFrame with columns <code>[Patient_ID, Artery_Type, Px, Py, Pz, Radius]</code> and <code>.vtp</code> centerline polydata files for downstream geometric analysis.</td>
-  </tr>
-</table>
+**Phase 1 — Pre-processing: Mask Loading and RCA/LCA Separation**
+The `.nrrd` binary mask is loaded and split into Right Coronary Artery (RCA) and Left Coronary Artery (LCA) using connected component analysis and center-of-mass spatial sorting. The component with the smaller physical X-coordinate is assigned as RCA (anatomical convention).
+
+**Phase 2 — The "Scout" (Maren's Voxel Skeletonization)**
+For each artery component, `scikit-image` 3D morphological thinning reduces the binary volume to a one-voxel-wide skeleton. Degree-1 nodes (endpoints) are detected via neighbor counting. The **ostium** (proximal inlet) is identified as the endpoint deepest inside the vessel using the Euclidean Distance Transform (EDT). All remaining endpoints become distal branch targets. This phase eliminates the need for any manual seed selection.
+
+**Phase 3 — The "Math" (VMTK Voronoi Centerlines)**
+The binary mask is converted to a surface mesh via Marching Cubes, smoothed with Taubin passband filtering (20 iterations), and fed into VMTK's centerline extraction algorithm. The automated seed points from the Scout phase are projected onto the mesh surface using a **surface-normal-aware inward nudging strategy** to prevent VMTK "steepest descent" failures. VMTK then computes smooth centerlines with maximum inscribed sphere radii along the entire artery tree.
+
+**Output:** A DataFrame containing columns `[Patient_ID, Artery_Type, Px, Py, Pz, Radius]` and `.vtp` centerline polydata files for downstream geometric analysis.
 
 ---
 
@@ -204,28 +156,31 @@ The hybrid approach decouples the problem into two phases:
 
 > **Important:** This project relies on C++ medical imaging libraries (VMTK). It **cannot** be installed using a standard Python `venv`. You must use **Conda** (Miniconda or Anaconda).
 
-<table>
-  <tr>
-    <th bgcolor="#37474F" align="left"><strong>Step</strong></th>
-    <th bgcolor="#37474F" align="left"><strong>Command</strong></th>
-  </tr>
-  <tr>
-    <td bgcolor="#E3F2FD"><strong>1. Create &amp; activate Conda env</strong></td>
-    <td><code>conda create -n tfg_adria python=3.10 -y && conda activate tfg_adria</code></td>
-  </tr>
-  <tr>
-    <td bgcolor="#E3F2FD"><strong>2. Install VMTK (must be first)</strong></td>
-    <td><code>conda install -c conda-forge vmtk -y</code></td>
-  </tr>
-  <tr>
-    <td bgcolor="#E3F2FD"><strong>3. Install Python dependencies</strong></td>
-    <td><code>pip install -r requirements.txt</code></td>
-  </tr>
-  <tr>
-    <td bgcolor="#E3F2FD"><strong>4. Verify installation</strong></td>
-    <td><code>conda list vmtk && python --version</code> (should output Python 3.10.x)</td>
-  </tr>
-</table>
+### 1. Create and Activate the Conda Environment
+
+```bash
+conda create -n tfg_adria python=3.10 -y
+conda activate tfg_adria
+```
+
+### 2. Install VMTK (must be done first)
+
+```bash
+conda install -c conda-forge vmtk -y
+```
+
+### 3. Install Python Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### Verification
+
+```bash
+conda list vmtk
+python --version   # Should output Python 3.10.x
+```
 
 ---
 
@@ -245,20 +200,9 @@ python -m src._pipeline
 
 The pipeline will prompt for a **Patient ID** (e.g., `Normal_1`). It then runs all implemented blocks sequentially. Currently only Block 1 is active — future blocks will be chained automatically as they are implemented.
 
-<table>
-  <tr>
-    <th bgcolor="#37474F" align="left"><strong>Output</strong></th>
-    <th bgcolor="#37474F" align="left"><strong>Path &amp; Naming Convention</strong></th>
-  </tr>
-  <tr>
-    <td bgcolor="#E3F2FD"><strong>Centerlines</strong></td>
-    <td><code>results/block1_results/centerlines/centerline_&lt;PatientID&gt;_&lt;ArteryType&gt;_&lt;YYYYMMDD&gt;.vtp</code></td>
-  </tr>
-  <tr>
-    <td bgcolor="#E3F2FD"><strong>DataFrames</strong></td>
-    <td><code>results/block1_results/dataframes/df_&lt;PatientID&gt;_&lt;YYYYMMDD&gt;.xlsx</code></td>
-  </tr>
-</table>
+Results are saved under `results/` with the following naming convention:
+- **Centerlines:** `results/block1_results/centerlines/centerline_<PatientID>_<ArteryType>_<YYYYMMDD>.vtp`
+- **DataFrames:** `results/block1_results/dataframes/df_<PatientID>_<YYYYMMDD>.xlsx`
 
 Re-running the pipeline for the same patient overwrites previous results to avoid duplicates.
 
@@ -311,45 +255,26 @@ UPF_TFGRepository/
 
 ## Dataset: ASOCA
 
-<table>
-  <tr>
-    <td bgcolor="#E3F2FD"><strong>Source</strong></td>
-    <td>MICCAI 2020 Challenge — Automated Segmentation of Coronary Arteries</td>
-  </tr>
-  <tr>
-    <td bgcolor="#E3F2FD"><strong>Cases</strong></td>
-    <td>40 total: 20 Healthy ("Normal") + 20 with CAD ("Diseased")</td>
-  </tr>
-  <tr>
-    <td bgcolor="#E3F2FD"><strong>Input Format</strong></td>
-    <td><code>.nrrd</code> binary masks where coronary artery voxels = 1, background = 0</td>
-  </tr>
-  <tr>
-    <td bgcolor="#E3F2FD"><strong>Usage</strong></td>
-    <td>Development and validation of the automated pipeline</td>
-  </tr>
-</table>
+The project uses the **ASOCA** (Automated Segmentation of Coronary Arteries) dataset from the MICCAI 2020 Challenge:
+- **40 cases:** 20 healthy ("Normal") + 20 with CAD ("Diseased").
+- **Input files:** Binary masks in `.nrrd` format (e.g., `Normal_1.nrrd`) where coronary artery voxels are labeled `1` and background is `0`.
 
 ---
 
 ## Acronym Legend
 
-<table>
-  <tr>
-    <th bgcolor="#37474F" align="left"><strong>Acronym</strong></th>
-    <th bgcolor="#37474F" align="left"><strong>Definition</strong></th>
-  </tr>
-  <tr><td bgcolor="#E3F2FD"><strong>CAD</strong></td><td>Coronary Artery Disease</td></tr>
-  <tr><td bgcolor="#E3F2FD"><strong>CAD-RADS</strong></td><td>Coronary Artery Disease — Reporting and Data System</td></tr>
-  <tr><td bgcolor="#E3F2FD"><strong>CCTA</strong></td><td>Coronary Computed Tomography Angiography</td></tr>
-  <tr><td bgcolor="#E3F2FD"><strong>CT</strong></td><td>Computed Tomography</td></tr>
-  <tr><td bgcolor="#E3F2FD"><strong>EDT</strong></td><td>Euclidean Distance Transform</td></tr>
-  <tr><td bgcolor="#E3F2FD"><strong>LCA</strong></td><td>Left Coronary Artery</td></tr>
-  <tr><td bgcolor="#E3F2FD"><strong>PACS</strong></td><td>Picture Archiving and Communication System</td></tr>
-  <tr><td bgcolor="#E3F2FD"><strong>RCA</strong></td><td>Right Coronary Artery</td></tr>
-  <tr><td bgcolor="#E3F2FD"><strong>RIS</strong></td><td>Radiology Information System</td></tr>
-  <tr><td bgcolor="#E3F2FD"><strong>TFG</strong></td><td>Treball de Fi de Grau (Final Degree Project)</td></tr>
-  <tr><td bgcolor="#E3F2FD"><strong>VMTK</strong></td><td>Vascular Modeling Toolkit</td></tr>
-  <tr><td bgcolor="#E3F2FD"><strong>%DS</strong></td><td>Percentage Diameter Stenosis</td></tr>
-  <tr><td bgcolor="#E3F2FD"><strong>ASOCA</strong></td><td>Automated Segmentation of Coronary Arteries (MICCAI 2020)</td></tr>
-</table>
+| Acronym | Definition |
+|---------|-----------|
+| **CAD** | Coronary Artery Disease |
+| **CAD-RADS** | Coronary Artery Disease — Reporting and Data System |
+| **CCTA** | Coronary Computed Tomography Angiography |
+| **CT** | Computed Tomography |
+| **EDT** | Euclidean Distance Transform |
+| **LCA** | Left Coronary Artery |
+| **PACS** | Picture Archiving and Communication System |
+| **RCA** | Right Coronary Artery |
+| **RIS** | Radiology Information System |
+| **TFG** | Treball de Fi de Grau (Final Degree Project) |
+| **VMTK** | Vascular Modeling Toolkit |
+| **%DS** | Percentage Diameter Stenosis |
+| **ASOCA** | Automated Segmentation of Coronary Arteries (MICCAI 2020) |
