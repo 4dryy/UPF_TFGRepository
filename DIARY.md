@@ -110,3 +110,65 @@ Every work session must be recorded using the following structure:
   * Create "Level 1" clinical workflow diagrams (Current vs. Future Hospital Workflow) for the upcoming 1-on-1 meeting with Oscar.
   * Investigate additional VMTK troubleshooting strategies: skeleton branch pruning and surface capping for narrow vessel segments.
   * Begin work on Block 2 (Stenosis Quantification).
+
+---
+
+### 2026-04-16 — Documentation Refactoring & Workflow Diagrams as Methodology Foundation
+
+* **🎯 Objectives:** Refactor all project documentation to align with the "Workflow as a Product" approach and the formalized 4-block modular architecture, establishing a professional and consistent documentation baseline before starting Block 2.
+
+* **✅ Progress & Tasks Completed:**
+  * **Workflow Diagrams Created:** Designed and completed a comprehensive set of 15 workflow diagrams (`Workflow Diagrams 16_04.pdf`) that formalize the entire project architecture. These diagrams cover:
+    * The current clinical workflow at Hospital de Sant Pau for CAD diagnosis (patient journey from chest pain to final report).
+    * The manual image analysis bottleneck (detailing how the radiologist currently extracts features by hand).
+    * The proposed automated workflow with the support visualization tool and patient prioritization loop.
+    * The master E2E pipeline architecture showing all 4 blocks and their data flow.
+    * The development progress dashboard with internal phases for each block.
+    * Detailed flow diagrams for Block 1 (hybrid extraction), Block 2 (geometric stenosis quantification), Block 3 (CAD-RADS prediction), and Block 4 (visualization dashboard).
+  * **README.md — Full Rewrite:**
+    * Added a professional header with author and institution information.
+    * Created a "Project Architecture" section with a visual ASCII diagram of the 4-block pipeline.
+    * Built an HTML-based Development Progress Dashboard table (matching the workflow diagrams slide 8) with green-highlighted cells for completed phases — designed as a living roadmap for future contributors.
+    * Wrote a detailed "Block 1 Methodology" section explaining the Hybrid Approach (Scout + Math) with its three phases: Pre-processing, Voxel Skeletonization, and VMTK Voronoi Centerlines.
+    * Documented pipeline execution instructions (`python -m src._pipeline`), output naming conventions, and standalone block execution.
+    * Added an Acronym Legend for all medical imaging and technical terms used.
+  * **CONTEXT.md — Full Rewrite:**
+    * Structured around three core sections: Current Workflow, Manual Bottleneck, and Proposed Workflow.
+    * Described the complete 5-step patient journey at Hospital de Sant Pau (from chest pain presentation to CAD diagnosis).
+    * Deepened the clinical motivation by quantifying the bottleneck: ~30 minutes per healthy patient, ~60–90 minutes per complex case, limiting throughput to 8–16 patients per radiologist per day.
+    * Explained how the proposed automated pipeline reduces assessment time, enables patient prioritization, improves reproducibility, and integrates with existing hospital systems.
+    * Added the surrounding research ecosystem (Maren Clapers, Ela Burrull, Eva Ferrer) to contextualize this project within the larger AI framework.
+    * Included Cursor AI instructions and Acronym Legend for consistency.
+  * **DIARY.md — Updated:**
+    * Added this comprehensive entry documenting the documentation refactoring session.
+  * **Conceptual Shift Documented:** The project narrative has evolved from "a collection of experimental notebooks" to "a structured medical engineering system where the workflow itself is the product." The final deliverable is the visualization dashboard, but the project encompasses the entire automated pipeline from segmentation input to clinical output.
+
+* **💡 Key Decisions:**
+  * The workflow diagrams are now the single source of truth for the project's architecture. All documentation files reference and align with these diagrams.
+  * The Development Progress Dashboard in the README is designed as a living table — phases will be colored green as they are implemented, providing immediate visibility to anyone continuing the project.
+  * Documentation uses an "academic yet engineering-focused" tone with professional medical imaging terminology (CCTA, PACS, CAD-RADS, %DS) while remaining accessible to non-specialist readers through acronym legends and contextual explanations.
+
+* **⏭️ Next Steps:**
+  * Begin experimental work on Block 2 (Geometric Stenosis Quantification): implement cross-sectional area computation along the centerline using perpendicular planes.
+  * Define the interpolated healthy reference methodology for %DS calculation.
+  * Create the `notebooks/block2_stenosis/` exploration notebooks before refactoring into `src/blocks/_02_stenosis.py`.
+
+---
+
+## Acronym Legend
+
+| Acronym | Definition |
+|---------|-----------|
+| **CAD** | Coronary Artery Disease |
+| **CAD-RADS** | Coronary Artery Disease — Reporting and Data System |
+| **CCTA** | Coronary Computed Tomography Angiography |
+| **CT** | Computed Tomography |
+| **EDT** | Euclidean Distance Transform |
+| **LCA** | Left Coronary Artery |
+| **PACS** | Picture Archiving and Communication System |
+| **RCA** | Right Coronary Artery |
+| **RIS** | Radiology Information System |
+| **TFG** | Treball de Fi de Grau (Final Degree Project) |
+| **VMTK** | Vascular Modeling Toolkit |
+| **%DS** | Percentage Diameter Stenosis |
+| **ASOCA** | Automated Segmentation of Coronary Arteries (MICCAI 2020) |
