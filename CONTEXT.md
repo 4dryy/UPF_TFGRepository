@@ -60,14 +60,16 @@ This means a single radiologist can process at most **8–16 patients per day**,
 
 ### What Is Currently Manual
 
-The following image analysis features are extracted manually during Step 4:
+The following image analysis features are extracted manually and visually during Step 4:
 
 - **Artery Segmentation** — Identifying and tracing the coronary artery tree.
 - **Stenosis Quantification** — Measuring the degree of arterial narrowing at each location.
 - **Plaque Quantification** — Characterizing plaque type and extent.
 - **Other Clinical Findings** — Anomalies, calcification scores, and anatomical variants.
 
-All of these are then manually introduced into the reporting system, one field at a time.
+The expert must recognize findings for all of the previous features for a patient and then manually introduce them into the reporting system, one field at a time.
+
+In this project we aim to automate some of these feature extractions.
 
 ---
 
@@ -77,12 +79,16 @@ This project proposes inserting an **automated computational layer** between the
 
 ### What Changes
 
+This project does **not** attempt to automate the full visual image analysis performed by the radiologist. Clinical expertise and the expert eye remain central to diagnosis. Instead, the project introduces mathematical and computational approaches that extract selected quantitative features (such as stenosis-related metrics) directly from the segmented coronary anatomy, so that when the clinician visually analyzes the image, they can find diseases faster and with a quantitative reference already available.
+
 | Current Workflow | Proposed Workflow |
 |---|---|
-| Visual image analysis (manual) | Automated image analysis |
-| Manual feature extraction | Automated feature extraction |
-| Manual data introduction to report | Automated data introduction |
-| Radiologist works from raw images | Radiologist works from a **support visualization tool** with pre-computed metrics |
+| Visual image analysis (manual) | Visual image analysis (still manual), now supported by pre-computed quantitative references |
+| Manual feature extraction for every feature | Automated extraction of **some** useful features (e.g., geometric stenosis), while other features remain manual |
+| Manual data introduction to report | Manual data introduction **facilitated** by the support tool (not automated; clinician still enters findings) |
+| Radiologist works from raw images | Radiologist works from a **support visualization tool** with pre-computed metrics as an initial reference |
+
+The key idea is to provide a **support visualization tool** that the clinician can use as a reference starting point to accelerate assessment and enable patient prioritization, maximizing diagnostic efficiency without replacing the clinician's expertise.
 
 ### The Proposed Pipeline
 
