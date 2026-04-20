@@ -155,6 +155,55 @@ Every work session must be recorded using the following structure:
 
 ---
 
+### 2026-04-20 — Block 2 · Task 1: Sectional Area Extraction (Exploratory Notebook)
+
+* **🎯 Objectives:** Implement and validate the first sub-task of Block 2 — compute the **cross-sectional lumen area at every centerline point** for a single patient (both arteries) using VMTK's `vmtkCenterlineSections`, and integrate the result into the Block 1 dataframe as a new `Area (mm²)` column. The implementation lives in `notebooks/block2_stenosis/_04_sq_sectional_area.ipynb` (exploratory; later to be migrated into `src/blocks/_02_stenosis.py`).
+
+* **✅ Progress & Tasks Completed:**
+  * **Notebook scaffold (Block 1-style):** 20 cells organized into 6 sections (Imports & Configuration → Data Loading & Mesh Preparation → Cross-Sectional Area Computation → DataFrame Integration → Visual Validation → Export), mirroring the didactic green-banner style used in `03_centerline_extraction_hybrid.ipynb`.
+  * **Robust I/O layer:** Auto-detection of the latest Block 1 dataframe (`.xlsx` or `.csv`), latest per-artery centerline `.vtp`, and validation of required columns (`Patient_ID, Artery_Type, Px, Py, Pz, Radius`).
+  * **Mesh regeneration from mask:** Because Block 1 does not currently persist the smoothed surface, Block 2 rebuilds it from the original `.nrrd` using the exact Block 1 parameters (Marching Cubes level 0.5 + Taubin 20-iter, 0.1 passband) via the reused helpers `load_and_separate_mask` and `_numpy_to_vtk_image`. Coordinate system matches are explicitly verified per artery (bbox + point-count comparison).
+  * **Defensive VMTK preprocessing:** Added `clean_triangulate_surface` (via `vtkTriangleFilter` + `vtkCleanPolyData`) and `prepare_centerline_for_sections` (`vmtkCenterlineSmoothing` 100-iter + `vmtkCenterlineResampling` 0.1 mm step) to prevent `vmtkCenterlineSections` from segfaulting on coincident centerline points or non-triangulated surfaces.
+  * **Core section computation:** `compute_centerline_sections` wraps VMTK and returns `(sections_polydata, centerline_with_arrays)`. `extract_area_array` converts VMTK's `CenterlineSectionArea` into a clean `(N,)` float array, marking non-closed / zero-area / non-finite sections as `NaN` — the **robustness cornerstone** for diseased patients.
+  * **DataFrame integration:** Row-aligned merge where possible, KDTree nearest-point fallback otherwise (always hit after resampling, which changes point count). Enriched sanity checks include: global NaN count, **per-artery NaN breakdown with row-level preview** of offending points (`Px/Py/Pz/Radius`), and a `corr(Radius, Area)` check per artery (expected strongly positive).
+  * **Visual validation:**
+    * **3D overview:** low-opacity surface mesh + centerline point cloud coloured by `Area (mm²)` — stenoses would appear as cold-coloured bands.
+    * **2D cross-section QA plots:** for each artery, plot the actual lumen outline at three representative points (healthy-median, narrow-min, random). After iterating on the approach, the current implementation re-cuts the surface mesh directly at each QA point using the centerline-tangent plane (`vtkCutter` → `ClosestPointRegion` → `vtkStripper`), giving high-resolution, ordered 2D outlines aligned with VMTK's area values.
+    * Added dedicated **§5c "QA Interpretation & Validation"** markdown with: root-cause explanation of the QA bugs encountered, plot semantics, definition of `centroid-dist` as a trust metric, per-pick verdict table for the current patient, and recommended downstream filters (trim tips, flag high `centroid_dist / Radius`, smooth the Area signal, define a per-artery healthy reference).
+  * **Export:** New code cell writes `results/block2_results/dataframes/df_<Patient>_<date>.xlsx` with the `Area` column appended. First run produced `df_Normal_1_20260420.xlsx` (7,296 rows, 0 NaN).
+  * **Quantitative validation on `Normal_1`:** Healthy sections satisfy `Area ≈ 1.2–1.4 · π·R²` (consistent with slightly oval lumens and the MIS radius being a lower bound); healthy `centroid_dist ≈ 0` mm; `corr(Radius, Area) = +0.895` (RCA) and `+0.745` (LCA) — signal quality is suitable for the downstream %AS / %DS step.
+  * **Notebook polish:** Rewrote the Method Overview to match the actual §1–§6 layout (removed the obsolete Phase A/B/C/D diagram), updated the stale strategy comment at the top of the 2D QA cell to reflect the re-cut approach, trimmed redundant docstring narrative, tightened the Summary section to avoid duplicating §5c.
+
+* **🐛 Bugs & Challenges:**
+  * *Issue:* `ModuleNotFoundError: No module named 'src'` on the first cell execution.
+    *Cause:* `src/blocks/__init__.py` uses absolute imports (`from src.blocks._01_extraction import ...`), requiring **`PROJECT_ROOT`** on `sys.path`, not `PROJECT_ROOT / "src"`.
+    *Fix:* Changed the path insertion to `sys.path.insert(0, str(PROJECT_ROOT))` and used the fully-qualified import.
+  * *Issue:* Kernel crash (C++ segfault, no Python traceback) when calling `vmtkCenterlineSections`.
+    *Cause:* VMTK cannot handle non-triangulated surfaces or centerlines with near-duplicate consecutive points (`AppendEndPoints=1` in Block 1 produces exactly this).
+    *Fix:* Added defensive preprocessing — triangulate & clean the surface, smooth & uniformly resample the centerline (0.1 mm step) — which also improves tangent stability at bifurcations.
+  * *Issue:* `IndexError: single positional indexer is out-of-bounds` in the 2D QA cell for LCA.
+    *Cause:* `idx` indexed the *resampled* centerline (denser) but the code was using it against the original Block 1 dataframe subset for the radius lookup.
+    *Fix:* Read the radius from the resampled centerline's `MaximumInscribedSphereRadius` point-data array (where values are correctly interpolated and aligned with `idx`).
+  * *Issue:* First QA plots showed triangular shapes for every pick.
+    *Cause:* `vmtkCenterlineSections` stores each section as a **triangulated patch** (~7–8 coplanar triangles); the initial code was picking the single nearest *triangle*, not the whole patch.
+    *Fix attempt (failed):* Group patches with `vtkPolyDataConnectivityFilter` — failed because adjacent sections share vertex IDs inherited from the parent surface, so the whole `sections_pv` is one connected component.
+    *Final fix:* Abandon `sections_pv` for QA and **re-cut the smoothed surface mesh** at each QA centerline point with a tangent-perpendicular plane. This reproduces VMTK's internal slicing and yields clean, ordered outlines. `Area` values in the titles still come from VMTK so the shape and number remain consistent.
+  * *Issue:* Outline points plotted from `vtkStripper` looked jagged.
+    *Cause:* `vtkStripper` returns a `vtkPolyData` whose `.points` array is not necessarily in traversal order; the ordered sequence lives in the `lines` connectivity.
+    *Fix:* Rebuild the ordered sequence by following the first polyline cell's index list.
+
+* **💡 Key Decisions:**
+  * **Separation of concerns between authoritative area and QA visualization.** `CenterlineSectionArea` produced by VMTK is the single source of truth for the `Area` column. The QA re-cut is visualization-only; its purpose is exclusively to *inspect* the slice geometry, never to re-measure area. This avoids two disagreeing numbers in the dataframe vs. the plots.
+  * **NaN is a first-class signal, not an error.** Non-closed sections, degenerate tangents, and near-total occlusions will all surface as `NaN` in the `Area` column. Downstream stenosis-detection code must interpret them as "missing data", not propagate them as `0 mm²`.
+  * **The methodology is patient-agnostic; only the notebook wrapper is not.** All algorithmic components (mesh rebuild, defensive preprocessing, VMTK section call, NaN policy, KDTree merge) are parameter-free and generalize to Diseased patients. What is currently notebook-local (hardcoded `ASOCA Normal` path, single-patient scope) will be promoted to `src/blocks/_02_stenosis.py` as `run_block2(patient_id)` with auto-detection between `ASOCA Normal / Diseased` and a patient-loop driver.
+
+* **⏭️ Next Steps:**
+  * **Block 2 · Task 2 — Healthy Reference Values:** Start `_05_sq_reference_values.ipynb` (already created as empty placeholder). Define a robust per-artery healthy reference radius/area (e.g. rolling median over proximal third with outlier clipping), respecting §5c's filtering recommendations (trim tips, exclude points with `centroid_dist / Radius > 0.3`).
+  * **Block 2 · Task 3 — %AS / %DS computation** against the healthy reference, with NaN-aware smoothing (Savitzky–Golay or rolling median) of the `Area` signal before identifying local minima.
+  * **Refactor trigger:** Once the next two sub-tasks validate the current `Area` signal, promote the exploratory helpers to `src/blocks/_02_stenosis.py` behind a `run_block2(patient_id)` entry point mirroring `run_block1`, and optionally add a one-line Block 1 improvement (`results/block1_results/meshes/surface_<Patient>_<Artery>_<date>.vtp`) to eliminate the NRRD-based mesh reconstruction from Block 2.
+
+---
+
 ## Acronym Legend
 
 | Acronym | Definition |
@@ -171,4 +220,7 @@ Every work session must be recorded using the following structure:
 | **TFG** | Treball de Fi de Grau (Final Degree Project) |
 | **VMTK** | Vascular Modeling Toolkit |
 | **%DS** | Percentage Diameter Stenosis |
+| **%AS** | Percentage Area Stenosis |
+| **MIS** | Maximum Inscribed Sphere (radius) |
+| **QA** | Quality Assurance (visual/numeric sanity checking) |
 | **ASOCA** | Automated Segmentation of Coronary Arteries (MICCAI 2020) |
