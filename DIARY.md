@@ -204,6 +204,33 @@ Every work session must be recorded using the following structure:
 
 ---
 
+### 2026-04-21 — Update 4 Presentation Preparation & Block 2 Visual QA Tuning
+
+* **🎯 Objectives:** Finalize material for the 4th update meeting with Oscar and the PhySense group, and improve the interpretability of the 3D area visualization in Block 2 so lumen-width variation is easier to inspect visually.
+
+* **✅ Progress & Tasks Completed:**
+  * Prepared the new presentation for tomorrow's follow-up meeting and added it to the project documentation folder as `PhySense Update 4 _ Adrià Cortés Cugat.pdf`, continuing the update-series record.
+  * Updated `notebooks/block2_stenosis/_04_sq_sectional_area.ipynb` (cell §5a, 3D overview) to replace the default `viridis` palette with a clinically intuitive red↔green scale:
+    * **Red** for narrower lumen sections (lower `Area`).
+    * **Green** for wider lumen sections (higher `Area`).
+  * Increased color-change sensitivity in the same cell by introducing percentile-based display limits:
+    * `vmin = nanpercentile(Area, 5)` and `vmax = nanpercentile(Area, 95)`.
+    * Applied through `clim=[vmin, vmax]` so outliers do not compress most points into a near-uniform color.
+  * Smoothed visual transitions while preserving interpretability using a controlled discrete gradient (`N=64`) in a custom `LinearSegmentedColormap`.
+  * Result: the 3D centerline-area map now better highlights subtle local changes in vessel caliber instead of showing most of the artery in the same red range.
+
+* **🐛 Bugs & Challenges:**
+  * *Issue:* Initial red/green remap still appeared dominated by red tones, with only small green patches.
+  * *Cause:* Global min/max scaling was overly influenced by a small number of extreme area values.
+  * *Fix:* Switched to robust percentile clipping (`5th–95th`) before color mapping.
+
+* **⏭️ Next Steps:**
+  * Deliver Update 4 presentation and capture feedback from Oscar/PhySense on Block 2 progress and methodology framing.
+  * If visual feedback still suggests low contrast, tune sensitivity window (`10–90` for more contrast, `2–98` for less aggressive clipping) and standardize one default for all patients.
+  * Continue with Block 2 Task 2 in `_05_sq_reference_values.ipynb` (healthy reference definition) before implementing `%AS/%DS`.
+
+---
+
 ## Acronym Legend
 
 | Acronym | Definition |
