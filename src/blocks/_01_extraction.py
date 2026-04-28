@@ -1,22 +1,21 @@
 """
-Block 1 — Hybrid Centerline Extraction.
+Block 1 — Hybrid centerline extraction with branch packaging.
 
-Loads a patient's .nrrd coronary mask, separates RCA/LCA via center-of-mass,
-discovers seed points through 3D skeletonization, and extracts VMTK Voronoi
-centerlines with maximum inscribed sphere radii.
-
-Outputs:
-    - Excel (.xlsx) DataFrame with columns: Patient_ID, Artery_Type, Px, Py, Pz, Radius
-    - VTP (.vtp) centerline polydata for each artery
+For one patient mask (.nrrd), this block:
+- separates RCA/LCA,
+- runs scout-based ostium/target selection + VMTK centerlines,
+- classifies points with topology-based PointType,
+- splits centerline into ostium->endpoint branch paths,
+- exports outputs in the same structure used in the notebook.
 """
 
 from __future__ import annotations
 
 import logging
+import shutil
 import sys
 import time
 import types
-from datetime import datetime
 from pathlib import Path
 
 import numpy as np
@@ -38,14 +37,15 @@ logger = logging.getLogger(__name__)
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DATA_ROOT = PROJECT_ROOT / "data"
 RESULTS_ROOT = PROJECT_ROOT / "results" / "block1_results"
-DF_DIR = RESULTS_ROOT / "dataframes"
-CL_DIR = RESULTS_ROOT / "centerlines"
+SAMPLES_DIR = RESULTS_ROOT / "samples"
 
 
-# ── Geometry helpers ──────────────────────────────────────────────────────────
+def _sample_numeric_id(patient_id: str) -> int:
+    tail = patient_id.split("_")[-1]
+    return int(tail) if tail.isdigit() else -1
+
 
 def _find_skeleton_endpoints(skeleton: np.ndarray) -> np.ndarray:
-    """Return (N, 3) array of [z, y, x] voxel indices for degree-1 skeleton nodes."""
     kernel = np.ones((3, 3, 3), dtype=int)
     kernel[1, 1, 1] = 0
     neighbor_count = ndi.convolve(skeleton.astype(int), kernel, mode="constant", cval=0)
@@ -53,15 +53,132 @@ def _find_skeleton_endpoints(skeleton: np.ndarray) -> np.ndarray:
     return np.argwhere(endpoint_mask)
 
 
-def _identify_ostium(endpoints_zyx: np.ndarray, binary_mask: np.ndarray) -> tuple[int, np.ndarray]:
-    """Return (index, distances) for the endpoint deepest inside the vessel (max EDT)."""
+def _identify_ostium(
+    endpoints_zyx: np.ndarray,
+    skeleton: np.ndarray,
+    binary_mask: np.ndarray,
+    edt_weight: float = 0.35,
+    centroid_weight: float = 0.15,
+    caliber_weight: float = 0.30,
+    calib_steps: int = 10,
+) -> tuple[int, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Robust ostium selection combining local and global skeleton cues."""
     dist_transform = ndi.distance_transform_edt(binary_mask)
-    dists = dist_transform[endpoints_zyx[:, 0], endpoints_zyx[:, 1], endpoints_zyx[:, 2]]
-    return int(np.argmax(dists)), dists
+    dists_edt = dist_transform[
+        endpoints_zyx[:, 0], endpoints_zyx[:, 1], endpoints_zyx[:, 2]
+    ].astype(float)
+
+    sk = np.asarray(skeleton > 0)
+    sk_coords = np.argwhere(sk)
+    node_of = {tuple(c): i for i, c in enumerate(sk_coords)}
+    endpoint_nodes = np.array(
+        [node_of.get((int(p[0]), int(p[1]), int(p[2])), -1) for p in endpoints_zyx],
+        dtype=int,
+    )
+
+    if np.any(endpoint_nodes < 0) or len(sk_coords) == 0:
+        total_geo = np.zeros_like(dists_edt)
+        caliber_sum = dists_edt.copy()
+        score = dists_edt.copy()
+        return int(np.argmax(score)), dists_edt, total_geo, caliber_sum, score
+
+    from heapq import heappop, heappush
+
+    neigh = []
+    for dz in (-1, 0, 1):
+        for dy in (-1, 0, 1):
+            for dx in (-1, 0, 1):
+                if dz == 0 and dy == 0 and dx == 0:
+                    continue
+                w = float(np.sqrt(dx * dx + dy * dy + dz * dz))
+                neigh.append((dz, dy, dx, w))
+
+    adjacency: list[set[int]] = [set() for _ in range(len(sk_coords))]
+    for u, (z, y, x) in enumerate(sk_coords):
+        for dz, dy, dx, _ in neigh:
+            key = (int(z + dz), int(y + dy), int(x + dx))
+            v = node_of.get(key)
+            if v is None or v == u:
+                continue
+            adjacency[u].add(int(v))
+
+    def dijkstra_from(src_idx: int) -> np.ndarray:
+        dist = np.full(len(sk_coords), np.inf, dtype=float)
+        dist[src_idx] = 0.0
+        pq = [(0.0, int(src_idx))]
+        while pq:
+            d, u = heappop(pq)
+            if d > dist[u]:
+                continue
+            z, y, x = sk_coords[u]
+            for dz, dy, dx, w in neigh:
+                key = (int(z + dz), int(y + dy), int(x + dx))
+                v = node_of.get(key)
+                if v is None:
+                    continue
+                nd = d + w
+                if nd < dist[v]:
+                    dist[v] = nd
+                    heappush(pq, (nd, int(v)))
+        return dist
+
+    def local_caliber_integral(start_node: int, max_steps: int) -> float:
+        prev = -1
+        cur = int(start_node)
+        total = 0.0
+        for _ in range(max(1, int(max_steps))):
+            z, y, x = sk_coords[cur]
+            edt_here = float(dist_transform[int(z), int(y), int(x)])
+            total += float(np.pi) * edt_here * edt_here
+
+            next_nodes = [v for v in adjacency[cur] if v != prev]
+            if len(next_nodes) != 1:
+                break
+            nxt = int(next_nodes[0])
+            prev, cur = cur, nxt
+        return float(total)
+
+    m = len(endpoint_nodes)
+    pairwise = np.full((m, m), np.inf, dtype=float)
+    for i in range(m):
+        dist_all = dijkstra_from(int(endpoint_nodes[i]))
+        pairwise[i, :] = dist_all[endpoint_nodes]
+
+    total_geo = np.sum(pairwise, axis=1)
+    caliber_sum = np.array(
+        [local_caliber_integral(int(node), int(calib_steps)) for node in endpoint_nodes],
+        dtype=float,
+    )
+
+    def _z(v: np.ndarray) -> np.ndarray:
+        v = np.asarray(v, dtype=float)
+        return (v - np.mean(v)) / (np.std(v) + 1e-8)
+
+    mask_pts = np.argwhere(np.asarray(binary_mask) > 0)
+    if len(mask_pts) > 0:
+        centroid_zyx = mask_pts.mean(axis=0)
+        d_centroid = np.linalg.norm(
+            endpoints_zyx.astype(float) - centroid_zyx.astype(float), axis=1
+        )
+    else:
+        d_centroid = np.zeros(len(endpoints_zyx), dtype=float)
+
+    z_edt = _z(dists_edt)
+    z_geo = _z(total_geo)
+    z_centroid = _z(d_centroid)
+    z_caliber = _z(caliber_sum)
+
+    w_edt = float(np.clip(edt_weight, 0.0, 1.0))
+    w_ctr = float(np.clip(centroid_weight, 0.0, 1.0))
+    w_cal = float(np.clip(caliber_weight, 0.0, 1.0))
+    w_geo = max(0.0, 1.0 - w_edt - w_ctr - w_cal)
+
+    score = w_edt * z_edt - w_geo * z_geo - w_ctr * z_centroid + w_cal * z_caliber
+    ostium_idx = int(np.argmax(score))
+    return ostium_idx, dists_edt, total_geo, caliber_sum, score
 
 
 def _voxel_to_physical(coords_zyx: np.ndarray, origin: np.ndarray, spacing: np.ndarray) -> np.ndarray:
-    """Convert voxel indices (z, y, x) to physical coordinates (X, Y, Z) in mm."""
     phys_x = origin[0] + coords_zyx[:, 2] * spacing[0]
     phys_y = origin[1] + coords_zyx[:, 1] * spacing[1]
     phys_z = origin[2] + coords_zyx[:, 0] * spacing[2]
@@ -69,7 +186,6 @@ def _voxel_to_physical(coords_zyx: np.ndarray, origin: np.ndarray, spacing: np.n
 
 
 def _numpy_to_vtk_image(array_zyx: np.ndarray, spacing: np.ndarray, origin: np.ndarray) -> vtkImageData:
-    """Pack a (Z, Y, X) NumPy array into a vtkImageData with correct metadata."""
     nz, ny, nx = array_zyx.shape
     vtk_img = vtkImageData()
     vtk_img.SetDimensions(nx, ny, nz)
@@ -82,30 +198,7 @@ def _numpy_to_vtk_image(array_zyx: np.ndarray, spacing: np.ndarray, origin: np.n
     return vtk_img
 
 
-def _snap_seed_to_surface(
-    mesh: pv.PolyData,
-    point: np.ndarray,
-    inward_fraction: float = 0.3,
-) -> list[float]:
-    """
-    Project a seed point onto the mesh surface, then nudge it slightly inward
-    along the vertex normal so it sits inside the tubular geometry.
-
-    VMTK's Voronoi-based centerline tracer needs seeds that lie *on or just
-    inside* the surface.  A naive closest-vertex snap can land on the outer
-    shell, causing "no steepest descent edge" failures.
-
-    Parameters
-    ----------
-    mesh : pv.PolyData
-        The smoothed surface mesh (must have point normals or they will be
-        computed).
-    point : array-like
-        The (x, y, z) seed in physical coordinates.
-    inward_fraction : float
-        Fraction of the local edge length used to push the point inward.
-        Kept small (default 0.3) so the seed stays very close to the surface.
-    """
+def _snap_seed_to_surface(mesh: pv.PolyData, point: np.ndarray, inward_fraction: float = 0.3) -> list[float]:
     idx = mesh.find_closest_point(point)
     surface_pt = mesh.points[idx].copy()
 
@@ -122,42 +215,209 @@ def _snap_seed_to_surface(
         return surface_pt.tolist()
 
     normal = normal / norm_len
-
     edges = mesh.extract_feature_edges(
-        boundary_edges=False, non_manifold_edges=False,
-        feature_edges=False, manifold_edges=True,
+        boundary_edges=False, non_manifold_edges=False, feature_edges=False, manifold_edges=True,
     )
     if edges.n_points > 1:
         avg_edge_len = np.mean(np.linalg.norm(np.diff(edges.points[:100], axis=0), axis=1))
     else:
-        avg_edge_len = np.mean(mesh.spacing) if hasattr(mesh, "spacing") else 0.2
+        avg_edge_len = 0.2
 
     to_center = np.array(point, dtype=float) - surface_pt
-    if np.dot(to_center, normal) > 0:
-        inward_normal = normal
-    else:
-        inward_normal = -normal
-
+    inward_normal = normal if np.dot(to_center, normal) > 0 else -normal
     nudged = surface_pt + inward_fraction * avg_edge_len * inward_normal
-
-    final_idx = mesh.find_closest_point(nudged)
-    return mesh.points[final_idx].tolist()
+    return mesh.points[mesh.find_closest_point(nudged)].tolist()
 
 
-# ── Phase 1: Mask loading & RCA/LCA separation ───────────────────────────────
+def _edge_topology_from_polydata(
+    poly: pv.PolyData,
+    tol_mm: float = 0.05,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    pts_xyz = np.asarray(poly.points, dtype=np.float64)
+    n_pts = len(pts_xyz)
+    if n_pts == 0:
+        z = np.zeros(0, dtype=np.int32)
+        return z, z, z
 
-def load_and_separate_mask(nrrd_path: Path) -> tuple[dict[str, np.ndarray], np.ndarray, np.ndarray]:
-    """
-    Load a binary .nrrd coronary mask and separate it into RCA and LCA.
+    scale = max(float(tol_mm), 1e-6)
+    voxel = np.round(pts_xyz / scale).astype(np.int64)
 
-    Returns
-    -------
-    artery_arrays : dict mapping ``"RCA"`` / ``"LCA"`` to binary uint8 arrays (Z, Y, X).
-    spacing : image spacing in mm.
-    origin  : image origin in mm.
-    """
-    logger.info("Loading mask from %s", nrrd_path)
+    key_to_node: dict[tuple[int, int, int], int] = {}
+    point_to_node = np.empty(n_pts, dtype=np.int32)
+    node_count = 0
+    for i in range(n_pts):
+        key = (int(voxel[i, 0]), int(voxel[i, 1]), int(voxel[i, 2]))
+        node = key_to_node.get(key)
+        if node is None:
+            node = node_count
+            key_to_node[key] = node
+            node_count += 1
+        point_to_node[i] = node
 
+    adjacency = [set() for _ in range(node_count)]
+    lines_flat = np.asarray(poly.lines, dtype=np.int64)
+    idx = 0
+    while idx < len(lines_flat):
+        seg_len = int(lines_flat[idx])
+        seg_pts = lines_flat[idx + 1 : idx + 1 + seg_len]
+        for k in range(len(seg_pts) - 1):
+            a = int(seg_pts[k])
+            b = int(seg_pts[k + 1])
+            na = int(point_to_node[a])
+            nb = int(point_to_node[b])
+            if na == nb:
+                continue
+            adjacency[na].add(nb)
+            adjacency[nb].add(na)
+        idx += seg_len + 1
+
+    node_degree = np.array([len(neigh) for neigh in adjacency], dtype=np.int32)
+    point_degree = node_degree[point_to_node]
+    return point_degree, point_to_node, node_degree
+
+
+def _point_types_from_topology(
+    point_degree: np.ndarray,
+    point_to_node: np.ndarray,
+    node_degree: np.ndarray,
+    ostium_idx: int,
+    points_xyz: np.ndarray,
+    radii_mm: np.ndarray | None = None,
+    bif_merge_mm: float | None = None,
+) -> list[str]:
+    n = len(point_degree)
+    out = np.full(n, "Standard", dtype=object)
+    out[point_degree == 0] = "Isolated"
+
+    end_mask = point_degree == 1
+    out[end_mask] = "Endpoint"
+    if 0 <= int(ostium_idx) < n:
+        out[int(ostium_idx)] = "Ostium"
+
+    bif_nodes = np.where(node_degree > 2)[0]
+    cand_idx: list[int] = []
+    cand_score: list[float] = []
+    radii = np.asarray(radii_mm, dtype=float).ravel() if radii_mm is not None else None
+
+    for node_id in bif_nodes:
+        idxs = np.where(point_to_node == node_id)[0]
+        if len(idxs) == 0:
+            continue
+        centroid = points_xyz[idxs].mean(axis=0)
+        rep = int(idxs[np.argmin(np.linalg.norm(points_xyz[idxs] - centroid, axis=1))])
+        r = float(radii[rep]) if radii is not None and rep < len(radii) else 0.0
+        cand_idx.append(rep)
+        cand_score.append(float(node_degree[node_id]) + 0.01 * r)
+
+    if len(cand_idx) == 0:
+        return out.tolist()
+
+    if bif_merge_mm is None:
+        d = np.linalg.norm(np.diff(points_xyz, axis=0), axis=1)
+        d = d[np.isfinite(d) & (d > 0)]
+        step = float(np.median(d)) if len(d) else 0.3
+        bif_merge_mm = float(np.clip(2.0 * step, 0.4, 1.5))
+
+    order = np.argsort(-np.asarray(cand_score, dtype=float))
+    kept: list[int] = []
+    for oi in order:
+        i = cand_idx[int(oi)]
+        pi = points_xyz[i]
+        if any(float(np.linalg.norm(pi - points_xyz[j])) <= float(bif_merge_mm) for j in kept):
+            continue
+        kept.append(i)
+
+    for rep in kept:
+        if out[rep] != "Ostium":
+            out[rep] = "Bifurcation"
+
+    return out.tolist()
+
+
+def _split_centerline_paths(
+    centerlines: pv.PolyData,
+    sample_id: int,
+    artery_name: str,
+    point_types: list[str] | np.ndarray,
+    ostium_point_mm: np.ndarray,
+    min_points: int = 20,
+    ostium_start_tol_mm: float = 4.0,
+) -> tuple[list[dict], dict]:
+    cl_points = np.asarray(centerlines.points)
+    cl_radii = np.asarray(centerlines.point_data["MaximumInscribedSphereRadius"])
+    pt_types = np.asarray(point_types, dtype=object)
+    ost = np.asarray(ostium_point_mm, dtype=float)
+
+    branches: list[dict] = []
+    dropped = {"too_short": 0, "far_from_ostium": 0, "bad_terminal": 0}
+
+    lines_flat = np.asarray(centerlines.lines, dtype=np.int64)
+    idx = 0
+    branch_num = 1
+    while idx < len(lines_flat):
+        npts = int(lines_flat[idx])
+        seg_ids = np.asarray(lines_flat[idx + 1 : idx + 1 + npts], dtype=np.int64)
+        idx += npts + 1
+        if len(seg_ids) < 2:
+            continue
+
+        seg_pts_raw = cl_points[seg_ids]
+        d0 = float(np.linalg.norm(seg_pts_raw[0] - ost))
+        d1 = float(np.linalg.norm(seg_pts_raw[-1] - ost))
+        if d1 < d0:
+            seg_ids = seg_ids[::-1]
+            seg_pts_raw = seg_pts_raw[::-1]
+            d0, d1 = d1, d0
+
+        seg_pts = cl_points[seg_ids]
+        seg_rad = cl_radii[seg_ids]
+        seg_ptt_global = pt_types[seg_ids]
+
+        if len(seg_ids) < int(min_points):
+            dropped["too_short"] += 1
+            continue
+        if d0 > float(ostium_start_tol_mm):
+            dropped["far_from_ostium"] += 1
+            continue
+        if str(seg_ptt_global[-1]) != "Endpoint":
+            dropped["bad_terminal"] += 1
+            continue
+
+        # Branch-local semantic labels:
+        # force start/end to represent ostium->endpoint path intent, even when
+        # sampled polyline endpoints are near (but not exactly at) global ostium point.
+        seg_ptt = np.asarray(seg_ptt_global, dtype=object).copy()
+        if len(seg_ptt) > 0:
+            seg_ptt[0] = "Ostium"
+            seg_ptt[-1] = "Endpoint"
+
+        branch_id = f"{artery_name}_B{branch_num:02d}"
+        branch_num += 1
+
+        branch_poly = pv.lines_from_points(seg_pts, close=False)
+        branch_poly.point_data["MaximumInscribedSphereRadius"] = seg_rad
+
+        df_branch = pd.DataFrame(
+            {
+                "Sample_ID": sample_id,
+                "Artery_Type": artery_name,
+                "Branch_ID": branch_id,
+                "Path_Point_Index": np.arange(len(seg_ids), dtype=int),
+                "Px": seg_pts[:, 0],
+                "Py": seg_pts[:, 1],
+                "Pz": seg_pts[:, 2],
+                "Radius": seg_rad,
+                "PointType": seg_ptt,
+            }
+        )
+        branches.append({"branch_id": branch_id, "poly": branch_poly, "df": df_branch})
+
+    return branches, dropped
+
+
+def _load_and_separate_mask(
+    nrrd_path: Path,
+) -> tuple[dict[str, np.ndarray], np.ndarray, np.ndarray]:
     reader = vmtkscripts.vmtkImageReader()
     reader.InputFileName = str(nrrd_path)
     reader.Execute()
@@ -166,13 +426,12 @@ def load_and_separate_mask(nrrd_path: Path) -> tuple[dict[str, np.ndarray], np.n
     spacing = np.array(vtk_image.GetSpacing())
     origin = np.array(vtk_image.GetOrigin())
     dims = vtk_image.GetDimensions()
-
     vtk_scalars = vtk_image.GetPointData().GetScalars()
     mask = vtk_to_numpy(vtk_scalars).reshape(dims[2], dims[1], dims[0]).astype(np.uint8)
-    logger.info("Mask shape (Z,Y,X)=%s  spacing=%s  origin=%s", mask.shape, spacing, origin)
 
     labeled, num_components = ndi.label(mask)
-    logger.info("Connected components found: %d", num_components)
+    if num_components < 2:
+        raise RuntimeError(f"Expected at least 2 connected components, found {num_components}")
 
     component_sizes = ndi.sum(mask, labeled, range(1, num_components + 1))
     sorted_labels = np.argsort(component_sizes)[::-1] + 1
@@ -192,58 +451,22 @@ def load_and_separate_mask(nrrd_path: Path) -> tuple[dict[str, np.ndarray], np.n
         "RCA": (labeled == rca_label).astype(np.uint8),
         "LCA": (labeled == lca_label).astype(np.uint8),
     }
-    for name, arr in artery_arrays.items():
-        logger.info("%s: %s voxels", name, f"{np.count_nonzero(arr):,}")
-
     return artery_arrays, spacing, origin
 
 
-# ── Phase 2 & 3: Scout + VMTK per artery ─────────────────────────────────────
-
-def extract_single_artery(
+def _process_artery(
     artery_name: str,
     artery_mask: np.ndarray,
     spacing: np.ndarray,
     origin: np.ndarray,
-    patient_id: str,
-    smoothing_iterations: int = 20,
-    smoothing_passband: float = 0.1,
-) -> tuple[pd.DataFrame, pv.PolyData] | None:
-    """
-    Run the full hybrid pipeline on one artery.
-
-    Returns ``(dataframe, centerline_polydata)`` or ``None`` if fewer than
-    2 endpoints are found.
-    """
-    # ── Phase 2: Scout ────────────────────────────────────────────────────
-    logger.info("[%s] Running 3D skeletonization", artery_name)
-    skeleton = skeletonize(artery_mask)
-    logger.info("[%s] Skeleton voxels: %s", artery_name, f"{np.count_nonzero(skeleton):,}")
-
-    endpoints_zyx = _find_skeleton_endpoints(skeleton)
-    logger.info("[%s] Endpoints found: %d", artery_name, len(endpoints_zyx))
-
-    if len(endpoints_zyx) < 2:
-        logger.warning("[%s] Fewer than 2 endpoints — skipping.", artery_name)
-        return None
-
-    ostium_idx, dists = _identify_ostium(endpoints_zyx, artery_mask)
-    logger.info("[%s] Ostium = endpoint #%d (EDT=%.2f voxels)", artery_name, ostium_idx, dists[ostium_idx])
-
-    source_zyx = endpoints_zyx[ostium_idx : ostium_idx + 1]
-    target_mask_bool = np.ones(len(endpoints_zyx), dtype=bool)
-    target_mask_bool[ostium_idx] = False
-    targets_zyx = endpoints_zyx[target_mask_bool]
-
+    sample_id: int,
+    source_zyx: np.ndarray,
+    targets_zyx: np.ndarray,
+) -> dict | None:
     source_phys = _voxel_to_physical(source_zyx, origin, spacing)
     targets_phys = _voxel_to_physical(targets_zyx, origin, spacing)
-    logger.info("[%s] Source (mm): %s", artery_name, source_phys[0])
-    logger.info("[%s] Targets: %d branch tips", artery_name, len(targets_phys))
 
-    # ── Phase 3a: Surface mesh ────────────────────────────────────────────
-    logger.info("[%s] Building surface mesh (MarchingCubes + Taubin smoothing)", artery_name)
     vtk_artery = _numpy_to_vtk_image(artery_mask, spacing, origin)
-
     mc = vmtkscripts.vmtkMarchingCubes()
     mc.Image = vtk_artery
     mc.Level = 0.5
@@ -251,23 +474,19 @@ def extract_single_artery(
 
     smoother = vmtkscripts.vmtkSurfaceSmoothing()
     smoother.Surface = mc.Surface
-    smoother.NumberOfIterations = smoothing_iterations
-    smoother.PassBand = smoothing_passband
+    smoother.NumberOfIterations = 20
+    smoother.PassBand = 0.1
     smoother.Execute()
 
-    mesh_smooth = pv.wrap(smoother.Surface)
-    logger.info("[%s] Surface: %s vertices, %s triangles",
-                artery_name, f"{mesh_smooth.n_points:,}", f"{mesh_smooth.n_cells:,}")
-
+    surface_smooth = smoother.Surface
+    mesh_smooth = pv.wrap(surface_smooth)
     source_flat = _snap_seed_to_surface(mesh_smooth, source_phys[0])
     targets_flat: list[float] = []
     for t in targets_phys:
         targets_flat.extend(_snap_seed_to_surface(mesh_smooth, t))
 
-    # ── Phase 3b: VMTK Centerlines ───────────────────────────────────────
-    logger.info("[%s] Extracting VMTK centerlines", artery_name)
     cl = vmtkscripts.vmtkCenterlines()
-    cl.Surface = smoother.Surface
+    cl.Surface = surface_smooth
     cl.SeedSelectorName = "pointlist"
     cl.SourcePoints = source_flat
     cl.TargetPoints = targets_flat
@@ -277,91 +496,307 @@ def extract_single_artery(
     centerlines = pv.wrap(cl.Centerlines)
     cl_points = centerlines.points
     cl_radii = centerlines.point_data["MaximumInscribedSphereRadius"]
-    logger.info("[%s] Centerline points: %d", artery_name, len(cl_points))
-    logger.info("[%s] Radius range: [%.3f , %.3f] mm", artery_name, cl_radii.min(), cl_radii.max())
 
-    df_artery = pd.DataFrame({
-        "Patient_ID": patient_id,
-        "Artery_Type": artery_name,
-        "Px": cl_points[:, 0],
-        "Py": cl_points[:, 1],
-        "Pz": cl_points[:, 2],
-        "Radius": cl_radii,
-    })
+    point_degree, point_to_node, node_degree = _edge_topology_from_polydata(centerlines, tol_mm=0.05)
+    ostium_idx = int(np.linalg.norm(cl_points - np.asarray(source_phys[0], dtype=float), axis=1).argmin())
+    point_types = _point_types_from_topology(
+        point_degree,
+        point_to_node,
+        node_degree,
+        ostium_idx,
+        cl_points,
+        radii_mm=cl_radii,
+        bif_merge_mm=None,
+    )
 
-    return df_artery, centerlines
+    df_artery = pd.DataFrame(
+        {
+            "Sample_ID": sample_id,
+            "Artery_Type": artery_name,
+            "Px": cl_points[:, 0],
+            "Py": cl_points[:, 1],
+            "Pz": cl_points[:, 2],
+            "Radius": cl_radii,
+            "PointType": point_types,
+        }
+    )
+
+    branch_items, dropped_stats = _split_centerline_paths(
+        centerlines,
+        sample_id=sample_id,
+        artery_name=artery_name,
+        point_types=point_types,
+        ostium_point_mm=np.asarray(source_phys[0], dtype=float),
+        min_points=20,
+        ostium_start_tol_mm=4.0,
+    )
+
+    logger.info(
+        "[%s] points=%d branches=%d dropped=(too_short=%d, far=%d, bad_terminal=%d)",
+        artery_name,
+        len(cl_points),
+        len(branch_items),
+        dropped_stats["too_short"],
+        dropped_stats["far_from_ostium"],
+        dropped_stats["bad_terminal"],
+    )
+
+    return {
+        "centerline_poly": centerlines,
+        "mesh_smooth": mesh_smooth,
+        "df_artery": df_artery,
+        "source_phys": np.asarray(source_phys[0], dtype=float),
+        "branches": branch_items,
+    }
 
 
-# ── Public entry-point ────────────────────────────────────────────────────────
+def _export_branch_qc_figures(sample_dir: Path, sample_name: str, artery_outputs: dict[str, dict]) -> None:
+    fig_dir = sample_dir / "branches" / "figures"
+    fig_dir.mkdir(parents=True, exist_ok=True)
+
+    saved = 0
+    for artery_name, info in artery_outputs.items():
+        vessel_mesh = info.get("mesh_smooth")
+        if vessel_mesh is None:
+            continue
+
+        for b in info["branches"]:
+            branch_id = b["branch_id"]
+            pts = np.asarray(b["poly"].points)
+            if len(pts) < 2:
+                continue
+
+            ost_pt = pts[0]
+            tip_pt = pts[-1]
+            png_path = fig_dir / f"fig_{branch_id}_{sample_name}.png"
+
+            pl = pv.Plotter(off_screen=True, window_size=(1600, 1200))
+            pl.set_background("white")
+            pl.add_mesh(vessel_mesh, color="lightgray", opacity=0.20, smooth_shading=True)
+            pl.add_mesh(b["poly"], color="black", line_width=7)
+            pl.add_mesh(pv.PolyData(ost_pt), color="red", point_size=22, render_points_as_spheres=True)
+            pl.add_mesh(pv.PolyData(tip_pt), color="blue", point_size=22, render_points_as_spheres=True)
+            pl.add_axes()
+            pl.show(screenshot=str(png_path), auto_close=True)
+            saved += 1
+
+    logger.info("[Save] Branch QC figures: %d -> %s", saved, fig_dir)
+
+
+def _export_centerline_tree_figure(sample_dir: Path, sample_name: str, artery_outputs: dict[str, dict]) -> None:
+    """Save one full coronary centerline tree figure with key points highlighted."""
+    if not artery_outputs:
+        return
+
+    png_path = sample_dir / f"fig_centerline_tree_{sample_name}.png"
+    pl = pv.Plotter(off_screen=True, window_size=(1800, 1300))
+    pl.set_background("white")
+
+    n_lines = 0
+    n_ostium = 0
+    n_endpoints = 0
+
+    for info in artery_outputs.values():
+        centerline_poly = info.get("centerline_poly")
+        df_artery = info.get("df_artery")
+        if centerline_poly is None or df_artery is None or len(df_artery) == 0:
+            continue
+
+        pl.add_mesh(centerline_poly, color="black", line_width=4)
+        n_lines += 1
+
+        pts = df_artery[["Px", "Py", "Pz"]].to_numpy(dtype=float)
+        ptype = df_artery["PointType"].astype(str).to_numpy()
+
+        ost_mask = ptype == "Ostium"
+        end_mask = ptype == "Endpoint"
+
+        if np.any(ost_mask):
+            pl.add_mesh(
+                pv.PolyData(pts[ost_mask]),
+                color="red",
+                point_size=24,
+                render_points_as_spheres=True,
+                label="Ostium",
+            )
+            n_ostium += int(np.count_nonzero(ost_mask))
+
+        if np.any(end_mask):
+            pl.add_mesh(
+                pv.PolyData(pts[end_mask]),
+                color="blue",
+                point_size=18,
+                render_points_as_spheres=True,
+                label="Endpoint",
+            )
+            n_endpoints += int(np.count_nonzero(end_mask))
+
+    if n_lines == 0:
+        pl.close()
+        return
+
+    pl.add_axes()
+    pl.add_legend(size=(0.2, 0.12), bcolor="white", border=True)
+    pl.show(screenshot=str(png_path), auto_close=True)
+    logger.info(
+        "[Save] Centerline tree figure -> %s (lines=%d, ostia=%d, endpoints=%d)",
+        png_path,
+        n_lines,
+        n_ostium,
+        n_endpoints,
+    )
+
 
 def run_block1(patient_id: str, nrrd_path: Path | None = None) -> pd.DataFrame:
-    """
-    Execute the full Block 1 pipeline for a single patient.
-
-    Parameters
-    ----------
-    patient_id : str
-        Patient identifier, e.g. ``"Normal_1"``.
-    nrrd_path : Path, optional
-        Explicit path to the ``.nrrd`` file.  When ``None`` the path is
-        resolved as ``data/ASOCA Normal/Annotations/<patient_id>.nrrd``.
-
-    Returns
-    -------
-    pd.DataFrame
-        Combined centerline data for RCA and LCA.
-    """
     t_start = time.perf_counter()
-    timestamp = datetime.now().strftime("%Y%m%d")
+    sample_name = patient_id
+    sample_id = _sample_numeric_id(patient_id)
 
     if nrrd_path is None:
         nrrd_path = DATA_ROOT / "ASOCA Normal" / "Annotations" / f"{patient_id}.nrrd"
-
     if not nrrd_path.exists():
         raise FileNotFoundError(f"Mask not found: {nrrd_path}")
 
-    DF_DIR.mkdir(parents=True, exist_ok=True)
-    CL_DIR.mkdir(parents=True, exist_ok=True)
+    artery_arrays, spacing, origin = _load_and_separate_mask(nrrd_path)
 
-    # Remove previous results for this patient to avoid duplicates
-    for old in CL_DIR.glob(f"centerline_{patient_id}_*.vtp"):
-        old.unlink()
-        logger.info("[Cleanup] Removed %s", old.name)
-    for old in DF_DIR.glob(f"df_{patient_id}_*.xlsx"):
-        old.unlink()
-        logger.info("[Cleanup] Removed %s", old.name)
-
-    artery_arrays, spacing, origin = load_and_separate_mask(nrrd_path)
-
-    all_dfs: list[pd.DataFrame] = []
+    scout_cache: dict[str, dict] = {}
     for artery_name, artery_mask in artery_arrays.items():
-        result = extract_single_artery(artery_name, artery_mask, spacing, origin, patient_id)
-        if result is None:
+        skeleton = skeletonize(artery_mask)
+        endpoints_zyx = _find_skeleton_endpoints(skeleton)
+        if len(endpoints_zyx) < 2:
+            logger.warning("[%s] Fewer than 2 endpoints — skipping.", artery_name)
             continue
-        df_artery, centerline_polydata = result
-        all_dfs.append(df_artery)
 
-        vtp_path = CL_DIR / f"centerline_{patient_id}_{artery_name}_{timestamp}.vtp"
-        centerline_polydata.save(str(vtp_path))
-        logger.info("[Save] %s -> %s", artery_name, vtp_path)
+        ost0_idx, d_edt, d_geo, d_calib, score = _identify_ostium(
+            endpoints_zyx,
+            skeleton,
+            artery_mask,
+            edt_weight=0.35,
+            centroid_weight=0.15,
+            caliber_weight=0.30,
+            calib_steps=10,
+        )
+        rank = np.argsort(score)[::-1]
+        topk = rank[: min(4, len(rank))]
+        endpoints_phys = _voxel_to_physical(endpoints_zyx, origin, spacing)
 
-    if not all_dfs:
+        scout_cache[artery_name] = {
+            "artery_mask": artery_mask,
+            "endpoints_zyx": endpoints_zyx,
+            "endpoints_phys": endpoints_phys,
+            "dists_edt": d_edt,
+            "total_geo": d_geo,
+            "caliber_sum": d_calib,
+            "ost_score": score,
+            "topk": topk,
+            "ostium_idx_default": int(ost0_idx),
+        }
+
+    if not scout_cache:
+        raise RuntimeError(f"No valid artery endpoints found for {patient_id}")
+
+    ostium_choice: dict[str, int] = {k: int(v["ostium_idx_default"]) for k, v in scout_cache.items()}
+    if ("RCA" in scout_cache) and ("LCA" in scout_cache):
+        rc = scout_cache["RCA"]
+        lc = scout_cache["LCA"]
+        s_r = (rc["ost_score"] - np.mean(rc["ost_score"])) / (np.std(rc["ost_score"]) + 1e-8)
+        s_l = (lc["ost_score"] - np.mean(lc["ost_score"])) / (np.std(lc["ost_score"]) + 1e-8)
+
+        pairs: list[tuple[int, int, float]] = []
+        for i in rc["topk"]:
+            for j in lc["topk"]:
+                d = float(np.linalg.norm(rc["endpoints_phys"][i] - lc["endpoints_phys"][j]))
+                pairs.append((int(i), int(j), d))
+
+        d_all = np.array([p[2] for p in pairs], dtype=float)
+        d_z = (d_all - np.mean(d_all)) / (np.std(d_all) + 1e-8)
+        best_obj = np.inf
+        best_idx: tuple[int, int] | None = None
+        for k, (i, j, _) in enumerate(pairs):
+            obj = 1.00 * d_z[k] - 0.60 * (s_r[i] + s_l[j])
+            if obj < best_obj:
+                best_obj = obj
+                best_idx = (int(i), int(j))
+        if best_idx is not None:
+            ostium_choice["RCA"], ostium_choice["LCA"] = best_idx
+
+    all_centerlines_data: list[pd.DataFrame] = []
+    artery_outputs: dict[str, dict] = {}
+    for artery_name, cache in scout_cache.items():
+        endpoints_zyx = cache["endpoints_zyx"]
+        ostium_idx = int(ostium_choice.get(artery_name, cache["ostium_idx_default"]))
+
+        source_zyx = endpoints_zyx[ostium_idx : ostium_idx + 1]
+        target_mask = np.ones(len(endpoints_zyx), dtype=bool)
+        target_mask[ostium_idx] = False
+        targets_zyx = endpoints_zyx[target_mask]
+
+        logger.info(
+            "[%s] Ostium endpoint #%d (EDT=%.2f, GeoSum=%.1f, Calib10=%.1f, Score=%.2f)",
+            artery_name,
+            ostium_idx,
+            cache["dists_edt"][ostium_idx],
+            cache["total_geo"][ostium_idx],
+            cache["caliber_sum"][ostium_idx],
+            cache["ost_score"][ostium_idx],
+        )
+
+        out = _process_artery(
+            artery_name=artery_name,
+            artery_mask=cache["artery_mask"],
+            spacing=spacing,
+            origin=origin,
+            sample_id=sample_id,
+            source_zyx=source_zyx,
+            targets_zyx=targets_zyx,
+        )
+        if out is None:
+            continue
+        artery_outputs[artery_name] = out
+        all_centerlines_data.append(out["df_artery"])
+
+    if not all_centerlines_data:
         raise RuntimeError(f"No centerlines extracted for patient {patient_id}")
 
-    df_centerlines = pd.concat(all_dfs, ignore_index=True)
+    df_centerlines = pd.concat(all_centerlines_data, ignore_index=True)
+    if "PointType" in df_centerlines.columns:
+        logger.info("PointType counts:\n%s", df_centerlines["PointType"].value_counts().sort_index())
 
-    xlsx_path = DF_DIR / f"df_{patient_id}_{timestamp}.xlsx"
-    df_centerlines.to_excel(str(xlsx_path), index=False)
-    logger.info("[Save] DataFrame -> %s", xlsx_path)
+    SAMPLES_DIR.mkdir(parents=True, exist_ok=True)
+    sample_dir = SAMPLES_DIR / sample_name
+    if sample_dir.exists():
+        shutil.rmtree(sample_dir)
+    branches_center_dir = sample_dir / "branches" / "centerlines"
+    branches_df_dir = sample_dir / "branches" / "dataframes"
+    for d in (sample_dir, branches_center_dir, branches_df_dir):
+        d.mkdir(parents=True, exist_ok=True)
+
+    global_xlsx = sample_dir / f"dataset_global_{sample_name}.xlsx"
+    df_centerlines.to_excel(global_xlsx, index=False)
+
+    for artery_name, info in artery_outputs.items():
+        centerline_path = sample_dir / f"centerline_{artery_name}.vtp"
+        surface_path = sample_dir / f"surface_{artery_name}.vtp"
+        artery_df_xlsx = sample_dir / f"dataset_{artery_name}_{sample_name}.xlsx"
+        info["centerline_poly"].save(str(centerline_path))
+        info["mesh_smooth"].save(str(surface_path))
+        info["df_artery"].to_excel(artery_df_xlsx, index=False)
+
+        for b in info["branches"]:
+            branch_id = b["branch_id"]
+            branch_vtp = branches_center_dir / f"centerline_{branch_id}_{sample_name}.vtp"
+            branch_xlsx = branches_df_dir / f"dataset_{branch_id}_{sample_name}.xlsx"
+            b["poly"].save(str(branch_vtp))
+            b["df"].to_excel(branch_xlsx, index=False)
+
+    _export_branch_qc_figures(sample_dir, sample_name, artery_outputs)
+    _export_centerline_tree_figure(sample_dir, sample_name, artery_outputs)
 
     elapsed = time.perf_counter() - t_start
-    logger.info("Block 1 Execution Time: %.1f seconds", elapsed)
-    print(f"\nBlock 1 Execution Time: {elapsed:.1f} seconds")
-
+    n_branches = sum(len(v["branches"]) for v in artery_outputs.values())
+    logger.info("Block 1 finished in %.1fs | sample=%s | branches=%d", elapsed, sample_name, n_branches)
     return df_centerlines
 
-
-# ── Standalone execution ──────────────────────────────────────────────────────
 
 if __name__ == "__main__":
     logging.basicConfig(
@@ -369,11 +804,9 @@ if __name__ == "__main__":
         format="%(asctime)s | %(levelname)-7s | %(message)s",
         datefmt="%H:%M:%S",
     )
-
     pid = sys.argv[1] if len(sys.argv) > 1 else "Normal_1"
-    df = run_block1(patient_id=pid)
-
-    print(f"\nTotal centerline points: {len(df)}")
-    print(f"  RCA: {(df['Artery_Type'] == 'RCA').sum()} points")
-    print(f"  LCA: {(df['Artery_Type'] == 'LCA').sum()} points")
-    print(df.head(10))
+    out_df = run_block1(patient_id=pid)
+    print(f"\nTotal centerline points: {len(out_df)}")
+    if "Artery_Type" in out_df.columns:
+        print(f"  RCA: {(out_df['Artery_Type'] == 'RCA').sum()} points")
+        print(f"  LCA: {(out_df['Artery_Type'] == 'LCA').sum()} points")

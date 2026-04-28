@@ -231,6 +231,54 @@ Every work session must be recorded using the following structure:
 
 ---
 
+### 2026-04-28 — Block 1 Packaging Finalization + Block 2 Area Pipeline Integration
+
+* **🎯 Objectives:** Finalize Block 1 as a robust patient-package generator and migrate Block 2 phase 1 (sectional area) from notebook methodology into the production pipeline, including data propagation and visualization outputs.
+
+* **✅ Progress & Tasks Completed:**
+  * **Block 1 package consolidation (`src/blocks/_01_extraction.py`):**
+    * Finalized sample-centric output layout under `results/block1_results/samples/<Patient_ID>/`.
+    * Persisted global, artery-level, and branch-level dataframes/centerlines with overwrite-on-rerun behavior.
+    * Added branch QC figures and global centerline-tree figure (colored ostia/endpoints).
+    * Added saving of artery surface meshes (`surface_RCA.vtp`, `surface_LCA.vtp`) to support downstream reuse.
+  * **Block 2 phase 1 implementation (`src/blocks/_02_stenosis.py`):**
+    * Implemented `run_block2(patient_id)` as first production version of geometric stenosis quantification (area extraction).
+    * Reads Block 1 package and computes per-point `Area` via `vmtkCenterlineSections` on full RCA/LCA trees.
+    * Propagates area values to:
+      * global dataframe,
+      * artery dataframes,
+      * branch dataframes.
+    * Mapping policy implemented:
+      * direct row-aligned assignment when possible,
+      * KDTree nearest-point fallback otherwise.
+    * Exports Block 2 outputs under `results/block2_results/area/samples/<Patient_ID>/` with overwrite-on-rerun.
+    * Added area-colored visual outputs (full tree, artery-level, and branch-level).
+  * **Pipeline wiring (`src/_pipeline.py`):**
+    * Activated Block 2 call after Block 1 so both phases run in one E2E command.
+
+* **🐛 Bugs & Challenges:**
+  * *Issue:* Pipeline appeared to stop after Block 1 with no Python traceback and no Block 2 outputs.
+  * *Cause:* Native VTK/VMTK failure around `vmtkCenterlineSections` (silent crash/hang behavior).
+  * *Fixes applied:*
+    * Switched Block 2 section computation path to VTK-native inputs.
+    * Added defensive preprocessing from notebook methodology:
+      * surface triangulation + cleaning,
+      * centerline smoothing + uniform resampling.
+    * Added granular log checkpoints around area computation.
+    * Reused Block 1 saved surfaces to reduce recomputation and improve geometric consistency.
+
+* **💡 Key Decisions:**
+  * Block interfaces are now artifact-based by patient package, enabling reproducibility and resumability.
+  * Block 2 uses full-artery area computation (RCA/LCA trees) and then maps to branch dataframes, preserving a globally consistent geometry signal.
+  * Mesh persistence in Block 1 is preferred over rebuilding in Block 2 for efficiency and reduced divergence between blocks.
+
+* **⏭️ Next Steps:**
+  * Begin Block 2 phase 2: healthy reference definition per artery/path.
+  * Implement `%AS/%DS` computation over the new `Area` signal with robust NaN and outlier handling.
+  * Add optional summary report per patient (mapping modes, NaN stats, area ranges) for QA traceability.
+
+---
+
 ## Acronym Legend
 
 | Acronym | Definition |

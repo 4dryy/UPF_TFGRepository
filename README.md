@@ -58,7 +58,7 @@ The system follows a strict **4-block modular architecture**. Each block is a se
 | Block | Name | Status |
 |-------|------|--------|
 | **B1** | Automated Anatomy Extraction | Completed / Refactored |
-| **B2** | Geometric Stenosis Quantification | Experimental |
+| **B2** | Geometric Stenosis Quantification | Phase 1 Implemented (Sectional Area) |
 | **B3** | CAD-RADS Scoring Prediction | Pending |
 | **B4** | Visualization Dashboard | Pending |
 
@@ -155,7 +155,26 @@ For each artery component, `scikit-image` 3D morphological thinning reduces the 
 **Phase 3 — The "Math" (VMTK Voronoi Centerlines)**
 The binary mask is converted to a surface mesh via Marching Cubes, smoothed with Taubin passband filtering (20 iterations), and fed into VMTK's centerline extraction algorithm. The automated seed points from the Scout phase are projected onto the mesh surface using a **surface-normal-aware inward nudging strategy** to prevent VMTK "steepest descent" failures. VMTK then computes smooth centerlines with maximum inscribed sphere radii along the entire artery tree.
 
-**Output:** A DataFrame containing columns `[Patient_ID, Artery_Type, Px, Py, Pz, Radius]` and `.vtp` centerline polydata files for downstream geometric analysis.
+**Output package (per patient):**
+- Global dataframe and per-artery dataframes with point-wise geometry/topology (`PointType`).
+- Artery centerlines (`centerline_RCA.vtp`, `centerline_LCA.vtp`).
+- Artery surfaces (`surface_RCA.vtp`, `surface_LCA.vtp`) for downstream Block 2 reuse.
+- Branch-level centerlines/dataframes (ostium -> endpoint paths).
+- QC figures (per-branch + full centerline tree with colored ostia/endpoints).
+
+---
+
+## Block 2 Methodology (Phase 1): Sectional Area Extraction
+
+Block 2 phase 1 consumes the Block 1 sample package and computes cross-sectional lumen area at each centerline point using `vmtkCenterlineSections`.
+
+### Key design choices implemented in pipeline
+
+- **Centerline reuse from Block 1:** Block 2 reads `centerline_RCA.vtp` and `centerline_LCA.vtp` directly.
+- **Surface reuse from Block 1:** Block 2 preferentially reads `surface_RCA.vtp` and `surface_LCA.vtp` to avoid mesh recomputation and keep geometric consistency between blocks.
+- **Defensive preprocessing before sections:** triangulate/clean surface and smooth/resample centerline to reduce VMTK instability on complex geometries.
+- **Area propagation:** computed artery-level area is mapped to global, artery, and branch dataframes (row-aligned when possible, KDTree fallback otherwise).
+- **Outputs mirrored by patient:** saved under `results/block2_results/area/samples/<Patient_ID>/` with enriched dataframes and area-colored figures (global, artery-level, and branch-level).
 
 ---
 
@@ -205,11 +224,11 @@ Execute the full pipeline from the project root:
 python -m src._pipeline
 ```
 
-The pipeline will prompt for a **Patient ID** (e.g., `Normal_1`). It then runs all implemented blocks sequentially. Currently only Block 1 is active — future blocks will be chained automatically as they are implemented.
+The pipeline prompts for a **Patient ID** (e.g., `Normal_1`) and runs all implemented blocks sequentially. At present, Block 1 and Block 2 (phase 1: sectional area) are integrated.
 
-Results are saved under `results/` with the following naming convention:
-- **Centerlines:** `results/block1_results/centerlines/centerline_<PatientID>_<ArteryType>_<YYYYMMDD>.vtp`
-- **DataFrames:** `results/block1_results/dataframes/df_<PatientID>_<YYYYMMDD>.xlsx`
+Results are saved under per-patient packages:
+- **Block 1:** `results/block1_results/samples/<Patient_ID>/`
+- **Block 2 area:** `results/block2_results/area/samples/<Patient_ID>/`
 
 Re-running the pipeline for the same patient overwrites previous results to avoid duplicates.
 
@@ -244,13 +263,14 @@ UPF_TFGRepository/
 │   └── blocks/
 │       ├── __init__.py
 │       ├── _01_extraction.py         # Block 1: Hybrid centerline extraction (implemented)
-│       ├── _02_stenosis.py           # Block 2: Stenosis quantification (planned)
+│       ├── _02_stenosis.py           # Block 2: Stenosis quantification (phase 1 implemented)
 │       ├── _03_.py                   # Block 3: CAD-RADS scoring (planned)
 │       └── _04_.py                   # Block 4: Visualization dashboard (planned)
 ├── results/
-│   └── block1_results/
-│       ├── dataframes/               # df_<PatientID>_<YYYYMMDD>.xlsx
-│       └── centerlines/              # centerline_<PatientID>_<ArteryType>_<YYYYMMDD>.vtp
+│   ├── block1_results/
+│   │   └── samples/<Patient_ID>/     # Global/artery/branch data + centerlines + surfaces + QC figures
+│   └── block2_results/
+│       └── area/samples/<Patient_ID>/# Area-enriched dataframes + area visualizations
 ├── maren work/                       # Reference notebooks from Maren Clapers
 ├── CONTEXT.md                        # Clinical context and workflow documentation
 ├── DIARY.md                          # Chronological development logbook

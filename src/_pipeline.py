@@ -13,7 +13,7 @@ from __future__ import annotations
 import logging
 
 from src.blocks._01_extraction import run_block1
-# from src.blocks._02_stenosis import run_block2
+from src.blocks._02_stenosis import run_block2
 # from src.blocks._03_ import run_block3
 # from src.blocks._04_ import run_block4
 
@@ -37,9 +37,10 @@ def main(patient_id: str) -> None:
     logging.info("Pipeline started for patient: %s", patient_id)
 
     df_centerlines = run_block1(patient_id=patient_id)
+    df_area = run_block2(patient_id=patient_id)
 
     # Future blocks receive the dataframe from the previous block:
-    # df_stenosis = run_block2(df_centerlines)
+    # df_stenosis = run_block3(df_area)
     # ...
 
     logging.info("Pipeline finished for patient: %s", patient_id)
