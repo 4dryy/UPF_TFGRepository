@@ -1,21 +1,25 @@
 """
-Block 2 — Geometric stenosis (phase 1): sectional area extraction.
+Block 2 — Geometric stenosis: sectional area extraction and %AS (stenosis phase).
 
-This block reads Block 1 packaged outputs, computes per-point cross-sectional
-area for full RCA/LCA centerlines with VMTK, propagates area values to global,
-artery and branch dataframes, and exports an area package for downstream phases.
+Reads Block 1 packaged outputs, computes cross-sectional area (VMTK), maps area to
+global/artery/branch tables, then computes reference areas, ``pct_AS``, merges
+branches with max-%AS deduplication, and exports figures (area + %AS).
 """
 
 from __future__ import annotations
 
 import logging
 import shutil
+import time
+from collections import Counter
 from pathlib import Path
+from typing import NamedTuple
 
 import numpy as np
 import pandas as pd
 import pyvista as pv
 import scipy.ndimage as ndi
+from matplotlib.colors import LinearSegmentedColormap
 from scipy.spatial import cKDTree
 from vmtk import vmtkscripts
 from vtkmodules.util.numpy_support import numpy_to_vtk, vtk_to_numpy
@@ -24,12 +28,227 @@ from vtkmodules.vtkIOXML import vtkXMLPolyDataReader
 from vtkmodules.vtkFiltersCore import vtkTriangleFilter
 from vtkmodules.vtkFiltersCore import vtkCleanPolyData
 
+from src.pipeline_log import footer_block, phase, short_path
+from src.pipeline_log import sub as log_detail
+
 logger = logging.getLogger(__name__)
+
+
+class Block2Outputs(NamedTuple):
+    """Outputs from ``run_block2`` for downstream blocks (e.g. Block 3)."""
+
+    df_global_area: pd.DataFrame
+    """Area-mapped full-tree table (same rows as Block 1 ``dataset_global``)."""
+
+    total_df_merged: pd.DataFrame
+    """Merged branch points with max ``pct_AS`` per rounded coordinate; empty if no branches."""
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DATA_ROOT = PROJECT_ROOT / "data"
 BLOCK1_PATIENT_DIR_ROOT = PROJECT_ROOT / "results" / "block1_results"
 BLOCK2_AREA_PATIENT_DIR_ROOT = PROJECT_ROOT / "results" / "block2_results" / "area"
+BLOCK2_STENOSIS_PATIENT_DIR_ROOT = PROJECT_ROOT / "results" / "block2_results" / "stenosis"
+
+# Stenosis reference / merge / %AS figures (``_05_sq_reference_values`` notebook parity)
+WINDOW_MM = 10.0
+COORD_ROUND = 6
+A_REF_EPS = 1e-12
+PCT_AS_VMIN = 0.0
+PCT_AS_VMAX = 100.0
+
+GREEN_YELLOW_RED_STENOSIS = LinearSegmentedColormap.from_list(
+    "pct_as_gyr", ["#1a9850", "#fee08b", "#d73027"], N=64
+)
+
+
+def nearest_index_within_bounds(gd_values: np.ndarray, target_values: np.ndarray) -> np.ndarray:
+    """
+    Return nearest indices in gd_values for each target in target_values.
+    Targets outside gd range are marked with -1.
+    """
+    idx = np.searchsorted(gd_values, target_values)
+    idx = np.clip(idx, 0, len(gd_values) - 1)
+
+    prev_idx = np.clip(idx - 1, 0, len(gd_values) - 1)
+
+    dist_prev = np.abs(gd_values[prev_idx] - target_values)
+    dist_curr = np.abs(gd_values[idx] - target_values)
+
+    nearest_idx = np.where(dist_prev <= dist_curr, prev_idx, idx)
+
+    out_of_bounds = (target_values < gd_values[0]) | (target_values > gd_values[-1])
+    nearest_idx[out_of_bounds] = -1
+
+    return nearest_idx
+
+
+def compute_reference_columns(df_branch: pd.DataFrame, window_mm: float) -> pd.DataFrame:
+    df_out = df_branch.copy()
+
+    xyz = df_out[["Px", "Py", "Pz"]].to_numpy(dtype=float)
+    delta_xyz = np.diff(xyz, axis=0)
+    step_dist = np.linalg.norm(delta_xyz, axis=1)
+    step_dist = np.insert(step_dist, 0, 0.0)
+
+    df_out["gd"] = np.cumsum(step_dist)
+
+    gd_vals = df_out["gd"].to_numpy(dtype=float)
+    area_vals = df_out["Area"].to_numpy(dtype=float)
+
+    prox_targets = gd_vals - window_mm
+    dist_targets = gd_vals + window_mm
+
+    prox_idx = nearest_index_within_bounds(gd_vals, prox_targets)
+    dist_idx = nearest_index_within_bounds(gd_vals, dist_targets)
+
+    area_prox = np.full(len(df_out), np.nan, dtype=float)
+    area_dist = np.full(len(df_out), np.nan, dtype=float)
+
+    prox_valid = prox_idx >= 0
+    dist_valid = dist_idx >= 0
+
+    area_prox[prox_valid] = area_vals[prox_idx[prox_valid]]
+    area_dist[dist_valid] = area_vals[dist_idx[dist_valid]]
+
+    df_out["Area_prox"] = area_prox
+    df_out["Area_dist"] = area_dist
+    df_out["A_ref"] = (df_out["Area_prox"] + df_out["Area_dist"]) / 2.0
+
+    return df_out
+
+
+def add_pct_as(df_branch: pd.DataFrame, eps: float = A_REF_EPS) -> pd.DataFrame:
+    """Append % area stenosis (pct_AS). NaN A_ref and near-zero A_ref yield NaN pct_AS."""
+    df_out = df_branch.copy()
+    a_ref = df_out["A_ref"].to_numpy(dtype=float)
+    area = df_out["Area"].to_numpy(dtype=float)
+    valid = np.isfinite(a_ref) & (np.abs(a_ref) > eps)
+
+    ratio = np.full(len(df_out), np.nan, dtype=float)
+    ratio[valid] = area[valid] / a_ref[valid]
+    df_out["pct_AS"] = (1.0 - ratio) * 100.0
+
+    return df_out
+
+
+def merge_branches_max_pct_as(
+    processed_branch_data: dict[str, pd.DataFrame],
+    coord_round: int = COORD_ROUND,
+) -> pd.DataFrame:
+    """Concatenate branches, dedupe rounded (Px,Py,Pz) keeping max pct_AS per location."""
+    branch_frames = []
+    for name, df in processed_branch_data.items():
+        branch_frames.append(df.assign(source_branch=name))
+    total_concat = pd.concat(branch_frames, ignore_index=True)
+    total_concat["_Px_g"] = np.round(total_concat["Px"].to_numpy(dtype=float), coord_round)
+    total_concat["_Py_g"] = np.round(total_concat["Py"].to_numpy(dtype=float), coord_round)
+    total_concat["_Pz_g"] = np.round(total_concat["Pz"].to_numpy(dtype=float), coord_round)
+
+    _dedup_subset = ["_Px_g", "_Py_g", "_Pz_g"]
+    return (
+        total_concat.sort_values("pct_AS", ascending=False, na_position="last")
+        .drop_duplicates(subset=_dedup_subset, keep="first")
+        .drop(columns=_dedup_subset)
+    )
+
+
+def infer_artery_type(branch_or_df_name: str, df_plot: pd.DataFrame | None = None) -> str | None:
+    if df_plot is not None and "Artery_Type" in df_plot.columns and len(df_plot) > 0:
+        v = df_plot["Artery_Type"].iloc[0]
+        if pd.notna(v):
+            sv = str(v).strip().upper()
+            if sv in ("RCA", "LCA"):
+                return sv
+    bn = branch_or_df_name.upper()
+    if "LCA" in bn:
+        return "LCA"
+    if "RCA" in bn:
+        return "RCA"
+    return None
+
+
+def plot_pct_as_tree_pyvista(
+    df_plot: pd.DataFrame,
+    title: str,
+    surfaces: dict[str, pv.PolyData],
+    surface_keys: tuple[str, ...],
+    *,
+    ordered_branch_paths: dict[str, pd.DataFrame] | None = None,
+    window_size: tuple[int, int] = (1500, 1100),
+    out_path: Path | None = None,
+) -> None:
+    """Render optional hulls, gray centerline tube(s), and colored point cloud.
+
+    If ``ordered_branch_paths`` is set (unified-tree mode), one polyline is drawn
+    per branch dict entry in **path order** — never a single line through the
+    concatenated global table, which would incorrectly connect unrelated segments.
+    """
+    off_screen = out_path is not None
+    plotter = pv.Plotter(off_screen=off_screen, window_size=window_size)
+    plotter.set_background("white")
+
+    pts = df_plot[["Px", "Py", "Pz"]].to_numpy(dtype=float)
+    pct = df_plot["pct_AS"].to_numpy(dtype=float)
+
+    for _sk in surface_keys:
+        surf = surfaces.get(_sk)
+        if surf is not None:
+            plotter.add_mesh(
+                surf,
+                opacity=0.15,
+                color="lightgray",
+                show_edges=False,
+                smooth_shading=True,
+                name=f"hull_{_sk}",
+            )
+
+    # Gray backbone: one continuous line only when df_plot rows are one ordered path.
+    # Unified ``total_df`` is *not* a single path → use ``ordered_branch_paths``.
+    if ordered_branch_paths is not None:
+        for _bpath_name in sorted(ordered_branch_paths.keys()):
+            bb = ordered_branch_paths[_bpath_name][["Px", "Py", "Pz"]].to_numpy(dtype=float)
+            if bb.shape[0] >= 2:
+                _ln = pv.lines_from_points(bb, close=False)
+                plotter.add_mesh(
+                    _ln,
+                    color="dimgray",
+                    line_width=4,
+                    opacity=0.35,
+                    render_lines_as_tubes=True,
+                    name=f"backbone_{_bpath_name}",
+                )
+    elif pts.shape[0] >= 2:
+        backbone = pv.lines_from_points(pts, close=False)
+        plotter.add_mesh(
+            backbone,
+            color="dimgray",
+            line_width=4,
+            opacity=0.40,
+            render_lines_as_tubes=True,
+            name="centerline_backbone",
+        )
+
+    cloud = pv.PolyData(pts)
+    cloud["pct_AS"] = pct
+
+    plotter.add_mesh(
+        cloud,
+        scalars="pct_AS",
+        cmap=GREEN_YELLOW_RED_STENOSIS,
+        clim=[PCT_AS_VMIN, PCT_AS_VMAX],
+        point_size=6,
+        render_points_as_spheres=True,
+        nan_color="lightgray",
+        scalar_bar_args={"title": "% Area stenosis (pct_AS)"},
+    )
+
+    plotter.add_text(title, font_size=11, color="black")
+    plotter.add_axes()
+    plotter.camera_position = "iso"
+    if out_path is not None:
+        plotter.show(screenshot=str(out_path), auto_close=True)
+    else:
+        plotter.show()
 
 
 def _sample_numeric_id(patient_id: str) -> int:
@@ -236,25 +455,48 @@ def _save_area_plot(
     pl.show(screenshot=str(out_path), auto_close=True)
 
 
-def run_block2(patient_id: str, block1_dir: Path | None = None) -> pd.DataFrame:
+def run_block2(patient_id: str, block1_dir: Path | None = None) -> Block2Outputs:
+    """Run Block 2: area extraction, optional stenosis columns + merge + figures.
+
+    **Area phase** → ``results/block2_results/area/<patient_id>/``:
+
+    - ``dataset_global_<patient>.xlsx``, artery-level excels (``Area`` mapped).
+    - ``branches/dataframes/dataset_*_<patient>.xlsx`` with ``Area`` only (Block 1 rows).
+    - Area colormap figures under ``figures/`` and ``branches/figures/``.
+
+    **Stenosis phase** (when branch spreadsheets exist) →
+    ``results/block2_results/stenosis/<patient_id>/``:
+
+    - Enriched branch tables (``gd``, ``A_ref``, ``pct_AS``, …) and ``total_df_<patient>.xlsx``.
+    - ``fig_pct_AS_*`` exports under ``figures/`` and ``branches/figures/``.
+
+    Re-running for the same ``patient_id`` replaces both folders (no duplicate samples).
+
+    Returns:
+        Block2Outputs with ``df_global_area`` (full-tree area table) and
+        ``total_df_merged`` (empty dataframe if no branch spreadsheets).
+    """
     sample_name = patient_id
+    t_start = time.perf_counter()
     if block1_dir is None:
         block1_dir = BLOCK1_PATIENT_DIR_ROOT / sample_name
     if not block1_dir.exists():
         raise FileNotFoundError(f"Block 1 sample folder not found: {block1_dir}")
 
-    out_sample_dir = BLOCK2_AREA_PATIENT_DIR_ROOT / sample_name
-    if out_sample_dir.exists():
-        shutil.rmtree(out_sample_dir)
-    out_branches_df_dir = out_sample_dir / "branches" / "dataframes"
-    out_fig_dir = out_sample_dir / "figures"
-    out_branch_fig_dir = out_sample_dir / "branches" / "figures"
-    for d in (out_sample_dir, out_branches_df_dir, out_fig_dir, out_branch_fig_dir):
+    out_area_dir = BLOCK2_AREA_PATIENT_DIR_ROOT / sample_name
+    out_stenosis_dir = BLOCK2_STENOSIS_PATIENT_DIR_ROOT / sample_name
+    for patient_root in (out_area_dir, out_stenosis_dir):
+        if patient_root.exists():
+            shutil.rmtree(patient_root)
+
+    out_branches_df_dir = out_area_dir / "branches" / "dataframes"
+    out_fig_dir = out_area_dir / "figures"
+    out_branch_fig_dir = out_area_dir / "branches" / "figures"
+    for d in (out_area_dir, out_branches_df_dir, out_fig_dir, out_branch_fig_dir):
         d.mkdir(parents=True, exist_ok=True)
 
-    logger.info("[Block2] Starting area phase for %s", patient_id)
-    logger.info("[Block2] Using Block1 package: %s", block1_dir)
-    logger.info("[Block2] Output package: %s", out_sample_dir)
+    phase(logger, "2", "Sectional area · %AS · merge")
+    log_detail(logger, "Block1 ← %s  ·  write area → %s", short_path(block1_dir), short_path(out_area_dir))
 
     artery_surfaces_vtk: dict[str, object] = {}
     artery_surfaces_pv: dict[str, pv.PolyData] = {}
@@ -267,17 +509,14 @@ def run_block2(patient_id: str, block1_dir: Path | None = None) -> pd.DataFrame:
         nrrd_path = DATA_ROOT / "ASOCA Normal" / "Annotations" / f"{patient_id}.nrrd"
         if not nrrd_path.exists():
             raise FileNotFoundError(f"Mask not found: {nrrd_path}")
-        logger.info(
-            "[Block2] Missing stored surfaces for %s. Rebuilding from mask.",
-            ", ".join(missing_surface_arteries),
-        )
+        log_detail(logger, "Surfaces: rebuild from NRRD (%s)", ", ".join(missing_surface_arteries))
         artery_arrays, spacing, origin = _load_and_separate_mask(nrrd_path)
         for name in missing_surface_arteries:
             surf_vtk, surf_pv = _build_surface_from_mask(artery_arrays[name], spacing, origin)
             artery_surfaces_vtk[name] = surf_vtk
             artery_surfaces_pv[name] = surf_pv
     else:
-        logger.info("[Block2] Reusing stored Block1 surfaces: RCA, LCA")
+        log_detail(logger, "Surfaces: reuse Block1 (RCA+LCA)")
 
     centerlines: dict[str, pv.PolyData] = {}
     ref_points: dict[str, np.ndarray] = {}
@@ -286,9 +525,7 @@ def run_block2(patient_id: str, block1_dir: Path | None = None) -> pd.DataFrame:
         cl_path = block1_dir / f"centerline_{artery}.vtp"
         if not cl_path.exists():
             raise FileNotFoundError(f"Missing Block 1 centerline: {cl_path}")
-        logger.info("[%s][Area] Loading centerline: %s", artery, cl_path)
         cl_vtk = _read_vtp_as_vtk(cl_path)
-        logger.info("[%s][Area] Preprocessing centerline (smooth+resample)", artery)
         cl_vtk_prep = _prepare_centerline_for_sections(
             cl_vtk,
             resample_step=0.1,
@@ -299,15 +536,14 @@ def run_block2(patient_id: str, block1_dir: Path | None = None) -> pd.DataFrame:
         centerlines[artery] = cl_poly
         ref_points[artery] = np.asarray(cl_poly.points, dtype=float)
 
-        logger.info("[%s][Area] Preprocessing surface (triangulate+clean)", artery)
         surface_clean_vtk = _clean_triangulate_surface(artery_surfaces_vtk[artery])
-        logger.info("[%s][Area] Running vmtkCenterlineSections", artery)
         ref_area[artery] = _compute_centerline_area(cl_vtk_prep, surface_clean_vtk)
 
         a = ref_area[artery]
         valid = np.isfinite(a)
-        logger.info(
-            "[%s][Area] points=%d valid=%d nan=%d range=[%.3f, %.3f] median=%.3f",
+        log_detail(
+            logger,
+            "%s sections: n=%d valid=%d nan=%d  A[%.3f–%.3f] mm² med=%.3f",
             artery,
             len(a),
             int(np.count_nonzero(valid)),
@@ -323,28 +559,36 @@ def run_block2(patient_id: str, block1_dir: Path | None = None) -> pd.DataFrame:
         raise FileNotFoundError(f"Missing global dataframe: {global_in}")
     df_global = pd.read_excel(global_in)
     df_global["Area"] = np.nan
+    global_bits: list[str] = []
     for artery in ("RCA", "LCA"):
         mask = df_global["Artery_Type"].astype(str).values == artery
         if not np.any(mask):
             continue
-        sub, mode = _map_area_to_df(df_global.loc[mask].copy(), ref_points[artery], ref_area[artery])
-        df_global.loc[mask, "Area"] = sub["Area"].values
-        logger.info("[Global][%s] mapping=%s rows=%d", artery, mode, int(np.count_nonzero(mask)))
-    df_global.to_excel(out_sample_dir / f"dataset_global_{sample_name}.xlsx", index=False)
+        mapped_df, mode = _map_area_to_df(df_global.loc[mask].copy(), ref_points[artery], ref_area[artery])
+        df_global.loc[mask, "Area"] = mapped_df["Area"].values
+        global_bits.append(f"{artery} {int(np.count_nonzero(mask))} rows [{mode}]")
+    df_global.to_excel(out_area_dir / f"dataset_global_{sample_name}.xlsx", index=False)
+    if global_bits:
+        log_detail(logger, "Map Area → global: %s", " · ".join(global_bits))
 
     # Artery dataframes
     artery_dfs: dict[str, pd.DataFrame] = {}
+    art_bits: list[str] = []
     for artery in ("RCA", "LCA"):
         artery_in = block1_dir / f"dataset_{artery}_{sample_name}.xlsx"
         if not artery_in.exists():
             raise FileNotFoundError(f"Missing artery dataframe: {artery_in}")
         df_art = pd.read_excel(artery_in)
         df_art, mode = _map_area_to_df(df_art, ref_points[artery], ref_area[artery])
-        logger.info("[Artery][%s] mapping=%s rows=%d", artery, mode, len(df_art))
-        df_art.to_excel(out_sample_dir / f"dataset_{artery}_{sample_name}.xlsx", index=False)
+        art_bits.append(f"{artery} {len(df_art)} [{mode}]")
+        df_art.to_excel(out_area_dir / f"dataset_{artery}_{sample_name}.xlsx", index=False)
         artery_dfs[artery] = df_art
+    if art_bits:
+        log_detail(logger, "Map Area → artery: %s", " · ".join(art_bits))
 
-    # Branch dataframes
+    # Branch dataframes (area mapping); stash copies for stenosis phase (no re-read).
+    processed_branch_data: dict[str, pd.DataFrame] = {}
+    branch_map_modes: list[str] = []
     branch_in_dir = block1_dir / "branches" / "dataframes"
     if branch_in_dir.exists():
         for branch_file in sorted(branch_in_dir.glob("dataset_*_*.xlsx")):
@@ -355,8 +599,9 @@ def run_block2(patient_id: str, block1_dir: Path | None = None) -> pd.DataFrame:
             if artery not in ref_points:
                 continue
             df_b, mode = _map_area_to_df(df_b, ref_points[artery], ref_area[artery])
-            logger.info("[Branch][%s][%s] mapping=%s rows=%d", artery, branch_file.name, mode, len(df_b))
+            branch_map_modes.append(mode)
             df_b.to_excel(out_branches_df_dir / branch_file.name, index=False)
+            processed_branch_data[branch_file.stem] = df_b.copy()
 
             pts_b = df_b[["Px", "Py", "Pz"]].to_numpy(dtype=float)
             area_b = df_b["Area"].to_numpy(dtype=float)
@@ -369,7 +614,90 @@ def run_block2(patient_id: str, block1_dir: Path | None = None) -> pd.DataFrame:
                 mesh=artery_surfaces_pv.get(artery),
             )
 
-    # Figures: full tree + artery-level
+    if branch_map_modes:
+        mc = Counter(branch_map_modes)
+        mode_summary = ", ".join(f"{k}×{v}" for k, v in sorted(mc.items()))
+        log_detail(
+            logger,
+            "Map Area → branches: %d tables (%s)",
+            len(branch_map_modes),
+            mode_summary,
+        )
+
+    total_df_merged = pd.DataFrame()
+    if processed_branch_data:
+        out_stenosis_branches_df_dir = out_stenosis_dir / "branches" / "dataframes"
+        out_stenosis_fig_dir = out_stenosis_dir / "figures"
+        out_stenosis_branch_fig_dir = out_stenosis_dir / "branches" / "figures"
+        for d in (out_stenosis_dir, out_stenosis_branches_df_dir, out_stenosis_fig_dir, out_stenosis_branch_fig_dir):
+            d.mkdir(parents=True, exist_ok=True)
+
+        log_detail(
+            logger,
+            "Stenosis: window ±%.0f mm · %d branch tables → %s",
+            WINDOW_MM,
+            len(processed_branch_data),
+            short_path(out_stenosis_dir),
+        )
+        for key in list(processed_branch_data.keys()):
+            d = compute_reference_columns(processed_branch_data[key], WINDOW_MM)
+            processed_branch_data[key] = add_pct_as(d)
+
+        total_df_merged = merge_branches_max_pct_as(processed_branch_data)
+        n_valid_pct = int(total_df_merged["pct_AS"].notna().sum())
+        n_br_st = len(processed_branch_data)
+        pct_finite = total_df_merged["pct_AS"].to_numpy(dtype=float)
+        pct_fin = np.isfinite(pct_finite)
+        pct_rng = (
+            f"{float(np.nanmin(pct_finite[pct_fin])):.1f}–{float(np.nanmax(pct_finite[pct_fin])):.1f}"
+            if pct_fin.any()
+            else "n/a"
+        )
+        log_detail(
+            logger,
+            "Merge (max %%AS / site): %d loc · %d valid pct_AS · range %s %%",
+            len(total_df_merged),
+            n_valid_pct,
+            pct_rng,
+        )
+
+        total_path = out_stenosis_dir / f"total_df_{sample_name}.xlsx"
+        total_df_merged.to_excel(total_path, index=False)
+
+        for key in sorted(processed_branch_data.keys()):
+            branch_xlsx = out_stenosis_branches_df_dir / f"{key}.xlsx"
+            processed_branch_data[key].to_excel(branch_xlsx, index=False)
+
+        surfaces_pv = artery_surfaces_pv
+        if not surfaces_pv:
+            logger.warning("%AS plots: no hull meshes (surfaces missing)")
+
+        unified_path = out_stenosis_fig_dir / f"fig_pct_AS_tree_{sample_name}.png"
+        plot_pct_as_tree_pyvista(
+            total_df_merged,
+            title=f"{sample_name} — Unified tree — %AS (max per location)",
+            surfaces=surfaces_pv,
+            surface_keys=("RCA", "LCA"),
+            ordered_branch_paths=processed_branch_data,
+            out_path=unified_path,
+        )
+
+        for branch_key in sorted(processed_branch_data.keys()):
+            dfb = processed_branch_data[branch_key]
+            art = infer_artery_type(branch_key, dfb)
+            surf_keys: tuple[str, ...] = (art,) if art is not None else tuple()
+            pct_fig = out_stenosis_branch_fig_dir / f"fig_pct_AS_{branch_key.replace('dataset_', '')}.png"
+            plot_pct_as_tree_pyvista(
+                dfb,
+                title=f"{sample_name} — {branch_key} — %AS",
+                surfaces=surfaces_pv,
+                surface_keys=surf_keys,
+                out_path=pct_fig,
+            )
+
+        log_detail(logger, "%%AS figures: 1 tree + %d branch → %s", n_br_st, short_path(out_stenosis_dir))
+
+    # Figures: full tree + artery-level (area colormap)
     _save_area_plot(
         points_xyz=df_global[["Px", "Py", "Pz"]].to_numpy(dtype=float),
         area=df_global["Area"].to_numpy(dtype=float),
@@ -387,5 +715,21 @@ def run_block2(patient_id: str, block1_dir: Path | None = None) -> pd.DataFrame:
             mesh=artery_surfaces_pv.get(artery),
         )
 
-    logger.info("[Save] Block 2 area package -> %s", out_sample_dir)
-    return df_global
+    av = df_global["Area"].to_numpy(dtype=float)
+    n_area_ok = int(np.sum(np.isfinite(av) & (av > 0)))
+    parts2 = [
+        f"{len(df_global)} rows · Area valid {n_area_ok}",
+        f"area → {short_path(out_area_dir)}",
+    ]
+    if processed_branch_data:
+        parts2.append(
+            f"stenosis → {short_path(out_stenosis_dir)}",
+        )
+    footer_block(
+        logger,
+        block_id="2",
+        title="area+stenosis",
+        seconds=time.perf_counter() - t_start,
+        parts=parts2,
+    )
+    return Block2Outputs(df_global_area=df_global, total_df_merged=total_df_merged)

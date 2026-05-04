@@ -11,9 +11,11 @@ Usage:
 from __future__ import annotations
 
 import logging
+import time
 
 from src.blocks._01_extraction import run_block1
-from src.blocks._02_stenosis import run_block2
+from src.blocks._02_stenosis import Block2Outputs, run_block2
+from src.pipeline_log import banner_pipeline, banner_pipeline_done, configure_logging
 # from src.blocks._03_ import run_block3
 # from src.blocks._04_ import run_block4
 
@@ -28,22 +30,21 @@ def _prompt_patient_id() -> str:
 
 
 def main(patient_id: str) -> None:
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s | %(levelname)-7s | %(message)s",
-        datefmt="%H:%M:%S",
-    )
+    configure_logging()
+    log = logging.getLogger("pipeline")
+    t0 = time.perf_counter()
 
-    logging.info("Pipeline started for patient: %s", patient_id)
+    banner_pipeline(log, patient_id)
+    run_block1(patient_id=patient_id)
+    block2_out: Block2Outputs = run_block2(patient_id=patient_id)
+    _df_global_area = block2_out.df_global_area
+    _total_df_merged = block2_out.total_df_merged
 
-    df_centerlines = run_block1(patient_id=patient_id)
-    df_area = run_block2(patient_id=patient_id)
-
-    # Future blocks receive the dataframe from the previous block:
-    # df_stenosis = run_block3(df_area)
+    # Future blocks can use area-aligned globals and/or merged %AS table:
+    # df_stenosis = run_block3(_df_global_area, _total_df_merged)
     # ...
 
-    logging.info("Pipeline finished for patient: %s", patient_id)
+    banner_pipeline_done(log, patient_id, time.perf_counter() - t0)
 
 
 if __name__ == "__main__":

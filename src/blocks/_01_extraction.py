@@ -23,6 +23,7 @@ import pandas as pd
 import pyvista as pv
 import scipy.ndimage as ndi
 from skimage.morphology import skeletonize
+from src.pipeline_log import configure_logging, footer_block, phase, short_path, sub
 from vmtk import vmtkscripts
 from vtkmodules.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 from vtkmodules.vtkCommonDataModel import vtkImageData
@@ -533,8 +534,9 @@ def _process_artery(
         ostium_start_tol_mm=4.0,
     )
 
-    logger.info(
-        "[%s] points=%d branches=%d dropped=(too_short=%d, far=%d, bad_terminal=%d)",
+    sub(
+        logger,
+        "%s centerline: %d pts → %d branches (drop short=%d far=%d bad_term=%d)",
         artery_name,
         len(cl_points),
         len(branch_items),
@@ -552,7 +554,7 @@ def _process_artery(
     }
 
 
-def _export_branch_qc_figures(sample_dir: Path, sample_name: str, artery_outputs: dict[str, dict]) -> None:
+def _export_branch_qc_figures(sample_dir: Path, sample_name: str, artery_outputs: dict[str, dict]) -> int:
     fig_dir = sample_dir / "branches" / "figures"
     fig_dir.mkdir(parents=True, exist_ok=True)
 
@@ -582,13 +584,15 @@ def _export_branch_qc_figures(sample_dir: Path, sample_name: str, artery_outputs
             pl.show(screenshot=str(png_path), auto_close=True)
             saved += 1
 
-    logger.info("[Save] Branch QC figures: %d -> %s", saved, fig_dir)
+    return saved
 
 
-def _export_centerline_tree_figure(sample_dir: Path, sample_name: str, artery_outputs: dict[str, dict]) -> None:
+def _export_centerline_tree_figure(
+    sample_dir: Path, sample_name: str, artery_outputs: dict[str, dict]
+) -> dict[str, int | Path] | None:
     """Save one full coronary centerline tree figure with key points highlighted."""
     if not artery_outputs:
-        return
+        return None
 
     png_path = sample_dir / f"fig_centerline_tree_{sample_name}.png"
     pl = pv.Plotter(off_screen=True, window_size=(1800, 1300))
@@ -635,24 +639,24 @@ def _export_centerline_tree_figure(sample_dir: Path, sample_name: str, artery_ou
 
     if n_lines == 0:
         pl.close()
-        return
+        return None
 
     pl.add_axes()
     pl.add_legend(size=(0.2, 0.12), bcolor="white", border=True)
     pl.show(screenshot=str(png_path), auto_close=True)
-    logger.info(
-        "[Save] Centerline tree figure -> %s (lines=%d, ostia=%d, endpoints=%d)",
-        png_path,
-        n_lines,
-        n_ostium,
-        n_endpoints,
-    )
+    return {
+        "lines": n_lines,
+        "ostia": n_ostium,
+        "endpoints": n_endpoints,
+        "path": png_path,
+    }
 
 
 def run_block1(patient_id: str, nrrd_path: Path | None = None) -> pd.DataFrame:
     t_start = time.perf_counter()
     sample_name = patient_id
     sample_id = _sample_numeric_id(patient_id)
+    phase(logger, "1", "Centerlines · branching · export")
 
     if nrrd_path is None:
         nrrd_path = DATA_ROOT / "ASOCA Normal" / "Annotations" / f"{patient_id}.nrrd"
@@ -733,14 +737,15 @@ def run_block1(patient_id: str, nrrd_path: Path | None = None) -> pd.DataFrame:
         target_mask[ostium_idx] = False
         targets_zyx = endpoints_zyx[target_mask]
 
-        logger.info(
-            "[%s] Ostium endpoint #%d (EDT=%.2f, GeoSum=%.1f, Calib10=%.1f, Score=%.2f)",
+        sub(
+            logger,
+            "%s ostium #%d | score=%.2f | EDT=%.2fm geo=%.1f cal=%.1f",
             artery_name,
             ostium_idx,
-            cache["dists_edt"][ostium_idx],
-            cache["total_geo"][ostium_idx],
-            cache["caliber_sum"][ostium_idx],
-            cache["ost_score"][ostium_idx],
+            float(cache["ost_score"][ostium_idx]),
+            float(cache["dists_edt"][ostium_idx]),
+            float(cache["total_geo"][ostium_idx]),
+            float(cache["caliber_sum"][ostium_idx]),
         )
 
         out = _process_artery(
@@ -762,7 +767,8 @@ def run_block1(patient_id: str, nrrd_path: Path | None = None) -> pd.DataFrame:
 
     df_centerlines = pd.concat(all_centerlines_data, ignore_index=True)
     if "PointType" in df_centerlines.columns:
-        logger.info("PointType counts:\n%s", df_centerlines["PointType"].value_counts().sort_index())
+        vc = df_centerlines["PointType"].value_counts().sort_index()
+        sub(logger, "PointType: %s", ", ".join(f"{k}={int(v)}" for k, v in vc.items()))
 
     RESULTS_ROOT.mkdir(parents=True, exist_ok=True)
     sample_dir = RESULTS_ROOT / sample_name
@@ -791,21 +797,37 @@ def run_block1(patient_id: str, nrrd_path: Path | None = None) -> pd.DataFrame:
             b["poly"].save(str(branch_vtp))
             b["df"].to_excel(branch_xlsx, index=False)
 
-    _export_branch_qc_figures(sample_dir, sample_name, artery_outputs)
-    _export_centerline_tree_figure(sample_dir, sample_name, artery_outputs)
+    n_qc_png = _export_branch_qc_figures(sample_dir, sample_name, artery_outputs)
+    tree_meta = _export_centerline_tree_figure(sample_dir, sample_name, artery_outputs)
+    fig_bits: list[str] = []
+    if tree_meta is not None:
+        fig_bits.append(
+            f"tree({tree_meta['lines']}L·{tree_meta['ostia']}O·{tree_meta['endpoints']}E)"
+        )
+    fig_bits.append(f"branch_QC×{n_qc_png}")
+    sub(logger, "Figures: %s → %s", " · ".join(fig_bits), short_path(sample_dir))
 
     elapsed = time.perf_counter() - t_start
     n_branches = sum(len(v["branches"]) for v in artery_outputs.values())
-    logger.info("Block 1 finished in %.1fs | sample=%s | branches=%d", elapsed, sample_name, n_branches)
+    rca_n = int((df_centerlines["Artery_Type"] == "RCA").sum()) if "Artery_Type" in df_centerlines.columns else 0
+    lca_n = int((df_centerlines["Artery_Type"] == "LCA").sum()) if "Artery_Type" in df_centerlines.columns else 0
+    footer_block(
+        logger,
+        block_id="1",
+        title="centerlines",
+        seconds=elapsed,
+        parts=[
+            f"{len(df_centerlines)} pts",
+            f"RCA {rca_n} · LCA {lca_n}",
+            f"{n_branches} branches",
+            f"out {short_path(sample_dir)}",
+        ],
+    )
     return df_centerlines
 
 
 if __name__ == "__main__":
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s | %(levelname)-7s | %(message)s",
-        datefmt="%H:%M:%S",
-    )
+    configure_logging()
     pid = sys.argv[1] if len(sys.argv) > 1 else "Normal_1"
     out_df = run_block1(patient_id=pid)
     print(f"\nTotal centerline points: {len(out_df)}")
