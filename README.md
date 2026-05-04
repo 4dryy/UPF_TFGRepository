@@ -174,7 +174,7 @@ Block 2 phase 1 consumes the Block 1 sample package and computes cross-sectional
 - **Surface reuse from Block 1:** Block 2 preferentially reads `surface_RCA.vtp` and `surface_LCA.vtp` to avoid mesh recomputation and keep geometric consistency between blocks.
 - **Defensive preprocessing before sections:** triangulate/clean surface and smooth/resample centerline to reduce VMTK instability on complex geometries.
 - **Area propagation:** computed artery-level area is mapped to global, artery, and branch dataframes (row-aligned when possible, KDTree fallback otherwise).
-- **Outputs mirrored by patient:** saved under `results/block2_results/area/samples/<Patient_ID>/` with enriched dataframes and area-colored figures (global, artery-level, and branch-level).
+- **Outputs mirrored by patient:** saved under `results/block2_results/area/<Patient_ID>/` with enriched dataframes and area-colored figures (global, artery-level, and branch-level).
 
 ---
 
@@ -227,8 +227,8 @@ python -m src._pipeline
 The pipeline prompts for a **Patient ID** (e.g., `Normal_1`) and runs all implemented blocks sequentially. At present, Block 1 and Block 2 (phase 1: sectional area) are integrated.
 
 Results are saved under per-patient packages:
-- **Block 1:** `results/block1_results/samples/<Patient_ID>/`
-- **Block 2 area:** `results/block2_results/area/samples/<Patient_ID>/`
+- **Block 1:** `results/block1_results/<Patient_ID>/`
+- **Block 2 area:** `results/block2_results/area/<Patient_ID>/`
 
 Re-running the pipeline for the same patient overwrites previous results to avoid duplicates.
 
@@ -268,9 +268,9 @@ UPF_TFGRepository/
 │       └── _04_.py                   # Block 4: Visualization dashboard (planned)
 ├── results/
 │   ├── block1_results/
-│   │   └── samples/<Patient_ID>/     # Global/artery/branch data + centerlines + surfaces + QC figures
+│   │   └── <Patient_ID>/             # Global/artery/branch data + centerlines + surfaces + QC figures
 │   └── block2_results/
-│       └── area/samples/<Patient_ID>/# Area-enriched dataframes + area visualizations
+│       └── area/<Patient_ID>/        # Area-enriched dataframes + area visualizations
 ├── maren work/                       # Reference notebooks from Maren Clapers
 ├── CONTEXT.md                        # Clinical context and workflow documentation
 ├── DIARY.md                          # Chronological development logbook

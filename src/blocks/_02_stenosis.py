@@ -28,8 +28,8 @@ logger = logging.getLogger(__name__)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DATA_ROOT = PROJECT_ROOT / "data"
-BLOCK1_SAMPLES_DIR = PROJECT_ROOT / "results" / "block1_results" / "samples"
-BLOCK2_AREA_SAMPLES_DIR = PROJECT_ROOT / "results" / "block2_results" / "area" / "samples"
+BLOCK1_PATIENT_DIR_ROOT = PROJECT_ROOT / "results" / "block1_results"
+BLOCK2_AREA_PATIENT_DIR_ROOT = PROJECT_ROOT / "results" / "block2_results" / "area"
 
 
 def _sample_numeric_id(patient_id: str) -> int:
@@ -239,11 +239,11 @@ def _save_area_plot(
 def run_block2(patient_id: str, block1_dir: Path | None = None) -> pd.DataFrame:
     sample_name = patient_id
     if block1_dir is None:
-        block1_dir = BLOCK1_SAMPLES_DIR / sample_name
+        block1_dir = BLOCK1_PATIENT_DIR_ROOT / sample_name
     if not block1_dir.exists():
         raise FileNotFoundError(f"Block 1 sample folder not found: {block1_dir}")
 
-    out_sample_dir = BLOCK2_AREA_SAMPLES_DIR / sample_name
+    out_sample_dir = BLOCK2_AREA_PATIENT_DIR_ROOT / sample_name
     if out_sample_dir.exists():
         shutil.rmtree(out_sample_dir)
     out_branches_df_dir = out_sample_dir / "branches" / "dataframes"

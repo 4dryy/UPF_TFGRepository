@@ -237,7 +237,7 @@ Every work session must be recorded using the following structure:
 
 * **✅ Progress & Tasks Completed:**
   * **Block 1 package consolidation (`src/blocks/_01_extraction.py`):**
-    * Finalized sample-centric output layout under `results/block1_results/samples/<Patient_ID>/`.
+    * Finalized sample-centric output layout under `results/block1_results/<Patient_ID>/`.
     * Persisted global, artery-level, and branch-level dataframes/centerlines with overwrite-on-rerun behavior.
     * Added branch QC figures and global centerline-tree figure (colored ostia/endpoints).
     * Added saving of artery surface meshes (`surface_RCA.vtp`, `surface_LCA.vtp`) to support downstream reuse.
@@ -251,7 +251,7 @@ Every work session must be recorded using the following structure:
     * Mapping policy implemented:
       * direct row-aligned assignment when possible,
       * KDTree nearest-point fallback otherwise.
-    * Exports Block 2 outputs under `results/block2_results/area/samples/<Patient_ID>/` with overwrite-on-rerun.
+    * Exports Block 2 outputs under `results/block2_results/area/<Patient_ID>/` with overwrite-on-rerun.
     * Added area-colored visual outputs (full tree, artery-level, and branch-level).
   * **Pipeline wiring (`src/_pipeline.py`):**
     * Activated Block 2 call after Block 1 so both phases run in one E2E command.

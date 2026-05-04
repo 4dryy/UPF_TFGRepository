@@ -37,7 +37,6 @@ logger = logging.getLogger(__name__)
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DATA_ROOT = PROJECT_ROOT / "data"
 RESULTS_ROOT = PROJECT_ROOT / "results" / "block1_results"
-SAMPLES_DIR = RESULTS_ROOT / "samples"
 
 
 def _sample_numeric_id(patient_id: str) -> int:
@@ -454,6 +453,9 @@ def _load_and_separate_mask(
     return artery_arrays, spacing, origin
 
 
+load_and_separate_mask = _load_and_separate_mask
+
+
 def _process_artery(
     artery_name: str,
     artery_mask: np.ndarray,
@@ -762,8 +764,8 @@ def run_block1(patient_id: str, nrrd_path: Path | None = None) -> pd.DataFrame:
     if "PointType" in df_centerlines.columns:
         logger.info("PointType counts:\n%s", df_centerlines["PointType"].value_counts().sort_index())
 
-    SAMPLES_DIR.mkdir(parents=True, exist_ok=True)
-    sample_dir = SAMPLES_DIR / sample_name
+    RESULTS_ROOT.mkdir(parents=True, exist_ok=True)
+    sample_dir = RESULTS_ROOT / sample_name
     if sample_dir.exists():
         shutil.rmtree(sample_dir)
     branches_center_dir = sample_dir / "branches" / "centerlines"
