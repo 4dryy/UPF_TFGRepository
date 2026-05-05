@@ -51,14 +51,14 @@ The system follows a strict **4-block modular architecture**. Each block is a se
   Input: .nrrd            Input: DataFrame        Input: %DS values       Input: Scores +
   binary mask             (centerline +           per segment             geometry data
                           geometry)
-  Output: DataFrame       Output: %DS per         Output: CAD-RADS        Output: Interactive
-  + .vtp centerlines      artery segment          score per patient       clinical dashboard
+  Output: DataFrame       Output: Area + %AS       Output: CAD-RADS        Output: Interactive
+  + .vtp centerlines      + merged locations       score per patient       clinical dashboard
 ```
 
 | Block | Name | Status |
 |-------|------|--------|
 | **B1** | Automated Anatomy Extraction | Completed / Refactored |
-| **B2** | Geometric Stenosis Quantification | Phase 1 Implemented (Sectional Area) |
+| **B2** | Geometric Stenosis Quantification | Implemented: sectional area + reference window + **%AS** + merge |
 | **B3** | CAD-RADS Scoring Prediction | Pending |
 | **B4** | Visualization Dashboard | Pending |
 
@@ -91,15 +91,15 @@ The table below details the internal phases of each block. This table serves as 
 
 <table>
   <tr>
-    <td>Area Computation</td>
-    <td>Reference Value Computation</td>
-    <td>Stenosis % Computation</td>
-    <td>Data Aggregation</td>
+    <td bgcolor="#4CAF50">Area Computation</td>
+    <td bgcolor="#4CAF50">Reference Value Computation</td>
+    <td bgcolor="#4CAF50">Stenosis % Computation (%AS)</td>
+    <td bgcolor="#4CAF50">Data Aggregation (merge)</td>
     <td>Validation</td>
     <td>Optimization</td>
   </tr>
   <tr>
-    <td colspan="6"><em>Status: Experimental — methodology defined, implementation next.</em></td>
+    <td colspan="6"><em>Status: Core pipeline implemented in code (notebooks remain reference). Validation &amp; optimization ongoing.</em></td>
   </tr>
 </table>
 
@@ -164,17 +164,42 @@ The binary mask is converted to a surface mesh via Marching Cubes, smoothed with
 
 ---
 
-## Block 2 Methodology (Phase 1): Sectional Area Extraction
+## Block 2 Methodology: Sectional Area, Reference Band, and %AS
 
-Block 2 phase 1 consumes the Block 1 sample package and computes cross-sectional lumen area at each centerline point using `vmtkCenterlineSections`.
+Block 2 consumes the Block 1 sample package. Methodology aligns with the exploratory notebooks under `notebooks/block2_stenosis/` (especially sectional area and reference values).
 
-### Key design choices implemented in pipeline
+### Phase A — Sectional area (`vmtkCenterlineSections`)
 
-- **Centerline reuse from Block 1:** Block 2 reads `centerline_RCA.vtp` and `centerline_LCA.vtp` directly.
-- **Surface reuse from Block 1:** Block 2 preferentially reads `surface_RCA.vtp` and `surface_LCA.vtp` to avoid mesh recomputation and keep geometric consistency between blocks.
-- **Defensive preprocessing before sections:** triangulate/clean surface and smooth/resample centerline to reduce VMTK instability on complex geometries.
-- **Area propagation:** computed artery-level area is mapped to global, artery, and branch dataframes (row-aligned when possible, KDTree fallback otherwise).
-- **Outputs mirrored by patient:** saved under `results/block2_results/area/<Patient_ID>/` with enriched dataframes and area-colored figures (global, artery-level, and branch-level).
+- **Centerline reuse:** reads `centerline_RCA.vtp` / `centerline_LCA.vtp` from Block 1.
+- **Surface reuse:** reads `surface_RCA.vtp` / `surface_LCA.vtp` when present; otherwise rebuilds lumen surfaces from the same `.nrrd` mask used in Block 1.
+- **Defensive preprocessing:** surface triangulation/cleaning; centerline smoothing + uniform resampling before sections (same intent as `_04_sq_sectional_area.ipynb`).
+- **Area mapping:** per-point area is mapped onto global, artery, and branch tables (row-aligned when possible, KDTree nearest neighbour otherwise).
+
+### Phase B — Reference window and % area stenosis (notebook parity)
+
+Along each **branch** path (ordered rows): cumulative arc length **`gd`**, sliding-window reference **`A_ref`** from proximal/distal areas at ±10 mm on the path, then **`pct_AS = (1 − Area/A_ref)×100`** with safe handling of NaN/zero reference (see `_05_sq_reference_values.ipynb`).
+
+### Phase C — Merge for a single patient-level map
+
+Branch tables are stacked with a **`source_branch`** label; duplicate locations (coordinates rounded to 6 decimals) keep the row with **maximum `pct_AS`** (sort descending, `drop_duplicates`), producing **`total_df_<Patient>.xlsx`**.
+
+### Output layout (two phases, same patient ID)
+
+| Folder | Contents |
+|--------|----------|
+| **`results/block2_results/area/<Patient_ID>/`** | Area phase only: global + artery + branch spreadsheets with **`Area`**, area-colored figures (`fig_area_*`, branch `fig_<branch>.png`). |
+| **`results/block2_results/stenosis/<Patient_ID>/`** | Enriched branch tables (`gd`, `A_ref`, `pct_AS`, …), **`total_df_<Patient>.xlsx`**, and **%AS** PyVista figures (unified tree + per branch). |
+
+Re-running **`python -m src._pipeline`** for the same patient **removes and recreates** both `area/` and `stenosis/` trees for that patient (no duplicate samples).
+
+### Pipeline API
+
+- **`run_block1(patient_id)`** → centerline `DataFrame`.
+- **`run_block2(patient_id)`** → **`Block2Outputs`** named tuple: **`df_global_area`** (full-tree table with `Area`), **`total_df_merged`** (merged %AS table; empty if Block 1 had no branch spreadsheets).
+
+### Logging
+
+Shared helpers in **`src/pipeline_log.py`** (`configure_logging`, banners, phase lines, footers) keep terminal output **short and consistent** across Block 1, Block 2, and the top-level pipeline.
 
 ---
 
@@ -224,13 +249,14 @@ Execute the full pipeline from the project root:
 python -m src._pipeline
 ```
 
-The pipeline prompts for a **Patient ID** (e.g., `Normal_1`) and runs all implemented blocks sequentially. At present, Block 1 and Block 2 (phase 1: sectional area) are integrated.
+The pipeline prompts for a **Patient ID** (e.g., `Normal_1`) and runs **Block 1** then **Block 2** (area + stenosis outputs when branch tables exist).
 
 Results are saved under per-patient packages:
 - **Block 1:** `results/block1_results/<Patient_ID>/`
-- **Block 2 area:** `results/block2_results/area/<Patient_ID>/`
+- **Block 2 — area phase:** `results/block2_results/area/<Patient_ID>/`
+- **Block 2 — stenosis phase:** `results/block2_results/stenosis/<Patient_ID>/` (when branch dataframes are present)
 
-Re-running the pipeline for the same patient overwrites previous results to avoid duplicates.
+Re-running for the same patient **overwrites** that patient’s Block 1 folder and both Block 2 folders (no duplicate artifacts).
 
 ### Running Block 1 Standalone
 
@@ -259,18 +285,20 @@ UPF_TFGRepository/
 │       ├── 02_centerline_extraction_2.ipynb    # Method 2: Maren's skeletonization
 │       └── 03_centerline_extraction_hybrid.ipynb  # Hybrid approach (research prototype)
 ├── src/
-│   ├── _pipeline.py                  # Main entrypoint — chains all blocks
+│   ├── _pipeline.py                  # Main entrypoint — chains all blocks + shared log style
+│   ├── pipeline_log.py               # Concise banners / phase lines / footers for terminal logs
 │   └── blocks/
 │       ├── __init__.py
-│       ├── _01_extraction.py         # Block 1: Hybrid centerline extraction (implemented)
-│       ├── _02_stenosis.py           # Block 2: Stenosis quantification (phase 1 implemented)
+│       ├── _01_extraction.py         # Block 1: Hybrid centerline extraction
+│       ├── _02_stenosis.py           # Block 2: Area + reference + %AS + merge (single module)
 │       ├── _03_.py                   # Block 3: CAD-RADS scoring (planned)
 │       └── _04_.py                   # Block 4: Visualization dashboard (planned)
 ├── results/
 │   ├── block1_results/
 │   │   └── <Patient_ID>/             # Global/artery/branch data + centerlines + surfaces + QC figures
 │   └── block2_results/
-│       └── area/<Patient_ID>/        # Area-enriched dataframes + area visualizations
+│       ├── area/<Patient_ID>/        # Area-mapped tables + area figures
+│       └── stenosis/<Patient_ID>/    # Enriched branches + total_df + %AS figures
 ├── maren work/                       # Reference notebooks from Maren Clapers
 ├── CONTEXT.md                        # Clinical context and workflow documentation
 ├── DIARY.md                          # Chronological development logbook
@@ -304,4 +332,5 @@ The project uses the **ASOCA** (Automated Segmentation of Coronary Arteries) dat
 | **TFG** | Treball de Fi de Grau (Final Degree Project) |
 | **VMTK** | Vascular Modeling Toolkit |
 | **%DS** | Percentage Diameter Stenosis |
+| **%AS** | Percentage Area Stenosis |
 | **ASOCA** | Automated Segmentation of Coronary Arteries (MICCAI 2020) |

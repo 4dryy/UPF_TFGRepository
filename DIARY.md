@@ -279,6 +279,36 @@ Every work session must be recorded using the following structure:
 
 ---
 
+### 2026-05-05 — Block 2 stenosis integration, split results layout, unified pipeline logging
+
+* **🎯 Objectives:** Finish Block 2 in production code so it matches the reference notebooks (sliding-window reference, **%AS**, merge per rounded 3D location), separate area vs. stenosis artifacts on disk, keep one module per block, and make pipeline logs concise and consistent.
+
+* **✅ Progress & Tasks Completed:**
+  * **Block 2 (`src/blocks/_02_stenosis.py`):**
+    * Single-module implementation (no extra submodule): helpers for **`gd`**, **`Area_prox` / `Area_dist`**, **`A_ref`** (±10 mm window), **`pct_AS`**, and **merge** (rounded coordinates, max **%AS** per site, **`source_branch`**), aligned with `notebooks/block2_stenosis/_05_sq_reference_values.ipynb`.
+    * **In-memory branch dict** during the area loop — stenosis does not re-read area Excel from disk.
+    * **`run_block2` → `Block2Outputs`**: returns **`df_global_area`** (Block-1–aligned rows + `Area`) and **`total_df_merged`** (merged table; empty if no branch spreadsheets).
+  * **Results layout:**
+    * **`results/block2_results/area/<Patient>/`** — area phase only: global/artery/branch tables with **`Area`**, area colormap figures.
+    * **`results/block2_results/stenosis/<Patient>/`** — enriched branches, **`total_df_<Patient>.xlsx`**, unified + per-branch **%AS** PyVista figures (GYR colormap, grey backbone polylines + hulls when surfaces exist).
+    * Start of **`run_block2`** deletes **both** patient folders under `area/` and `stenosis/` so reruns **overwrite** cleanly (no duplicated samples).
+  * **Pipeline (`src/_pipeline.py`):** Uses **`Block2Outputs`**; leaves hooks for a future Block 3 consuming **`df_global_area`** / **`total_df_merged`**.
+  * **Logging (`src/pipeline_log.py` + blocks):** Shared **`configure_logging`**, pipeline **banners**, **`>> Block N`** phase lines, indented metrics, **`footer_block`** summaries; reduced noisy per-file/per-step logs while keeping ostium scores, section stats, mapping modes, merge counts, and timings.
+
+* **🐛 Bugs & Challenges:**
+  * Variable naming in Block 2 briefly shadowed the logging helper **`sub`** during dataframe unpacking — fixed by renaming unpacked columns (e.g. **`mapped_df`**) and aliasing **`sub`** as **`log_detail`** where needed.
+
+* **💡 Key Decisions:**
+  * **Two-folder Block 2 layout** preserves a clear **area-only** snapshot for downstream steps that need Block-1 row counts, while **stenosis** holds the richer analytic exports.
+  * **Terminal UX:** one visual language for Block 1, Block 2, and top-level pipeline (rules, phase headers, footers with seconds).
+
+* **⏭️ Next Steps:**
+  * Block 3: CAD-RADS or segment-level scoring using **`total_df_merged`** / **`df_global_area`** as inputs.
+  * Optional QA notebook or report comparing merged row counts vs. notebook runs on identical inputs.
+  * Extend pipeline logging once Block 3/4 exist (same `pipeline_log` patterns).
+
+---
+
 ## Acronym Legend
 
 | Acronym | Definition |
