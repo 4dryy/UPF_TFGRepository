@@ -137,14 +137,15 @@ def merge_branches_max_pct_as(
 ) -> pd.DataFrame:
     """Concatenate branches, dedupe rounded (Px,Py,Pz) keeping max pct_AS per location."""
     branch_frames = []
-    for name, df in processed_branch_data.items():
-        branch_frames.append(df.assign(source_branch=name))
+    for _name, df in processed_branch_data.items():
+        branch_frames.append(df.copy())
     total_concat = pd.concat(branch_frames, ignore_index=True)
     total_concat["_Px_g"] = np.round(total_concat["Px"].to_numpy(dtype=float), coord_round)
     total_concat["_Py_g"] = np.round(total_concat["Py"].to_numpy(dtype=float), coord_round)
     total_concat["_Pz_g"] = np.round(total_concat["Pz"].to_numpy(dtype=float), coord_round)
 
     _dedup_subset = ["_Px_g", "_Py_g", "_Pz_g"]
+    # Sort so max pct_AS wins ties; preserves Branch_ID, Segment_ID, and other cols from retained row.
     return (
         total_concat.sort_values("pct_AS", ascending=False, na_position="last")
         .drop_duplicates(subset=_dedup_subset, keep="first")

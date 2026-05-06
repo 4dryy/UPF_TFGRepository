@@ -19,9 +19,11 @@ import types
 from pathlib import Path
 
 import numpy as np
+import nibabel as nib
 import pandas as pd
 import pyvista as pv
 import scipy.ndimage as ndi
+from scipy.spatial import cKDTree
 from skimage.morphology import skeletonize
 from src.pipeline_log import configure_logging, footer_block, phase, short_path, sub
 from vmtk import vmtkscripts
@@ -38,6 +40,77 @@ logger = logging.getLogger(__name__)
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DATA_ROOT = PROJECT_ROOT / "data"
 RESULTS_ROOT = PROJECT_ROOT / "results" / "block1_results"
+
+TARGET_SEGMENT_BY_ARTERY: dict[str, int] = {"RCA": 1, "LCA": 5}
+
+
+def _physical_to_volume_voxels(
+    world_xyz: np.ndarray, origin: np.ndarray, spacing: np.ndarray
+) -> np.ndarray:
+    """Map physical coordinates (same convention as VTK NRRD) to nearest voxel indices."""
+    pts = np.atleast_2d(np.asarray(world_xyz, dtype=float))
+    return np.rint((pts - origin[None, :]) / spacing[None, :]).astype(int)
+
+
+def _sample_segment_label_at_physical(
+    label_volume: np.ndarray,
+    physical_xyz_row: np.ndarray,
+    origin: np.ndarray,
+    spacing: np.ndarray,
+) -> int:
+    ij = _physical_to_volume_voxels(physical_xyz_row, origin, spacing)[0]
+    sx, sy, sz = label_volume.shape
+    i, j, k = int(ij[0]), int(ij[1]), int(ij[2])
+    if i < 0 or j < 0 or k < 0 or i >= sx or j >= sy or k >= sz:
+        return -1
+    return int(label_volume[i, j, k])
+
+
+def _segment_labels_for_physical_points(
+    label_volume: np.ndarray,
+    points_xyz: np.ndarray,
+    origin: np.ndarray,
+    spacing: np.ndarray,
+) -> np.ndarray:
+    if len(points_xyz) == 0:
+        return np.array([], dtype=int)
+    ij = _physical_to_volume_voxels(points_xyz, origin, spacing)
+    out = np.full(len(points_xyz), -1, dtype=int)
+    sx, sy, sz = label_volume.shape
+    for u in range(len(points_xyz)):
+        i, j, k = int(ij[u, 0]), int(ij[u, 1]), int(ij[u, 2])
+        if 0 <= i < sx and 0 <= j < sy and 0 <= k < sz:
+            out[u] = int(label_volume[i, j, k])
+    return out
+
+
+def _deterministic_ostium_idx_from_skeleton(
+    artery_name: str,
+    endpoints_phys: np.ndarray,
+    dists_edt: np.ndarray,
+    label_arr: np.ndarray,
+    origin: np.ndarray,
+    spacing: np.ndarray,
+) -> int:
+    """Choose skeleton endpoint index: target segment tie-break nearest to segment voxels else max EDT."""
+    target = TARGET_SEGMENT_BY_ARTERY[artery_name]
+    sampled = np.array(
+        [
+            _sample_segment_label_at_physical(label_arr, endpoints_phys[u], origin, spacing)
+            for u in range(len(endpoints_phys))
+        ],
+        dtype=int,
+    )
+    hits = np.flatnonzero(sampled == target)
+    if hits.size > 0:
+        tgt_vox = np.argwhere(label_arr == target)
+        if tgt_vox.size == 0:
+            return int(hits[np.argmin(np.linalg.norm(endpoints_phys[hits], axis=1))])
+        tw = tgt_vox.astype(float) * spacing[None, :] + origin[None, :]
+        tree = cKDTree(tw)
+        d_hit, _ = tree.query(endpoints_phys[hits], k=1)
+        return int(hits[int(np.argmin(d_hit))])
+    return int(np.argmax(np.asarray(dists_edt, dtype=float)))
 
 
 def _sample_numeric_id(patient_id: str) -> int:
@@ -342,6 +415,7 @@ def _split_centerline_paths(
     ostium_point_mm: np.ndarray,
     min_points: int = 20,
     ostium_start_tol_mm: float = 4.0,
+    segment_ids: np.ndarray | None = None,
 ) -> tuple[list[dict], dict]:
     cl_points = np.asarray(centerlines.points)
     cl_radii = np.asarray(centerlines.point_data["MaximumInscribedSphereRadius"])
@@ -397,19 +471,20 @@ def _split_centerline_paths(
         branch_poly = pv.lines_from_points(seg_pts, close=False)
         branch_poly.point_data["MaximumInscribedSphereRadius"] = seg_rad
 
-        df_branch = pd.DataFrame(
-            {
-                "Sample_ID": sample_id,
-                "Artery_Type": artery_name,
-                "Branch_ID": branch_id,
-                "Path_Point_Index": np.arange(len(seg_ids), dtype=int),
-                "Px": seg_pts[:, 0],
-                "Py": seg_pts[:, 1],
-                "Pz": seg_pts[:, 2],
-                "Radius": seg_rad,
-                "PointType": seg_ptt,
-            }
-        )
+        branch_cols: dict[str, object] = {
+            "Sample_ID": sample_id,
+            "Artery_Type": artery_name,
+            "Branch_ID": branch_id,
+            "Path_Point_Index": np.arange(len(seg_ids), dtype=int),
+            "Px": seg_pts[:, 0],
+            "Py": seg_pts[:, 1],
+            "Pz": seg_pts[:, 2],
+            "Radius": seg_rad,
+            "PointType": seg_ptt,
+        }
+        if segment_ids is not None and len(segment_ids) == len(cl_points):
+            branch_cols["Segment_ID"] = segment_ids[seg_ids]
+        df_branch = pd.DataFrame(branch_cols)
         branches.append({"branch_id": branch_id, "poly": branch_poly, "df": df_branch})
 
     return branches, dropped
@@ -465,6 +540,7 @@ def _process_artery(
     sample_id: int,
     source_zyx: np.ndarray,
     targets_zyx: np.ndarray,
+    label_arr_asoca: np.ndarray | None,
 ) -> dict | None:
     source_phys = _voxel_to_physical(source_zyx, origin, spacing)
     targets_phys = _voxel_to_physical(targets_zyx, origin, spacing)
@@ -512,17 +588,23 @@ def _process_artery(
         bif_merge_mm=None,
     )
 
-    df_artery = pd.DataFrame(
-        {
-            "Sample_ID": sample_id,
-            "Artery_Type": artery_name,
-            "Px": cl_points[:, 0],
-            "Py": cl_points[:, 1],
-            "Pz": cl_points[:, 2],
-            "Radius": cl_radii,
-            "PointType": point_types,
-        }
-    )
+    arteries_cols: dict[str, object] = {
+        "Sample_ID": sample_id,
+        "Artery_Type": artery_name,
+        "Px": cl_points[:, 0],
+        "Py": cl_points[:, 1],
+        "Pz": cl_points[:, 2],
+        "Radius": cl_radii,
+        "PointType": point_types,
+    }
+    segment_ids_centreline: np.ndarray | None = None
+    if label_arr_asoca is not None:
+        segment_ids_centreline = _segment_labels_for_physical_points(
+            label_arr_asoca, cl_points, origin, spacing
+        )
+        arteries_cols["Segment_ID"] = segment_ids_centreline
+
+    df_artery = pd.DataFrame(arteries_cols)
 
     branch_items, dropped_stats = _split_centerline_paths(
         centerlines,
@@ -532,6 +614,7 @@ def _process_artery(
         ostium_point_mm=np.asarray(source_phys[0], dtype=float),
         min_points=20,
         ostium_start_tol_mm=4.0,
+        segment_ids=segment_ids_centreline,
     )
 
     sub(
@@ -652,7 +735,11 @@ def _export_centerline_tree_figure(
     }
 
 
-def run_block1(patient_id: str, nrrd_path: Path | None = None) -> pd.DataFrame:
+def run_block1(
+    patient_id: str,
+    nrrd_path: Path | None = None,
+    label_nii_path: Path | None = None,
+) -> pd.DataFrame:
     t_start = time.perf_counter()
     sample_name = patient_id
     sample_id = _sample_numeric_id(patient_id)
@@ -664,6 +751,14 @@ def run_block1(patient_id: str, nrrd_path: Path | None = None) -> pd.DataFrame:
         raise FileNotFoundError(f"Mask not found: {nrrd_path}")
 
     artery_arrays, spacing, origin = _load_and_separate_mask(nrrd_path)
+
+    label_arr_asoca: np.ndarray | None = None
+    use_label_ostium = label_nii_path is not None and Path(label_nii_path).exists()
+    if label_nii_path is not None and not Path(label_nii_path).exists():
+        logger.warning("ASOCA label volume not found: %s — using scout ostium.", label_nii_path)
+    elif use_label_ostium:
+        label_img = nib.load(str(label_nii_path))
+        label_arr_asoca = np.asarray(label_img.dataobj)
 
     scout_cache: dict[str, dict] = {}
     for artery_name, artery_mask in artery_arrays.items():
@@ -702,7 +797,27 @@ def run_block1(patient_id: str, nrrd_path: Path | None = None) -> pd.DataFrame:
         raise RuntimeError(f"No valid artery endpoints found for {patient_id}")
 
     ostium_choice: dict[str, int] = {k: int(v["ostium_idx_default"]) for k, v in scout_cache.items()}
-    if ("RCA" in scout_cache) and ("LCA" in scout_cache):
+    if use_label_ostium and label_arr_asoca is not None:
+        for artery_name, cache in scout_cache.items():
+            if artery_name not in TARGET_SEGMENT_BY_ARTERY:
+                continue
+            oid = _deterministic_ostium_idx_from_skeleton(
+                artery_name,
+                cache["endpoints_phys"],
+                cache["dists_edt"],
+                label_arr_asoca,
+                origin,
+                spacing,
+            )
+            ostium_choice[artery_name] = oid
+            sub(
+                logger,
+                "%s deterministic ostium (labels) #%d (target_seg=%s)",
+                artery_name,
+                oid,
+                TARGET_SEGMENT_BY_ARTERY[artery_name],
+            )
+    elif ("RCA" in scout_cache) and ("LCA" in scout_cache):
         rc = scout_cache["RCA"]
         lc = scout_cache["LCA"]
         s_r = (rc["ost_score"] - np.mean(rc["ost_score"])) / (np.std(rc["ost_score"]) + 1e-8)
@@ -756,6 +871,7 @@ def run_block1(patient_id: str, nrrd_path: Path | None = None) -> pd.DataFrame:
             sample_id=sample_id,
             source_zyx=source_zyx,
             targets_zyx=targets_zyx,
+            label_arr_asoca=label_arr_asoca,
         )
         if out is None:
             continue
