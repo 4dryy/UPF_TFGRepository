@@ -88,13 +88,13 @@ def _resolve_segment_label_path(patient_id: str) -> Path | None:
 
 
 
-def _load_block3_phase1():
+def _load_block3():
 
     blocks_dir = Path(__file__).resolve().parent / "blocks"
 
     module_path = blocks_dir / "_03_cad-rats.py"
 
-    spec = importlib.util.spec_from_file_location("block3_cadrats_label", module_path)
+    spec = importlib.util.spec_from_file_location("block3_cadrats", module_path)
 
     if spec is None or spec.loader is None:
 
@@ -144,9 +144,9 @@ def main(patient_id: str) -> None:
 
 
 
-    block3_mod = _load_block3_phase1()
+    block3_mod = _load_block3()
 
-    block3_mod.run_block3_phase1(patient_id)
+    block3_mod.run_block3(patient_id)
 
 
 

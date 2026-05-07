@@ -50,7 +50,9 @@ BLOCK2_AREA_PATIENT_DIR_ROOT = PROJECT_ROOT / "results" / "block2_results" / "ar
 BLOCK2_STENOSIS_PATIENT_DIR_ROOT = PROJECT_ROOT / "results" / "block2_results" / "stenosis"
 
 # Stenosis reference / merge / %AS figures (``_05_sq_reference_values`` notebook parity)
-WINDOW_MM = 10.0
+# WINDOW_MM = 10.0
+WINDOW_MM = 5.0
+# WINDOW_MM = 2.5
 COORD_ROUND = 6
 A_REF_EPS = 1e-12
 PCT_AS_VMIN = 0.0
