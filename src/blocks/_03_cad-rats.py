@@ -11,6 +11,7 @@ from __future__ import annotations
 import logging
 import shutil
 import sys
+import textwrap
 import time
 import types
 from pathlib import Path
@@ -20,6 +21,8 @@ import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+from matplotlib.patches import FancyBboxPatch
+
 import numpy as np
 import pandas as pd
 import pyvista as pv
@@ -413,6 +416,74 @@ def run_segment_stenosis_phase(patient_id: str, segment_dictionary: pd.DataFrame
     ]
     seg_sum[export_columns].to_excel(out_xlsx, index=False)
 
+    fig_prof = out_dir / "figures"
+    fig_prof.mkdir(parents=True, exist_ok=True)
+
+    def _sort_segment_points(d: pd.DataFrame) -> pd.DataFrame:
+        key_cols: list[str] = []
+        if "Branch_ID" in d.columns:
+            key_cols.append("Branch_ID")
+        if "gd" in d.columns:
+            return d.sort_values(key_cols + ["gd"], ascending=True).reset_index(drop=True)
+        if "Path_Point_Index" in d.columns:
+            return d.sort_values(key_cols + ["Path_Point_Index"], ascending=True).reset_index(drop=True)
+        return d.sort_values(["Px", "Py", "Pz"]).reset_index(drop=True)
+
+    if "Area" not in foreground_df.columns:
+        logger.warning("Segment profile figures skipped: Area not in labeled tree dataframe.")
+    else:
+        for row in seg_sum.itertuples(index=False):
+            sid = int(row.Segment_ID)
+            sname = str(row.Segment_Name)
+            sdf_raw = foreground_df.loc[foreground_df["Segment_ID"] == sid].copy()
+            if sdf_raw.empty:
+                continue
+            sdf = _sort_segment_points(sdf_raw)
+            y_a = sdf["Area"].to_numpy(dtype=float)
+            y_p = sdf[pct_col].to_numpy(dtype=float)
+            n = len(sdf)
+            xv = np.arange(n)
+            fig_pr, (ax_a, ax_p) = plt.subplots(
+                2,
+                1,
+                figsize=(12, 7.0),
+                dpi=165,
+                sharex=True,
+                gridspec_kw={"height_ratios": [1.05, 1.0], "hspace": 0.14},
+            )
+            fig_pr.patch.set_facecolor("#fafafa")
+            for ax_k in (ax_a, ax_p):
+                ax_k.set_facecolor("#fcfcfc")
+            fig_pr.suptitle(
+                f"{sample_name} — {sname} · segment ID {sid} ({n} points)",
+                fontsize=12,
+                fontweight="bold",
+                color="#14532d",
+            )
+            ax_a.bar(xv, y_a, color="#00897b", edgecolor="white", linewidth=0.35)
+            ax_a.set_ylabel("Area (mm²)", fontsize=11)
+            ax_a.grid(axis="y", alpha=0.35, linestyle=":")
+            fa = np.isfinite(y_a)
+            if fa.any():
+                c_a = np.flatnonzero(fa)
+                imx = int(c_a[np.argmax(y_a[c_a])])
+                ax_a.scatter(imx, y_a[imx], color="#bf360c", s=54, zorder=5, edgecolors="white", linewidths=0.6)
+
+            ax_p.bar(xv, y_p, color="#fb8c00", edgecolor="white", linewidth=0.35)
+            ax_p.set_ylabel("% area stenosis (pct_AS)", fontsize=11)
+            ax_p.set_xlabel("Along-segment sample index (proximal → distal)", fontsize=11)
+            ax_p.grid(axis="y", alpha=0.35, linestyle=":")
+            fp = np.isfinite(y_p)
+            if fp.any():
+                c_p = np.flatnonzero(fp)
+                imp = int(c_p[np.argmax(y_p[c_p])])
+                ax_p.scatter(imp, y_p[imp], color="#b71c1c", s=54, zorder=5, edgecolors="white", linewidths=0.6)
+
+            fig_pr.subplots_adjust(top=0.90, bottom=0.08, left=0.09, right=0.97)
+            out_png = fig_prof / f"fig_segment_profiles_id{sid}_{sample_name}.png"
+            fig_pr.savefig(out_png, bbox_inches="tight", facecolor=fig_pr.patch.get_facecolor())
+            plt.close(fig_pr)
+
     sub(
         logger,
         "Segment stenosis: %d segments · %s → %s",
@@ -600,99 +671,162 @@ def compute_cad_rads_patient_level(segment_summary: pd.DataFrame) -> dict[str, A
 def render_patient_id_card_png(
     out_path: Path,
     sample_name: str,
-    final_cad_rads_code: str,
     *,
-    top_segments: pd.DataFrame,
-    sis_score: int,
+    cad_rads_category: str,
     plaque_modifier: str | None,
     plaque_category: str,
-    clinical_interpretation: str,
+    sis_score: int,
+    sis_denominator: int,
+    top_segments: pd.DataFrame,
+    cad_rads_rationale: str,
     highest_location: str,
     highest_pct: float,
 ) -> None:
-    """High-quality static ID card (_08 HTML card → matplotlib)."""
-    sns.set_theme(style="whitegrid", context="talk")
-    fig = plt.figure(figsize=(11, 8.5), dpi=200)
-    fig.patch.set_facecolor("#fafafa")
-    ax_title = fig.add_axes((0.08, 0.82, 0.84, 0.14))
-    ax_title.axis("off")
-    ax_title.set_title(
-        f"Patient ID card — {sample_name}",
-        fontsize=18,
-        fontweight="bold",
-        color="#1b5e20",
-        loc="left",
+    """Clean CAD-RADS + SIS patient summary (matplotlib; CAD-RADS and SIS visually separated)."""
+    sns.set_theme(style="ticks")
+    fig = plt.figure(figsize=(11, 10), dpi=200)
+    fig.patch.set_facecolor("#eef2f3")
+
+    def _pill_axis(ax_bbox: tuple[float, float, float, float]) -> plt.Axes:
+        ax_k = fig.add_axes(ax_bbox)
+        ax_k.axis("off")
+        return ax_k
+
+    fig.text(0.5, 0.965, sample_name + " — Patient summary card", fontsize=15, ha="center", fontweight="bold", color="#1b4332")
+
+    # Left: CAD-RADS category only
+    ax_c = _pill_axis((0.07, 0.765, 0.41, 0.155))
+    ax_c.add_patch(
+        FancyBboxPatch(
+            (0.04, 0.08),
+            0.92,
+            0.84,
+            boxstyle="round,pad=0.02",
+            linewidth=1.35,
+            edgecolor="#0d47a1",
+            facecolor="#ffffff",
+            transform=ax_c.transAxes,
+        )
     )
-    ax_score = fig.add_axes((0.08, 0.68, 0.84, 0.12))
-    ax_score.axis("off")
-    ax_score.text(
-        0.0,
-        0.55,
-        final_cad_rads_code,
-        fontsize=28,
-        fontweight="bold",
-        color="#0d47a1",
+    ax_c.text(0.5, 0.75, "CAD-RADS category", fontsize=11, ha="center", va="center", color="#546e7a", transform=ax_c.transAxes)
+    ax_c.text(0.5, 0.38, cad_rads_category, fontsize=38, ha="center", va="center", fontweight="bold", color="#0d47a1", transform=ax_c.transAxes)
+
+    # Right: SIS (no P-letter here)
+    ax_s = _pill_axis((0.52, 0.765, 0.41, 0.155))
+    ax_s.add_patch(
+        FancyBboxPatch(
+            (0.04, 0.08),
+            0.92,
+            0.84,
+            boxstyle="round,pad=0.02",
+            linewidth=1.35,
+            edgecolor="#2e7d32",
+            facecolor="#ffffff",
+            transform=ax_s.transAxes,
+        )
+    )
+    ax_s.text(0.5, 0.75, "Segment involvement score (SIS)", fontsize=11, ha="center", va="center", color="#546e7a", transform=ax_s.transAxes)
+    ax_s.text(
+        0.5,
+        0.42,
+        str(sis_score),
+        fontsize=44,
+        ha="center",
         va="center",
+        fontweight="bold",
+        color="#14532d",
+        transform=ax_s.transAxes,
     )
-    pm = plaque_modifier if plaque_modifier else "—"
-    ax_score.text(
-        0.0,
-        0.05,
-        f"Highest stenosis: {highest_location}  ({highest_pct:.2f}% AS)\n"
-        f"SIS: {sis_score} / {EXPECTED_SIS_SEGMENT_COUNT}  ·  P modifier: {pm} ({plaque_category})",
-        fontsize=11,
-        color="#333333",
-        va="top",
+    ax_s.text(
+        0.5,
+        0.09,
+        f"Atlas denominator for plaque burden tiers: {sis_denominator}",
+        fontsize=9.5,
+        ha="center",
+        va="center",
+        color="#546e7a",
+        transform=ax_s.transAxes,
     )
 
-    ax_tbl = fig.add_axes((0.08, 0.42, 0.84, 0.24))
+    # Plaque line — separate row
+    pm = plaque_modifier if plaque_modifier else "(none)"
+    fig.text(
+        0.5,
+        0.695,
+        f"Plaque burden modifier — {pm}",
+        fontsize=12,
+        ha="center",
+        color="#37474f",
+        fontweight="semibold",
+    )
+    fig.text(0.5, 0.665, plaque_category, fontsize=10.5, ha="center", color="#455a64", style="italic")
+
+    fig.text(
+        0.5,
+        0.598,
+        f"Peak stenosis · {highest_location} ({highest_pct:.2f}% AS)",
+        fontsize=11,
+        ha="center",
+        color="#263238",
+        fontweight="bold",
+    )
+
+    ax_tbl = fig.add_axes((0.08, 0.28, 0.84, 0.295))
     ax_tbl.axis("off")
+    ax_tbl.text(0.0, 1.06, "Most affected segments", fontsize=11, fontweight="bold", color="#1b5e20", transform=ax_tbl.transAxes)
     disp = top_segments[
         ["Segment_ID", "Segment_Name", "Max_pct_AS_Clipped", "Stenosis_Severity_Label"]
     ].rename(columns={"Max_pct_AS_Clipped": "Max %AS"})
-    disp = disp.copy()
-    disp["Segment_ID"] = disp["Segment_ID"].astype("object")
-    disp["Max %AS"] = disp["Max %AS"].map(lambda x: "" if pd.isna(x) else f"{float(x):.2f}")
     if not disp.empty:
-        table = ax_tbl.table(
+        disp = disp.copy()
+        disp["Segment_ID"] = disp["Segment_ID"].astype("object")
+        disp["Max %AS"] = disp["Max %AS"].map(lambda x: "" if pd.isna(x) else f"{float(x):.2f}")
+        tab = ax_tbl.table(
             cellText=disp.values,
             colLabels=list(disp.columns),
             cellLoc="center",
-            loc="center",
+            loc="upper center",
         )
-        table.auto_set_font_size(False)
-        table.set_fontsize(9)
-        table.scale(1.05, 1.35)
-        for k, cell in table.get_celld().items():
+        tab.auto_set_font_size(False)
+        tab.set_fontsize(9)
+        tab.scale(1.02, 1.42)
+        for k, cell in tab.get_celld().items():
             if k[0] == 0:
-                cell.set_facecolor("#c8e6c9")
+                cell.set_facecolor("#dcefe0")
                 cell.set_text_props(fontweight="bold")
     else:
-        ax_tbl.text(0.5, 0.5, "No segment rows to display.", ha="center", va="center")
+        ax_tbl.text(0.5, 0.6, "(no segments to list)", fontsize=10, ha="center", va="center", transform=ax_tbl.transAxes)
 
-    ax_txt = fig.add_axes((0.08, 0.06, 0.84, 0.32))
-    ax_txt.axis("off")
-    ax_txt.text(
-        0.0,
-        1.0,
-        "Clinical interpretation",
-        fontsize=12,
-        fontweight="bold",
-        color="#1b5e20",
-        va="top",
+    ax_footer = fig.add_axes((0.08, 0.05, 0.84, 0.205))
+    ax_footer.axis("off")
+    ax_footer.add_patch(
+        FancyBboxPatch(
+            (0.0, 0.06),
+            1.0,
+            0.88,
+            boxstyle="round,pad=0.015",
+            linewidth=1.0,
+            edgecolor="#b0bec5",
+            facecolor="#ffffff",
+            transform=ax_footer.transAxes,
+        )
     )
-    ax_txt.text(
-        0.0,
-        0.88,
-        clinical_interpretation,
-        fontsize=10,
-        color="#222222",
+    ax_footer.text(0.04, 0.88, "Automated rationale (CAD-RADS 2.0 rules)", fontsize=10, fontweight="bold", transform=ax_footer.transAxes)
+    wrapped_single = cad_rads_rationale.replace("\n", " ").strip()
+    ax_footer.text(
+        0.05,
+        0.74,
+        "\n".join(textwrap.wrap(wrapped_single, width=118)),
+        fontsize=9.5,
         va="top",
+        color="#37474f",
+        linespacing=1.38,
+        transform=ax_footer.transAxes,
     )
 
     fig.savefig(out_path, bbox_inches="tight", facecolor=fig.patch.get_facecolor())
     plt.close(fig)
-    sns.set_theme()
+    sns.reset_defaults()
 
 
 def run_cad_rads_export_phase(patient_id: str, segment_summary: pd.DataFrame) -> tuple[Path, Path, str]:
@@ -725,13 +859,14 @@ def run_cad_rads_export_phase(patient_id: str, segment_summary: pd.DataFrame) ->
     render_patient_id_card_png(
         card_path,
         sample_name,
-        cad["final_cad_rads_code"],
+        cad_rads_category=str(cad["cad_rads_category"]),
+        plaque_modifier=cad["plaque_modifier"] if cad["plaque_modifier"] else None,
+        plaque_category=str(cad["plaque_category"]),
+        sis_score=int(cad["sis_score"]),
+        sis_denominator=int(EXPECTED_SIS_SEGMENT_COUNT),
         top_segments=top_n,
-        sis_score=cad["sis_score"],
-        plaque_modifier=cad["plaque_modifier"],
-        plaque_category=cad["plaque_category"],
-        clinical_interpretation=cad["clinical_interpretation"],
-        highest_location=cad["highest_stenosis_location"],
+        cad_rads_rationale=str(cad["cad_rads_rationale"]),
+        highest_location=str(cad["highest_stenosis_location"]),
         highest_pct=float(cad["highest_stenosis_pct"]),
     )
 

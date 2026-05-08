@@ -13,8 +13,12 @@ import shutil
 import time
 from collections import Counter
 from pathlib import Path
-from typing import NamedTuple
+from typing import Iterable, NamedTuple
 
+import matplotlib
+
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pyvista as pv
@@ -420,12 +424,123 @@ def _map_area_to_df(df: pd.DataFrame, ref_points: np.ndarray, ref_area: np.ndarr
     return out, "kdtree"
 
 
+def _slug_branch(df_b: pd.DataFrame, fallback: str) -> str:
+    """Stable short name for filenames."""
+    if "Branch_ID" in df_b.columns and len(df_b) > 0:
+        sid = df_b["Branch_ID"].iloc[0]
+        if pd.notna(sid):
+            return str(sid).strip()
+    return "".join(ch if ch.isalnum() or ch in "_-" else "_" for ch in fallback)[:120]
+
+
+def _order_branch_like_centerline(df: pd.DataFrame) -> pd.DataFrame:
+    sdf = df.copy()
+    cols = []
+    if "Branch_ID" in sdf.columns:
+        cols.append("Branch_ID")
+    if "gd" in sdf.columns:
+        return sdf.sort_values(cols + ["gd"], ascending=True).reset_index(drop=True)
+    if "Path_Point_Index" in sdf.columns:
+        return sdf.sort_values(cols + ["Path_Point_Index"], ascending=True).reset_index(drop=True)
+    return sdf.reset_index(drop=True)
+
+
+def _histogram_with_max_vline(
+    values: np.ndarray,
+    *,
+    out_path: Path,
+    title: str,
+    xlabel: str,
+    color: str = "#3949ab",
+) -> None:
+    v = np.asarray(values, dtype=float)
+    v = v[np.isfinite(v)]
+    fig, ax = plt.subplots(figsize=(9.5, 5.25), dpi=160)
+    fig.patch.set_facecolor("#fafafa")
+    ax.set_facecolor("#fcfcfc")
+    if len(v) == 0:
+        ax.text(0.5, 0.5, "No valid finite values", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+    else:
+        n_bins = int(np.clip(round(np.sqrt(len(v))), 12, 64))
+        ax.hist(v, bins=n_bins, color=color, alpha=0.88, edgecolor="white", linewidth=0.6)
+        vmax = float(np.nanmax(v))
+        ax.axvline(vmax, color="#c62828", linestyle="--", linewidth=2.2, label=f"Max = {vmax:.2f}")
+        ax.legend(frameon=True, loc="upper right", fontsize=10)
+        ax.set_xlabel(xlabel, fontsize=11)
+        ax.set_ylabel("Count", fontsize=11)
+        ax.grid(True, alpha=0.35, linestyle=":")
+    ax.set_title(title, fontsize=13, fontweight="bold", pad=12)
+    fig.tight_layout()
+    fig.savefig(out_path, bbox_inches="tight", facecolor=fig.patch.get_facecolor())
+    plt.close(fig)
+
+
+def _bar_metric_along_branch(
+    df: pd.DataFrame,
+    value_col: str,
+    *,
+    out_path: Path,
+    title: str,
+    ylabel: str,
+    color: str,
+) -> None:
+    sdf = _order_branch_like_centerline(df).reset_index(drop=True)
+    if value_col not in sdf.columns:
+        return
+    y = sdf[value_col].to_numpy(dtype=float)
+    n = len(y)
+    if n == 0:
+        return
+    x = np.arange(n)
+    fig_w = float(np.clip(6.0 + 0.035 * n, 8.5, 22.0))
+    fig, ax = plt.subplots(figsize=(fig_w, 4.8), dpi=160)
+    fig.patch.set_facecolor("#fafafa")
+    ax.set_facecolor("#fcfcfc")
+    ax.bar(x, y, width=0.92, color=color, edgecolor="white", linewidth=0.4, align="center")
+    ax.set_xlabel("Centerline point index (proximal→distal)", fontsize=11)
+    ax.set_ylabel(ylabel, fontsize=11)
+    ax.set_title(title, fontsize=12, fontweight="bold", pad=10)
+    fm = np.isfinite(y)
+    if fm.any():
+        cand = np.flatnonzero(fm)
+        sub_max = np.argmax(y[cand])
+        iy = int(cand[sub_max])
+        ymax = float(y[iy])
+        y_rng = np.nanmax(y[fm]) - np.nanmin(y[fm]) if np.nanmax(y[fm]) != np.nanmin(y[fm]) else abs(ymax) + 1e-6
+        off_y = ymax + 0.08 * y_rng
+        note = (
+            f"Max {ymax:.1f}%"
+            if value_col.lower() == "pct_as"
+            else f"Max {ymax:.2f} mm²"
+        )
+        ax.annotate(
+            note,
+            xy=(iy, ymax),
+            xytext=(iy, off_y),
+            fontsize=9,
+            ha="center",
+            arrowprops=dict(arrowstyle="-", color="#c62828", lw=0.85),
+            color="#37474f",
+        )
+        ax.scatter([iy], [ymax], s=52, color="#c62828", zorder=5, edgecolors="white", linewidths=0.6)
+    ax.grid(True, axis="y", alpha=0.35, linestyle=":")
+    if n > 80:
+        ax.set_xticks([])
+    else:
+        ax.set_xticks(x[:: max(1, n // 25)])
+    fig.tight_layout()
+    fig.savefig(out_path, bbox_inches="tight", facecolor=fig.patch.get_facecolor())
+    plt.close(fig)
+
+
 def _save_area_plot(
     points_xyz: np.ndarray,
     area: np.ndarray,
     out_path: Path,
     title: str,
     mesh: pv.PolyData | None = None,
+    extra_hulls: Iterable[pv.PolyData] | None = None,
 ) -> None:
     if len(points_xyz) == 0:
         return
@@ -441,7 +556,11 @@ def _save_area_plot(
 
     pl = pv.Plotter(off_screen=True, window_size=(1500, 1100))
     pl.set_background("white")
-    if mesh is not None:
+    if extra_hulls is not None:
+        for hm in extra_hulls:
+            if hm is not None:
+                pl.add_mesh(hm, color="lightgray", opacity=0.20, smooth_shading=True)
+    elif mesh is not None:
         pl.add_mesh(mesh, color="lightgray", opacity=0.20, smooth_shading=True)
     pl.add_mesh(
         cloud,
@@ -465,13 +584,15 @@ def run_block2(patient_id: str, block1_dir: Path | None = None) -> Block2Outputs
 
     - ``dataset_global_<patient>.xlsx``, artery-level excels (``Area`` mapped).
     - ``branches/dataframes/dataset_*_<patient>.xlsx`` with ``Area`` only (Block 1 rows).
-    - Area colormap figures under ``figures/`` and ``branches/figures/``.
+    - Area colormap figures under ``figures/`` and ``branches/figures/``
+      (plus Matplotlib: full-tree / branch Area histograms & along-centerline bars).
 
     **Stenosis phase** (when branch spreadsheets exist) →
     ``results/block2_results/stenosis/<patient_id>/``:
 
     - Enriched branch tables (``gd``, ``A_ref``, ``pct_AS``, …) and ``total_df_<patient>.xlsx``.
-    - ``fig_pct_AS_*`` exports under ``figures/`` and ``branches/figures/``.
+    - ``fig_pct_AS_*`` exports under ``figures/`` and ``branches/figures/``
+      (plus Matplotlib: %AS histograms for full tree / branches and along-branch bar charts).
 
     Re-running for the same ``patient_id`` replaces both folders (no duplicate samples).
 
@@ -616,6 +737,22 @@ def run_block2(patient_id: str, block1_dir: Path | None = None) -> Block2Outputs
                 title=f"{sample_name} - {branch_file.stem}",
                 mesh=artery_surfaces_pv.get(artery),
             )
+            bid = _slug_branch(df_b, branch_file.stem)
+            _histogram_with_max_vline(
+                df_b["Area"].to_numpy(dtype=float),
+                out_path=out_branch_fig_dir / f"hist_Area_branch_{bid}_{sample_name}.png",
+                title=f"{sample_name} · {bid} · Area distribution",
+                xlabel="Cross-sectional area (mm²)",
+                color="#1b5e20",
+            )
+            _bar_metric_along_branch(
+                df_b,
+                "Area",
+                out_path=out_branch_fig_dir / f"bar_Area_branch_{bid}_{sample_name}.png",
+                title=f"{sample_name} · {bid} · Area along centerline",
+                ylabel="Area (mm²)",
+                color="#388e3c",
+            )
 
     if branch_map_modes:
         mc = Counter(branch_map_modes)
@@ -626,6 +763,14 @@ def run_block2(patient_id: str, block1_dir: Path | None = None) -> Block2Outputs
             len(branch_map_modes),
             mode_summary,
         )
+
+    _histogram_with_max_vline(
+        df_global["Area"].to_numpy(dtype=float),
+        out_path=out_fig_dir / f"hist_Area_full_tree_{sample_name}.png",
+        title=f"{sample_name} · Full coronary tree · Area distribution",
+        xlabel="Cross-sectional area (mm²)",
+        color="#283593",
+    )
 
     total_df_merged = pd.DataFrame()
     if processed_branch_data:
@@ -698,15 +843,47 @@ def run_block2(patient_id: str, block1_dir: Path | None = None) -> Block2Outputs
                 out_path=pct_fig,
             )
 
+        concat_pct = pd.concat(processed_branch_data.values(), ignore_index=True)
+        _histogram_with_max_vline(
+            concat_pct["pct_AS"].to_numpy(dtype=float),
+            out_path=out_stenosis_fig_dir / f"hist_pct_AS_full_tree_{sample_name}.png",
+            title=f"{sample_name} · Full coronary tree · % area stenosis (all branch points)",
+            xlabel="% area stenosis (pct_AS)",
+            color="#5c6bc0",
+        )
+
+        for branch_key in sorted(processed_branch_data.keys()):
+            dfb_w = processed_branch_data[branch_key]
+            bid = _slug_branch(dfb_w, branch_key)
+            _histogram_with_max_vline(
+                dfb_w["pct_AS"].to_numpy(dtype=float),
+                out_path=out_stenosis_branch_fig_dir / f"hist_pct_AS_branch_{bid}_{sample_name}.png",
+                title=f"{sample_name} · {bid} · % area stenosis distribution",
+                xlabel="% area stenosis (pct_AS)",
+                color="#3949ab",
+            )
+            _bar_metric_along_branch(
+                dfb_w,
+                "pct_AS",
+                out_path=out_stenosis_branch_fig_dir / f"bar_pct_AS_branch_{bid}_{sample_name}.png",
+                title=f"{sample_name} · {bid} · %AS along centerline",
+                ylabel="% area stenosis (pct_AS)",
+                color="#fb8c00",
+            )
+
         log_detail(logger, "%%AS figures: 1 tree + %d branch → %s", n_br_st, short_path(out_stenosis_dir))
 
     # Figures: full tree + artery-level (area colormap)
+    tree_hulls = tuple(
+        h for k in ("RCA", "LCA") if (h := artery_surfaces_pv.get(k)) is not None
+    )
     _save_area_plot(
         points_xyz=df_global[["Px", "Py", "Pz"]].to_numpy(dtype=float),
         area=df_global["Area"].to_numpy(dtype=float),
         out_path=out_fig_dir / f"fig_area_tree_{sample_name}.png",
         title=f"{sample_name} - Area (full tree)",
         mesh=None,
+        extra_hulls=tree_hulls if tree_hulls else None,
     )
     for artery in ("RCA", "LCA"):
         df_art = artery_dfs[artery]
