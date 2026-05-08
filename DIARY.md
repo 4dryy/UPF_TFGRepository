@@ -309,6 +309,62 @@ Every work session must be recorded using the following structure:
 
 ---
 
+### 2026-05-06 to 2026-05-08 — Block 3 production integration + Block 4 Streamlit infrastructure and launch robustness
+
+* **🎯 Objectives:** Convert the post-Block-2 roadmap into production-ready pipeline stages by integrating Block 3 outputs (label + segment stenosis + CAD-RADS) and implementing Block 4 as an automatic visualization launcher with reliable browser opening and patient-session synchronization.
+
+* **✅ Progress & Tasks Completed:**
+  * **Block 3 end-to-end integration in pipeline execution:**
+    * Promoted Block 3 into active production flow inside `src/_pipeline.py` after Block 2.
+    * Standardized the Block 3 output package into three patient-level folders:
+      * `results/block3_results/label/<Patient_ID>/`
+      * `results/block3_results/segment stenosis/<Patient_ID>/`
+      * `results/block3_results/cad-rads/<Patient_ID>/`
+    * Validated successful exports of `patient_report_<Patient_ID>.xlsx` and `patient_id_card_<Patient_ID>.png` during full pipeline runs.
+  * **Notebook-to-pipeline continuity work (multi-day):**
+    * Continued notebook experimentation and parity checks to ensure production behavior remains aligned with exploratory methodology, especially around stenosis interpretation and patient-level summaries.
+    * Consolidated learnings from repeated runs on Normal cohort samples to stabilize output layout and naming consistency across blocks.
+  * **Block 4 implementation (`src/blocks/_04_visualization.py`):**
+    * Added `run_block4(patient_id: str)` as the visualization bridge stage.
+    * Implemented session persistence via `results/current_session.json`, overwritten at each run with the latest patient context.
+    * Integrated Block 4 call in `src/_pipeline.py` just before final pipeline completion banner.
+  * **Streamlit app scaffold (`src/viewer/app.py`):**
+    * Added base Streamlit entrypoint with wide layout.
+    * Implemented robust read of `current_session.json` and fallback warning when session metadata is missing.
+    * Added base title tied to current patient and footer metadata (author, degree, TFG context).
+  * **Environment and dependency updates:**
+    * Added `streamlit` to `requirements.txt`.
+    * Installed and verified Streamlit in `tfg_adria` conda environment (`streamlit 1.57.0`).
+  * **Launch reliability hardening (critical robustness pass):**
+    * Resolved first-run Streamlit onboarding prompt (email question) that interfered with terminal flow by disabling usage-stats prompts.
+    * Switched Streamlit launch to detached background process to avoid blocking/stealing pipeline stdin.
+    * Enforced deterministic host/port configuration (`127.0.0.1:8501`).
+    * Added reachability checks and delayed browser opening until server is actually listening, preventing early "page not found" browser states.
+    * Added logic to reuse an already-running Streamlit server when present, opening URL directly.
+
+* **🐛 Bugs & Challenges:**
+  * *Issue:* `No module named streamlit` at Block 4 launch.
+    * *Cause:* Streamlit not installed in the same Python environment used by the pipeline (`tfg_adria`).
+    * *Fix:* Installed Streamlit in `tfg_adria`, added dependency to `requirements.txt`, and added in-code preflight check with actionable log message.
+  * *Issue:* Streamlit first-run onboarding prompt appeared in terminal (`Email:`), causing confusing interaction at pipeline end.
+    * *Cause:* Initial `subprocess.Popen` launch inherited terminal interaction channels.
+    * *Fix:* Disabled usage-stats prompt and detached process I/O from pipeline terminal.
+  * *Issue:* Browser sometimes opened before server readiness (`localhost` page unavailable).
+    * *Cause:* URL opened immediately after process spawn, without startup synchronization.
+    * *Fix:* Implemented socket-based readiness polling and open-browser only after port becomes reachable.
+
+* **💡 Key Decisions:**
+  * Adopted **single active viewer session pointer** (`results/current_session.json`) so the dashboard always represents the latest processed patient while preserving historical per-patient artifacts on disk.
+  * Chose **non-blocking detached Streamlit launch** as default UX: pipeline completes normally and visualization opens automatically when ready.
+  * Kept Block 4 as infrastructure-first (launch + synchronization), deferring rich clinical panels to the next iteration.
+
+* **⏭️ Next Steps:**
+  * Start visualization content design in `src/viewer/app.py` (patient overview, CAD-RADS panel, stenosis summaries, branch/segment explorers).
+  * Build a dedicated data-access layer for loading patient-specific tables/figures/meshes from `results/` based on `current_session.json`.
+  * Define UI information hierarchy with clinical stakeholders before adding complex interactive elements.
+
+---
+
 ## Acronym Legend
 
 | Acronym | Definition |

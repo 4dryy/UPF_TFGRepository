@@ -35,6 +35,7 @@ from pathlib import Path
 from src.blocks._01_extraction import run_block1
 
 from src.blocks._02_stenosis import run_block2
+from src.blocks._04_visualization import run_block4
 
 from src.pipeline_log import banner_pipeline, banner_pipeline_done, configure_logging, sub
 
@@ -149,6 +150,8 @@ def main(patient_id: str) -> None:
     block3_mod.run_block3(patient_id)
 
 
+
+    run_block4(patient_id=patient_id)
 
     banner_pipeline_done(log, patient_id, time.perf_counter() - t0)
 

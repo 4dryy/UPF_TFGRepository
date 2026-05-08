@@ -59,8 +59,8 @@ The system follows a strict **4-block modular architecture**. Each block is a se
 |-------|------|--------|
 | **B1** | Automated Anatomy Extraction | Completed / Refactored |
 | **B2** | Geometric Stenosis Quantification | Implemented: sectional area + reference window + **%AS** + merge |
-| **B3** | CAD-RADS Scoring Prediction | Pending |
-| **B4** | Visualization Dashboard | Pending |
+| **B3** | Labeling + Segment Stenosis + CAD-RADS Scoring | Implemented in production pipeline |
+| **B4** | Visualization Dashboard | Implemented (Streamlit launcher + session handoff; UI scaffold in progress) |
 
 ---
 
@@ -107,12 +107,14 @@ The table below details the internal phases of each block. This table serves as 
 
 <table>
   <tr>
-    <td colspan="3"><em>Internal phases to be defined</em></td>
+    <td bgcolor="#4CAF50">Label Packaging</td>
+    <td bgcolor="#4CAF50">Segment Stenosis Aggregation</td>
+    <td bgcolor="#4CAF50">CAD-RADS 2.0 Rule Engine</td>
     <td>Validation</td>
     <td>Optimization</td>
   </tr>
   <tr>
-    <td colspan="5"><em>Status: Pending — depends on Block 2 output.</em></td>
+    <td colspan="5"><em>Status: Implemented in code and integrated in pipeline. Validation and optimization ongoing.</em></td>
   </tr>
 </table>
 
@@ -120,15 +122,15 @@ The table below details the internal phases of each block. This table serves as 
 
 <table>
   <tr>
-    <td>3D Artery Mesh</td>
-    <td>Stenosis Visualizations</td>
-    <td>CAD-RADS Visualizations</td>
-    <td>Patient Information</td>
+    <td bgcolor="#4CAF50">Auto-launch Infrastructure</td>
+    <td bgcolor="#4CAF50">Session Persistence</td>
+    <td bgcolor="#4CAF50">Streamlit Base UI Scaffold</td>
+    <td>Results Panels</td>
     <td>Validation</td>
     <td>Optimization</td>
   </tr>
   <tr>
-    <td colspan="6"><em>Status: Pending — prototype concept designed.</em></td>
+    <td colspan="6"><em>Status: Infrastructure integrated in pipeline. Result visualization content under development.</em></td>
   </tr>
 </table>
 
@@ -203,6 +205,37 @@ Shared helpers in **`src/pipeline_log.py`** (`configure_logging`, banners, phase
 
 ---
 
+## Block 3 Methodology: Label Packaging, Segment Stenosis, and CAD-RADS
+
+Block 3 consumes Block 2 outputs and creates the patient-level clinical summary package:
+
+- **Label phase:** consolidates per-branch stenosis-labelled dataframes and exports patient-level tree tables.
+- **Segment stenosis phase:** aggregates stenosis metrics at segment level (AHA mapping), including handling of unmapped Segment IDs.
+- **CAD-RADS phase:** applies the rule-based CAD-RADS 2.0 logic and exports:
+  - `patient_report_<Patient_ID>.xlsx`
+  - `patient_id_card_<Patient_ID>.png`
+
+Outputs are written under:
+
+- `results/block3_results/label/<Patient_ID>/`
+- `results/block3_results/segment stenosis/<Patient_ID>/`
+- `results/block3_results/cad-rads/<Patient_ID>/`
+
+---
+
+## Block 4 Methodology: Streamlit Visualization Launch Infrastructure
+
+Block 4 provides the bridge between pipeline execution and interactive visualization:
+
+- Persists current run context in `results/current_session.json` with the active `patient_id`.
+- Launches Streamlit dashboard (`src/viewer/app.py`) automatically at pipeline end.
+- Uses a deterministic local endpoint (`http://localhost:8501`) with readiness checks before opening the browser.
+- Handles first-run Streamlit onboarding suppression and detached background execution so the pipeline can finish cleanly.
+
+Current UI is a scaffold (title + session read + footer metadata). Clinical visualization panels are the next development phase.
+
+---
+
 ## Installation & Setup
 
 > **Important:** This project relies on C++ medical imaging libraries (VMTK). It **cannot** be installed using a standard Python `venv`. You must use **Conda** (Miniconda or Anaconda).
@@ -249,14 +282,20 @@ Execute the full pipeline from the project root:
 python -m src._pipeline
 ```
 
-The pipeline prompts for a **Patient ID** (e.g., `Normal_1`) and runs **Block 1** then **Block 2** (area + stenosis outputs when branch tables exist).
+The pipeline prompts for a **Patient ID** (e.g., `Normal_1`) and runs **Block 1 → Block 2 → Block 3 → Block 4**.
 
 Results are saved under per-patient packages:
 - **Block 1:** `results/block1_results/<Patient_ID>/`
 - **Block 2 — area phase:** `results/block2_results/area/<Patient_ID>/`
 - **Block 2 — stenosis phase:** `results/block2_results/stenosis/<Patient_ID>/` (when branch dataframes are present)
+- **Block 3 — label phase:** `results/block3_results/label/<Patient_ID>/`
+- **Block 3 — segment stenosis phase:** `results/block3_results/segment stenosis/<Patient_ID>/`
+- **Block 3 — CAD-RADS phase:** `results/block3_results/cad-rads/<Patient_ID>/`
+- **Block 4 session pointer:** `results/current_session.json`
 
-Re-running for the same patient **overwrites** that patient’s Block 1 folder and both Block 2 folders (no duplicate artifacts).
+At the end of execution, the Streamlit app is launched automatically and opened in the browser at `http://localhost:8501`.
+
+Re-running for the same patient **overwrites** that patient’s Block 1/2/3 outputs (no duplicate artifacts for that sample), while keeping other patients' folders intact. `results/current_session.json` is always updated to the latest executed patient.
 
 ### Running Block 1 Standalone
 
@@ -287,18 +326,25 @@ UPF_TFGRepository/
 ├── src/
 │   ├── _pipeline.py                  # Main entrypoint — chains all blocks + shared log style
 │   ├── pipeline_log.py               # Concise banners / phase lines / footers for terminal logs
+│   ├── viewer/
+│   │   └── app.py                    # Streamlit dashboard entrypoint (reads current_session.json)
 │   └── blocks/
 │       ├── __init__.py
 │       ├── _01_extraction.py         # Block 1: Hybrid centerline extraction
 │       ├── _02_stenosis.py           # Block 2: Area + reference + %AS + merge (single module)
-│       ├── _03_.py                   # Block 3: CAD-RADS scoring (planned)
-│       └── _04_.py                   # Block 4: Visualization dashboard (planned)
+│       ├── _03_cad-rats.py           # Block 3: Label + segment stenosis + CAD-RADS exports
+│       └── _04_visualization.py      # Block 4: Streamlit launch + session persistence
 ├── results/
 │   ├── block1_results/
 │   │   └── <Patient_ID>/             # Global/artery/branch data + centerlines + surfaces + QC figures
 │   └── block2_results/
 │       ├── area/<Patient_ID>/        # Area-mapped tables + area figures
 │       └── stenosis/<Patient_ID>/    # Enriched branches + total_df + %AS figures
+│   ├── block3_results/
+│   │   ├── label/<Patient_ID>/             # Label-enriched exports + total tables
+│   │   ├── segment stenosis/<Patient_ID>/  # Segment-level summaries
+│   │   └── cad-rads/<Patient_ID>/          # CAD-RADS report + patient ID card
+│   └── current_session.json          # Last pipeline execution patient context for viewer
 ├── maren work/                       # Reference notebooks from Maren Clapers
 ├── CONTEXT.md                        # Clinical context and workflow documentation
 ├── DIARY.md                          # Chronological development logbook

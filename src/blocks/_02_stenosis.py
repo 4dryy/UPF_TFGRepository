@@ -52,6 +52,7 @@ DATA_ROOT = PROJECT_ROOT / "data"
 BLOCK1_PATIENT_DIR_ROOT = PROJECT_ROOT / "results" / "block1_results"
 BLOCK2_AREA_PATIENT_DIR_ROOT = PROJECT_ROOT / "results" / "block2_results" / "area"
 BLOCK2_STENOSIS_PATIENT_DIR_ROOT = PROJECT_ROOT / "results" / "block2_results" / "stenosis"
+BLOCK2_AREA_STENOSIS_PLOTS_ROOT = PROJECT_ROOT / "results" / "block2_results" / "area_stenosis_plots"
 
 # Stenosis reference / merge / %AS figures (``_05_sq_reference_values`` notebook parity)
 # WINDOW_MM = 10.0
@@ -476,60 +477,77 @@ def _histogram_with_max_vline(
     plt.close(fig)
 
 
-def _bar_metric_along_branch(
+def _plot_area_stenosis_profile_along_branch(
     df: pd.DataFrame,
-    value_col: str,
     *,
     out_path: Path,
     title: str,
-    ylabel: str,
-    color: str,
 ) -> None:
     sdf = _order_branch_like_centerline(df).reset_index(drop=True)
-    if value_col not in sdf.columns:
+    if "Area" not in sdf.columns or "pct_AS" not in sdf.columns:
         return
-    y = sdf[value_col].to_numpy(dtype=float)
-    n = len(y)
+
+    y_area = sdf["Area"].to_numpy(dtype=float)
+    y_pct = sdf["pct_AS"].to_numpy(dtype=float)
+    n = len(sdf)
     if n == 0:
         return
+
     x = np.arange(n)
-    fig_w = float(np.clip(6.0 + 0.035 * n, 8.5, 22.0))
-    fig, ax = plt.subplots(figsize=(fig_w, 4.8), dpi=160)
+    fig_w = float(np.clip(8.0 + 0.03 * n, 10.5, 22.0))
+    fig, (ax_a, ax_p) = plt.subplots(
+        2,
+        1,
+        figsize=(fig_w, 6.8),
+        dpi=165,
+        sharex=True,
+        gridspec_kw={"height_ratios": [1.05, 1.0], "hspace": 0.14},
+    )
     fig.patch.set_facecolor("#fafafa")
-    ax.set_facecolor("#fcfcfc")
-    ax.bar(x, y, width=0.92, color=color, edgecolor="white", linewidth=0.4, align="center")
-    ax.set_xlabel("Centerline point index (proximal→distal)", fontsize=11)
-    ax.set_ylabel(ylabel, fontsize=11)
-    ax.set_title(title, fontsize=12, fontweight="bold", pad=10)
-    fm = np.isfinite(y)
-    if fm.any():
-        cand = np.flatnonzero(fm)
-        sub_max = np.argmax(y[cand])
-        iy = int(cand[sub_max])
-        ymax = float(y[iy])
-        y_rng = np.nanmax(y[fm]) - np.nanmin(y[fm]) if np.nanmax(y[fm]) != np.nanmin(y[fm]) else abs(ymax) + 1e-6
-        off_y = ymax + 0.08 * y_rng
-        note = (
-            f"Max {ymax:.1f}%"
-            if value_col.lower() == "pct_as"
-            else f"Max {ymax:.2f} mm²"
+    ax_a.set_facecolor("#fcfcfc")
+    ax_p.set_facecolor("#fcfcfc")
+    fig.suptitle(title, fontsize=12, fontweight="bold")
+
+    ax_a.bar(x, y_area, width=0.92, color="#388e3c", edgecolor="white", linewidth=0.35, align="center")
+    ax_a.set_ylabel("Area (mm²)", fontsize=11)
+    ax_a.grid(axis="y", alpha=0.35, linestyle=":")
+    fa = np.isfinite(y_area)
+    if fa.any():
+        c_a = np.flatnonzero(fa)
+        imx_a = int(c_a[np.argmax(y_area[c_a])])
+        ax_a.scatter(
+            imx_a,
+            y_area[imx_a],
+            color="#bf360c",
+            s=54,
+            zorder=5,
+            edgecolors="white",
+            linewidths=0.6,
         )
-        ax.annotate(
-            note,
-            xy=(iy, ymax),
-            xytext=(iy, off_y),
-            fontsize=9,
-            ha="center",
-            arrowprops=dict(arrowstyle="-", color="#c62828", lw=0.85),
-            color="#37474f",
+
+    ax_p.bar(x, y_pct, width=0.92, color="#fb8c00", edgecolor="white", linewidth=0.35, align="center")
+    ax_p.set_ylabel("% area stenosis (pct_AS)", fontsize=11)
+    ax_p.set_xlabel("Centerline point index (proximal→distal)", fontsize=11)
+    ax_p.grid(axis="y", alpha=0.35, linestyle=":")
+    fp = np.isfinite(y_pct)
+    if fp.any():
+        c_p = np.flatnonzero(fp)
+        imx_p = int(c_p[np.argmax(y_pct[c_p])])
+        ax_p.scatter(
+            imx_p,
+            y_pct[imx_p],
+            color="#b71c1c",
+            s=54,
+            zorder=5,
+            edgecolors="white",
+            linewidths=0.6,
         )
-        ax.scatter([iy], [ymax], s=52, color="#c62828", zorder=5, edgecolors="white", linewidths=0.6)
-    ax.grid(True, axis="y", alpha=0.35, linestyle=":")
+
     if n > 80:
-        ax.set_xticks([])
+        ax_p.set_xticks([])
     else:
-        ax.set_xticks(x[:: max(1, n // 25)])
-    fig.tight_layout()
+        ax_p.set_xticks(x[:: max(1, n // 25)])
+    fig.subplots_adjust(top=0.90, bottom=0.08, left=0.09, right=0.97)
     fig.savefig(out_path, bbox_inches="tight", facecolor=fig.patch.get_facecolor())
     plt.close(fig)
 
@@ -609,7 +627,8 @@ def run_block2(patient_id: str, block1_dir: Path | None = None) -> Block2Outputs
 
     out_area_dir = BLOCK2_AREA_PATIENT_DIR_ROOT / sample_name
     out_stenosis_dir = BLOCK2_STENOSIS_PATIENT_DIR_ROOT / sample_name
-    for patient_root in (out_area_dir, out_stenosis_dir):
+    out_area_stenosis_plots_dir = BLOCK2_AREA_STENOSIS_PLOTS_ROOT / sample_name
+    for patient_root in (out_area_dir, out_stenosis_dir, out_area_stenosis_plots_dir):
         if patient_root.exists():
             shutil.rmtree(patient_root)
 
@@ -745,15 +764,6 @@ def run_block2(patient_id: str, block1_dir: Path | None = None) -> Block2Outputs
                 xlabel="Cross-sectional area (mm²)",
                 color="#1b5e20",
             )
-            _bar_metric_along_branch(
-                df_b,
-                "Area",
-                out_path=out_branch_fig_dir / f"bar_Area_branch_{bid}_{sample_name}.png",
-                title=f"{sample_name} · {bid} · Area along centerline",
-                ylabel="Area (mm²)",
-                color="#388e3c",
-            )
-
     if branch_map_modes:
         mc = Counter(branch_map_modes)
         mode_summary = ", ".join(f"{k}×{v}" for k, v in sorted(mc.items()))
@@ -777,7 +787,14 @@ def run_block2(patient_id: str, block1_dir: Path | None = None) -> Block2Outputs
         out_stenosis_branches_df_dir = out_stenosis_dir / "branches" / "dataframes"
         out_stenosis_fig_dir = out_stenosis_dir / "figures"
         out_stenosis_branch_fig_dir = out_stenosis_dir / "branches" / "figures"
-        for d in (out_stenosis_dir, out_stenosis_branches_df_dir, out_stenosis_fig_dir, out_stenosis_branch_fig_dir):
+        out_area_stenosis_branch_fig_dir = out_area_stenosis_plots_dir / "branches" / "figures"
+        for d in (
+            out_stenosis_dir,
+            out_stenosis_branches_df_dir,
+            out_stenosis_fig_dir,
+            out_stenosis_branch_fig_dir,
+            out_area_stenosis_branch_fig_dir,
+        ):
             d.mkdir(parents=True, exist_ok=True)
 
         log_detail(
@@ -862,13 +879,10 @@ def run_block2(patient_id: str, block1_dir: Path | None = None) -> Block2Outputs
                 xlabel="% area stenosis (pct_AS)",
                 color="#3949ab",
             )
-            _bar_metric_along_branch(
+            _plot_area_stenosis_profile_along_branch(
                 dfb_w,
-                "pct_AS",
-                out_path=out_stenosis_branch_fig_dir / f"bar_pct_AS_branch_{bid}_{sample_name}.png",
-                title=f"{sample_name} · {bid} · %AS along centerline",
-                ylabel="% area stenosis (pct_AS)",
-                color="#fb8c00",
+                out_path=out_area_stenosis_branch_fig_dir / f"fig_area_stenosis_branch_{bid}_{sample_name}.png",
+                title=f"{sample_name} — {bid} ({len(dfb_w)} points)",
             )
 
         log_detail(logger, "%%AS figures: 1 tree + %d branch → %s", n_br_st, short_path(out_stenosis_dir))
