@@ -365,6 +365,39 @@ Every work session must be recorded using the following structure:
 
 ---
 
+### 2026-05-09 — Block 4 dashboard: dual interactive 3D LCA/RCA visualization
+
+* **🎯 Objectives:** Move the Streamlit app beyond placeholder content by implementing the first major clinical view: a patient-specific, side-by-side 3D visualization of the left and right coronary trees with outer lumen mesh and colored centerline, suitable for iterative refinement later.
+
+* **✅ Progress & Tasks Completed:**
+  * Added **`src/viewer/plots.py`** with **`create_3d_artery_plot(mesh_vtp_path, centerline_df, color_variable, …)`**:
+    * Loads artery **surface** `.vtp` with **PyVista**, converts triangles to **Plotly** `Mesh3d` (translucent grey hull, `hoverinfo='skip'`).
+    * Draws **centerline** as **Plotly** `Scatter3d` (`lines+markers`) from **`Px` / `Py` / `Pz`**, with dynamic color from **`pct_AS`** (Reds) or **`Area`** (Viridis).
+    * Hover text includes segment id/name (using **`Segment_Name`** when present, else AHA-style labels from **`Segment_ID`**), **Area**, and **%AS**.
+    * Scene styling: minimal axes, **`aspectmode='data'`**, tight margins.
+  * Expanded **`src/viewer/app.py`**:
+    * **Global control:** horizontal radio to switch color mapping between **%AS** and **Area** (updates both plots on rerun).
+    * **Two columns:** **LCA** and **RCA** subheaders; each loads **Block 1** meshes (`surface_LCA.vtp`, `surface_RCA.vtp`) and **`total_df_<patient_id>.xlsx`** from **`results/block3_results/label/`** (fallback to **`results/block2_results/stenosis/`** if needed).
+    * **Artery-specific** dataframe filtering via **`Artery_Type`**; point order preserved using **`Branch_ID` / `gd` / `Path_Point_Index`** when available.
+    * **Per-artery “Reset view”** (session-state key bump to remount Plotly figures) plus Plotly toolbar for zoom/reset; **`scrollZoom`** enabled in chart config.
+    * **Error handling:** `try`/`except` with user-facing warnings if mesh/table is missing or loading fails.
+  * Added **`src/viewer/__init__.py`** so `src.viewer` is a proper package.
+  * **Manual validation:** Confirmed both arteries render and **3D interaction** behaves well; noted follow-up tweaks for a future session.
+
+* **🐛 Bugs & Challenges:** *None blocking for this iteration* — optional refinements (camera defaults, color scales, hover formatting) deferred to next session.
+
+* **💡 Key Decisions:**
+  * **Plotly in Streamlit** for lightweight, fully interactive 3D in the browser without embedding a second VTK window.
+  * **Single merged table** (`total_df_*.xlsx`) as the centerline + metric source keeps the viewer aligned with Block 2/3 pipeline outputs.
+  * **Dual independent charts** so LCA and RCA can be manipulated separately.
+
+* **⏭️ Next Steps:**
+  * Refine visualization details (styling, layout, clinical labels) based on review.
+  * Add further panels: CAD-RADS summary, segment/branch tables, static figures from `results/`.
+  * Consider a small data-access module to centralize path resolution and column validation.
+
+---
+
 ## Acronym Legend
 
 | Acronym | Definition |
