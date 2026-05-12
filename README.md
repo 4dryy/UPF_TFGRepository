@@ -60,7 +60,7 @@ The system follows a strict **4-block modular architecture**. Each block is a se
 | **B1** | Automated Anatomy Extraction | Completed / Refactored |
 | **B2** | Geometric Stenosis Quantification | Implemented: sectional area + reference window + **%AS** + merge |
 | **B3** | Labeling + Segment Stenosis + CAD-RADS Scoring | Implemented in production pipeline |
-| **B4** | Visualization Dashboard | Implemented (launcher + session handoff + dual interactive 3D LCA/RCA; further panels TBD) |
+| **B4** | Visualization Dashboard | Implemented: dual 3D LCA/RCA + **branch-path** 3D + along-branch **%AS/Area** bar charts + session UI polish (see Block 4 section) |
 
 ---
 
@@ -126,11 +126,12 @@ The table below details the internal phases of each block. This table serves as 
     <td bgcolor="#4CAF50">Session Persistence</td>
     <td bgcolor="#4CAF50">Streamlit Base UI Scaffold</td>
     <td bgcolor="#4CAF50">Dual 3D LCA/RCA (mesh + centerline)</td>
+    <td bgcolor="#4CAF50">Branch-path 3D + along-branch charts</td>
     <td>Further Results Panels</td>
     <td>Validation</td>
   </tr>
   <tr>
-    <td colspan="6"><em>Status: First clinical view online — interactive Plotly 3D per artery with %AS/Area coloring. Additional dashboards and polish ongoing.</em></td>
+    <td colspan="7"><em>Status: Interactive Plotly views for full trees and per-branch stenosis/area profiles; CAD-RADS / static figure panels still planned.</em></td>
   </tr>
 </table>
 
@@ -234,11 +235,13 @@ Block 4 provides the bridge between pipeline execution and interactive visualiza
 
 **Dashboard content (current):**
 
-- **Dual 3D view:** two columns — **LCA** (left) and **RCA** (right). Each shows a translucent outer lumen mesh (from Block 1 `surface_LCA.vtp` / `surface_RCA.vtp`, via PyVista → Plotly `Mesh3d`) and the colored **centerline** (from `total_df_<Patient_ID>.xlsx` under `results/block3_results/label/`, with Block 2 stenosis export as fallback).
-- **Global control:** radio selector to color the centerline by **% area stenosis (`pct_AS`)** or **cross-sectional area (`Area`)** (Plotly colorscales Reds / Viridis).
-- **Interaction:** zoom/pan/rotate per chart; per-artery **Reset view**; hover tooltips include segment name/ID, Area, and %AS where available.
+- **Dual 3D view (full tree):** two columns — **LCA** and **RCA**. Each shows a translucent outer lumen mesh (Block 1 `surface_*.vtp`, PyVista → Plotly `Mesh3d`) and the colored **centerline** from `total_df_<Patient>.xlsx` (`results/block3_results/label/`, with Block 2 stenosis fallback). Color scale: **Reds** for **%AS**, **Viridis** for **Area**.
+- **Global controls:** large **%AS** vs **Area** toggle buttons (orange accent; unselected state shown as neutral grey). **Reset view** per artery (cyan, Sant Pau–aligned styling). Hover includes segment, Area, and %AS where available.
+- **Coronary branch paths (second section):** horizontal rule separates this block from the dual view. **LCA/RCA** selector, **branch list**, and a **third 3D figure** that shows the full branch centerline tree in black with the **selected branch** highlighted in **Reds** by `pct_AS` (limits from pooled branch points). Data: per-branch spreadsheets under `results/block3_results/label/<Patient>/branches/dataframes/`.
+- **Along-branch metrics:** stacked **interactive Plotly bar charts** (transparent background): **Area** (top, blue `#0092c7`) and **%AS** (bottom, orange `#f57c00`) vs centerline point index (proximal→distal), driven by the same branch tables. **Maximum finite %AS** on the branch is marked with **purple** bars on both subplots and a **purple diamond** on the branch 3D path; hover shows %AS and Area at each point (and `gd` when present).
+- **Footer:** author, degree, and TFG line are **center**-aligned in the main column.
 
-Plotting helpers live in **`src/viewer/plots.py`** (`create_3d_artery_plot`). Additional panels (CAD-RADS summary, static figures, etc.) are planned next.
+Plotting helpers: **`src/viewer/plots.py`** — `create_3d_artery_plot`, `create_3d_mesh_branch_path_highlight`, `discover_block3_label_branch_xlsx`, `load_concat_branch_centerlines`, `create_branch_centerline_metric_bars`, plus shared branch sorting/extrema helpers. Further panels (CAD-RADS summary, static exports, etc.) remain planned.
 
 ---
 
@@ -333,8 +336,8 @@ UPF_TFGRepository/
 │   ├── _pipeline.py                  # Main entrypoint — chains all blocks + shared log style
 │   ├── pipeline_log.py               # Concise banners / phase lines / footers for terminal logs
 │   ├── viewer/
-│   │   ├── app.py                    # Streamlit UI — session, controls, dual 3D LCA/RCA
-│   │   └── plots.py                  # Plotly 3D builders (mesh + centerline traces)
+│   │   ├── app.py                    # Streamlit UI — session, controls, dual 3D, branch-path section, bar charts
+│   │   └── plots.py                  # Plotly 3D + branch bar figures (mesh, centerline, branch highlight, metrics)
 │   └── blocks/
 │       ├── __init__.py
 │       ├── _01_extraction.py         # Block 1: Hybrid centerline extraction

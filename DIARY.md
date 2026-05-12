@@ -365,36 +365,32 @@ Every work session must be recorded using the following structure:
 
 ---
 
-### 2026-05-09 — Block 4 dashboard: dual interactive 3D LCA/RCA visualization
+### 2026-05-09 — Block 4: dual 3D trees, branch-path explorer, along-branch metrics, and UI polish
 
-* **🎯 Objectives:** Move the Streamlit app beyond placeholder content by implementing the first major clinical view: a patient-specific, side-by-side 3D visualization of the left and right coronary trees with outer lumen mesh and colored centerline, suitable for iterative refinement later.
+* **🎯 Objectives:** Deliver a usable clinical-first Streamlit dashboard: side-by-side full-tree 3D views, a dedicated **per-branch** exploration block aligned with Block 3 label exports, along-centerline **%AS** and **Area** profiles, clear **selected-state** controls, and readable footer metadata.
 
 * **✅ Progress & Tasks Completed:**
-  * Added **`src/viewer/plots.py`** with **`create_3d_artery_plot(mesh_vtp_path, centerline_df, color_variable, …)`**:
-    * Loads artery **surface** `.vtp` with **PyVista**, converts triangles to **Plotly** `Mesh3d` (translucent grey hull, `hoverinfo='skip'`).
-    * Draws **centerline** as **Plotly** `Scatter3d` (`lines+markers`) from **`Px` / `Py` / `Pz`**, with dynamic color from **`pct_AS`** (Reds) or **`Area`** (Viridis).
-    * Hover text includes segment id/name (using **`Segment_Name`** when present, else AHA-style labels from **`Segment_ID`**), **Area**, and **%AS**.
-    * Scene styling: minimal axes, **`aspectmode='data'`**, tight margins.
-  * Expanded **`src/viewer/app.py`**:
-    * **Global control:** horizontal radio to switch color mapping between **%AS** and **Area** (updates both plots on rerun).
-    * **Two columns:** **LCA** and **RCA** subheaders; each loads **Block 1** meshes (`surface_LCA.vtp`, `surface_RCA.vtp`) and **`total_df_<patient_id>.xlsx`** from **`results/block3_results/label/`** (fallback to **`results/block2_results/stenosis/`** if needed).
-    * **Artery-specific** dataframe filtering via **`Artery_Type`**; point order preserved using **`Branch_ID` / `gd` / `Path_Point_Index`** when available.
-    * **Per-artery “Reset view”** (session-state key bump to remount Plotly figures) plus Plotly toolbar for zoom/reset; **`scrollZoom`** enabled in chart config.
-    * **Error handling:** `try`/`except` with user-facing warnings if mesh/table is missing or loading fails.
-  * Added **`src/viewer/__init__.py`** so `src.viewer` is a proper package.
-  * **Manual validation:** Confirmed both arteries render and **3D interaction** behaves well; noted follow-up tweaks for a future session.
+  * **Dual 3D LCA/RCA (`src/viewer/app.py` + `create_3d_artery_plot` in `plots.py`):** translucent mesh + centerline colored by **`pct_AS`** (Reds) or **`Area`** (Viridis); percentile-based color limits; hovers with segment / Area / %AS; per-artery **Reset view**; `scrollZoom` in Plotly config.
+  * **Top controls:** replaced radio with large **orange** toggle buttons for **%AS vs Area**; **cyan** reset buttons (Sant Pau palette); **secondary** buttons styled as dark grey tiles so the active metric is obvious.
+  * **Branch-path section (new):** visual **separator** from the dual view; section title **Coronary branch paths**; **LCA/RCA** artery toggle; **branch picker** in a right column aligned with the 3D chart; data from `results/block3_results/label/<patient>/branches/dataframes/dataset_<artery>_B##_*.xlsx` via `discover_block3_label_branch_xlsx` + `load_concat_branch_centerlines`.
+  * **Branch 3D (`create_3d_mesh_branch_path_highlight`):** mesh + **black** tree centerline (slim markers) + **selected** branch in **Reds** by `pct_AS`; global color limits from pooled branch points.
+  * **Branch selection UX:** `st.button(..., on_click=...)` so the **3D branch plot updates on the first click** (fixes left-column-before-right Streamlit execution order).
+  * **Along-branch bar charts (`create_branch_centerline_metric_bars`):** two stacked **Plotly** subplots — **Area** on top (blue `#0092c7`), **%AS** below (orange `#f57c00`); shared x = centerline point index; transparent paper/plot background; `hovermode='x unified'`; cross-metric values (and `gd`) in hovers.
+  * **Max-stenosis highlight:** single branch index = **argmax finite %AS**; **purple** (`#a855f7`) **diamond** on branch 3D + **purple** bars at that index on **both** bar rows; hover on 3D marker includes **Area at that point**.
+  * **Layout/CSS:** section spacing, branch-panel spacer, Inter typography; centered **footer** (author, degree, TFG) via `.footer-app-meta` + `html.escape`.
 
-* **🐛 Bugs & Challenges:** *None blocking for this iteration* — optional refinements (camera defaults, color scales, hover formatting) deferred to next session.
+* **🐛 Bugs & Challenges:**
+  * *Issue:* Branch plot needed **two clicks** to update after picking a branch.
+  * *Cause:* Streamlit runs the **left** column (3D) before the **right** column (branch buttons), so `session_state` was updated too late for the same rerun.
+  * *Fix:* **`on_click` callback** updates `branch_viz_selected` at rerun start before the script body runs.
 
 * **💡 Key Decisions:**
-  * **Plotly in Streamlit** for lightweight, fully interactive 3D in the browser without embedding a second VTK window.
-  * **Single merged table** (`total_df_*.xlsx`) as the centerline + metric source keeps the viewer aligned with Block 2/3 pipeline outputs.
-  * **Dual independent charts** so LCA and RCA can be manipulated separately.
+  * One **max %AS** landmark only (no separate max-Area marker) so clinicians focus on peak stenosis and read **Area at that same point** from hovers and the Area bar.
+  * **Plotly** end-to-end for branch section (no static Matplotlib) for pan/zoom and consistent UX with the upper views.
 
 * **⏭️ Next Steps:**
-  * Refine visualization details (styling, layout, clinical labels) based on review.
-  * Add further panels: CAD-RADS summary, segment/branch tables, static figures from `results/`.
-  * Consider a small data-access module to centralize path resolution and column validation.
+  * Continue visualization: CAD-RADS / segment summaries, optional static figures from `results/`, further layout review with clinical readers.
+  * Optional: small path-helper module for viewer `Path` resolution and column validation.
 
 ---
 
