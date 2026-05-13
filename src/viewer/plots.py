@@ -31,6 +31,25 @@ _BRANCH_REF_WINDOW_GREEN = "#2e7d32"
 _SEGMENT_3D_SELECTED_PATH = "#1c1c1c"  # selected segment overlay (line + markers; dark, not amber)
 _SEGMENT_UNASSIGNED_MARKER = "#9e9e9e"
 
+# %AS on 3D centerlines: custom greens — low stenosis stays a **visible light green** (not near-white).
+_PCT_AS_3D_COLORSCALE: list[list[float | str]] = [
+    [0.0, "rgb(175, 222, 175)"],
+    [0.22, "rgb(138, 204, 138)"],
+    [0.45, "rgb(92, 176, 95)"],
+    [0.68, "rgb(45, 134, 55)"],
+    [1.0, "rgb(8, 78, 22)"],
+]
+
+# Area on 3D centerlines: same idea as %AS — low values stay a **visible light blue** (not near-white).
+_AREA_3D_COLORSCALE: list[list[float | str]] = [
+    [0.0, "rgb(176, 214, 246)"],
+    [0.22, "rgb(138, 187, 240)"],
+    [0.45, "rgb(92, 156, 226)"],
+    [0.68, "rgb(45, 118, 196)"],
+    [1.0, "rgb(10, 62, 118)"],
+]
+
+
 def _discrete_plotly_color_list() -> tuple[str, ...]:
     parts: list[str] = []
     for name in ("Plotly", "Dark24", "Set2", "Pastel"):
@@ -121,13 +140,21 @@ def _format_area(a: Any) -> str:
 
 
 def _format_pct(p: Any) -> str:
+    """Format %AS for UI; negative values are shown as zero (not meaningful as stenosis)."""
     try:
         v = float(p)
     except (TypeError, ValueError):
         return "n/a"
     if not np.isfinite(v):
         return "n/a"
+    v = max(0.0, v)
     return f"{v:.2f}"
+
+
+def _pct_as_viz_array(pct: np.ndarray | pd.Series) -> np.ndarray:
+    """Clamp negative %AS to 0 for colors, bars, and argmax (NaN preserved)."""
+    a = np.asarray(pd.to_numeric(pct, errors="coerce"), dtype=float)
+    return np.where(np.isfinite(a), np.maximum(a, 0.0), np.nan)
 
 
 def _segment_display_name(row: pd.Series) -> str:
@@ -299,10 +326,11 @@ def create_3d_mesh_branch_path_highlight(
 ) -> go.Figure:
     """
     Artery mesh + full centerline tree (small black markers) with **one** branch path
-    highlighted by ``pct_AS`` (Reds). Color limits use the 5th–95th percentile of finite
-    ``pct_AS`` over **all** concatenated branch points.
+    highlighted by ``pct_AS`` (custom light-to-deep green scale; low values stay visibly green). Color limits use the 5th–95th percentile of finite
+    **display** %AS (values ``< 0`` are treated as ``0`` for the colormap) over **all**
+    concatenated branch points.
 
-    Adds a **purple diamond** at the branch centerline point with **maximum finite %AS**
+    Adds a **purple diamond** at the branch centerline point with **maximum display %AS**
     (Area at that point is shown in the marker hover when available).
 
     **Green circles** mark the proximal/distal reference centerline samples used for ``A_ref``
@@ -331,9 +359,10 @@ def create_3d_mesh_branch_path_highlight(
         raise ValueError(f"No rows for selected branch {sel!r}.")
 
     raw_all = pd.to_numeric(d["pct_AS"], errors="coerce").to_numpy(dtype=float)
+    viz_all = _pct_as_viz_array(raw_all)
     valid_all = np.isfinite(raw_all)
     if valid_all.any():
-        cmin, cmax = _percentile_clim(raw_all[valid_all], 5.0, 95.0)
+        cmin, cmax = _percentile_clim(viz_all[valid_all], 5.0, 95.0)
     else:
         cmin, cmax = 0.0, 1.0
 
@@ -399,12 +428,12 @@ def create_3d_mesh_branch_path_highlight(
         )
     )
 
-    # --- Selected branch: %AS coloring (Reds) ---
+    # --- Selected branch: %AS coloring (sequential greens) ---
     g_sel = _sort_branch_rows(d_sel)
     xs_s = g_sel["Px"].to_numpy(dtype=float)
     ys_s = g_sel["Py"].to_numpy(dtype=float)
     zs_s = g_sel["Pz"].to_numpy(dtype=float)
-    c_s = pd.to_numeric(g_sel["pct_AS"], errors="coerce").to_numpy(dtype=float)
+    c_s = _pct_as_viz_array(g_sel["pct_AS"])
 
     hover_sel: list[str] = []
     for _, row in g_sel.iterrows():
@@ -420,7 +449,7 @@ def create_3d_mesh_branch_path_highlight(
     marker_sel: dict[str, Any] = dict(
         size=8,
         color=c_s,
-        colorscale="Reds",
+        colorscale=_PCT_AS_3D_COLORSCALE,
         cmin=cmin,
         cmax=cmax,
         showscale=True,
@@ -442,7 +471,7 @@ def create_3d_mesh_branch_path_highlight(
             y=ys_s,
             z=zs_s,
             mode="lines+markers",
-            line=dict(color=c_s, colorscale="Reds", cmin=cmin, cmax=cmax, width=6.5, showscale=False),
+            line=dict(color=c_s, colorscale=_PCT_AS_3D_COLORSCALE, cmin=cmin, cmax=cmax, width=6.5, showscale=False),
             marker=marker_sel,
             text=hover_sel,
             hovertemplate="%{text}<extra></extra>",
@@ -451,7 +480,7 @@ def create_3d_mesh_branch_path_highlight(
     )
 
     # --- Reference window samples at max %AS (green circles); then purple diamond on top ---
-    pct_num = pd.to_numeric(g_sel["pct_AS"], errors="coerce").to_numpy(dtype=float)
+    pct_num = _pct_as_viz_array(g_sel["pct_AS"])
     idx_max_pct = _argmax_finite_index(pct_num)
     prox_i, dist_i = prox_dist_ref_indices_for_pct_as(g_sel, BRANCH_PCT_AS_REFERENCE_WINDOW_MM)
 
@@ -566,7 +595,10 @@ def create_3d_artery_plot(
     across the tree) + optional NaN marker cloud.
 
     Color scale for quantified points uses the 5th–95th percentile of ``color_variable``
-    (finite values only) as ``cmin``/``cmax``.
+    (finite values only) as ``cmin``/``cmax``. When ``color_variable`` is ``pct_AS``, values
+    below zero are floored to zero for coloring and limits, and colors use a custom
+    light-to-deep green ramp (low stenosis is visibly green, not near-white). When it is
+    ``Area``, colors use a matching light-to-deep **blue** ramp (low area is visibly blue).
     """
     path = Path(mesh_vtp_path)
     if not path.is_file():
@@ -605,15 +637,24 @@ def create_3d_artery_plot(
 
     d = centerline_df.copy()
     raw_color = pd.to_numeric(d[color_variable], errors="coerce").to_numpy(dtype=float)
+    if color_variable == "pct_AS":
+        plot_color = _pct_as_viz_array(raw_color)
+    else:
+        plot_color = raw_color
     valid_mask = np.isfinite(raw_color)
 
     # Global colormap limits from sample (5th–95th percentile of quantified points).
     if valid_mask.any():
-        cmin, cmax = _percentile_clim(raw_color[valid_mask], 5.0, 95.0)
+        cmin, cmax = _percentile_clim(plot_color[valid_mask], 5.0, 95.0)
     else:
         cmin, cmax = 0.0, 1.0
 
-    colorscale = "Reds" if color_variable == "pct_AS" else "Viridis"
+    if color_variable == "pct_AS":
+        colorscale: list[list[float | str]] | str = _PCT_AS_3D_COLORSCALE
+    elif color_variable == "Area":
+        colorscale = _AREA_3D_COLORSCALE
+    else:
+        colorscale = "Viridis"
     cb_title = "% area stenosis (pct_AS)" if color_variable == "pct_AS" else "Cross-sectional area (mm²)"
 
     traces: list[go.BaseTraceType] = [mesh_trace]
@@ -660,7 +701,10 @@ def create_3d_artery_plot(
                 xs_list.append(float(row["Px"]))
                 ys_list.append(float(row["Py"]))
                 zs_list.append(float(row["Pz"]))
-                c_list.append(float(pd.to_numeric(row[color_variable], errors="coerce")))
+                cv = float(pd.to_numeric(row[color_variable], errors="coerce"))
+                if color_variable == "pct_AS" and np.isfinite(cv):
+                    cv = max(0.0, cv)
+                c_list.append(cv)
                 hover_texts.append(
                     f"<b>{trace_name}</b><br>"
                     f"Artery: {_artery_type_display(row)}<br>"
@@ -780,6 +824,21 @@ def _find_df_column(df: pd.DataFrame, *candidates: str) -> str | None:
     return None
 
 
+def _symmetric_area_bar_base_and_height(area_y: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Build ``go.Bar`` kwargs so each cross-sectional area ``A`` is drawn from ``-A/2`` to ``+A/2``
+    (Plotly: ``base=-A/2``, ``y=A`` as the bar length), giving a symmetric “lumen profile” along
+    the ordered samples.
+    """
+    a = np.asarray(area_y, dtype=float)
+    base = np.full_like(a, np.nan, dtype=float)
+    height = np.full_like(a, np.nan, dtype=float)
+    m = np.isfinite(a)
+    height[m] = a[m]
+    base[m] = -0.5 * a[m]
+    return height, base
+
+
 def create_branch_centerline_metric_bars(
     centerline_df: pd.DataFrame,
     *,
@@ -788,7 +847,8 @@ def create_branch_centerline_metric_bars(
 ) -> go.Figure:
     """
     Interactive paired bar charts along the ordered centerline of **one** branch:
-    row 1 — ``Area`` (cyan blue); row 2 — ``pct_AS`` (orange). Transparent figure backgrounds.
+    row 1 — ``Area`` (cyan blue), each bar symmetric about ``y=0`` (``-A/2`` … ``+A/2`` for area ``A``);
+    row 2 — ``pct_AS`` (orange). Transparent figure backgrounds.
 
     Bars at the **maximum finite %AS** index are purple on **both** rows (same centerline
     point: peak stenosis and its cross-sectional area). Proximal / distal reference areas at the
@@ -822,7 +882,7 @@ def create_branch_centerline_metric_bars(
         raise ValueError("Selected branch has no centerline points.")
 
     x_labels = [str(i + 1) for i in range(n)]
-    pct_y = pd.to_numeric(sub[pct_col], errors="coerce").to_numpy(dtype=float)
+    pct_y = _pct_as_viz_array(pd.to_numeric(sub[pct_col], errors="coerce").to_numpy(dtype=float))
     area_y = pd.to_numeric(sub[area_col], errors="coerce").to_numpy(dtype=float)
 
     idx_max_pct = _argmax_finite_index(pct_y)
@@ -875,6 +935,8 @@ def create_branch_centerline_metric_bars(
     title_area = f"Cross-sectional area along centerline · {art} · {sel}"
     title_pct = f"% area stenosis along centerline · {art} · {sel}"
 
+    area_bar_h, area_bar_base = _symmetric_area_bar_base_and_height(area_y)
+
     fig = make_subplots(
         rows=2,
         cols=1,
@@ -886,7 +948,8 @@ def create_branch_centerline_metric_bars(
     fig.add_trace(
         go.Bar(
             x=x_labels,
-            y=area_y,
+            y=area_bar_h,
+            base=area_bar_base,
             name="Area",
             marker=dict(color=col_area, line=dict(width=0), opacity=0.92),
             customdata=custom_cd,
@@ -972,6 +1035,14 @@ def create_branch_centerline_metric_bars(
         idx_max_pct=int(idx_max_pct) if idx_max_pct is not None else None,
         chart_scope="branch",
     )
+    _add_max_pct_as_peak_bar_annotations(
+        fig,
+        n=n,
+        x_labels=x_labels,
+        idx_max_pct=int(idx_max_pct) if idx_max_pct is not None else None,
+        pct_y=pct_y,
+        area_y=area_y,
+    )
 
     return fig
 
@@ -1046,7 +1117,13 @@ def segment_rows_for_artery_ui(
             for _, row in sub.iterrows():
                 sid = int(row["Segment_ID"])
                 name = str(row.get("Segment_Name") or "").strip() or _segment_label(sid)
-                mx = float(row["Max_pct_AS"]) if pd.notna(row.get("Max_pct_AS")) else 0.0
+                if pd.notna(row.get("Max_pct_AS")):
+                    try:
+                        mx = max(0.0, float(row["Max_pct_AS"]))
+                    except (TypeError, ValueError):
+                        mx = 0.0
+                else:
+                    mx = 0.0
                 out.append((sid, name, mx))
             return out
 
@@ -1054,13 +1131,15 @@ def segment_rows_for_artery_ui(
     d["_sid"] = pd.to_numeric(d["Segment_ID"], errors="coerce").fillna(0).astype(int)
     d = d.loc[d["_sid"].isin(present)]
     pct = pd.to_numeric(d.get("pct_AS", np.nan), errors="coerce")
+    pct = np.where(np.isfinite(pct), np.maximum(pct, 0.0), np.nan)
     d = d.assign(_pct=pct)
     agg = d.groupby("_sid", as_index=False)["_pct"].max().rename(columns={"_sid": "Segment_ID", "_pct": "Max_pct_AS"})
     agg = agg.sort_values("Max_pct_AS", ascending=False, na_position="last")
     rows: list[tuple[int, str, float]] = []
     for _, row in agg.iterrows():
         sid = int(row["Segment_ID"])
-        rows.append((sid, _segment_label(sid), float(row["Max_pct_AS"]) if pd.notna(row["Max_pct_AS"]) else 0.0))
+        _mx = float(row["Max_pct_AS"]) if pd.notna(row["Max_pct_AS"]) else 0.0
+        rows.append((sid, _segment_label(sid), max(0.0, _mx)))
     return rows
 
 
@@ -1296,7 +1375,8 @@ def ordered_centerline_peak_reference_summary(
         return {"ok": False, "reason": "no_pct_col"}
 
     pct_y = pd.to_numeric(sub[pct_col], errors="coerce").to_numpy(dtype=float)
-    idx_max = _argmax_finite_index(pct_y)
+    pct_viz = _pct_as_viz_array(pct_y)
+    idx_max = _argmax_finite_index(pct_viz)
 
     def _area_row(ix: int) -> float | None:
         if area_col is None or ix < 0 or ix >= n:
@@ -1344,7 +1424,7 @@ def ordered_centerline_peak_reference_summary(
                     ix_dist = i_dist
                     area_dist = _area_row(i_dist)
 
-    max_pct = float(pct_y[idx_max]) if idx_max is not None and np.isfinite(pct_y[idx_max]) else None
+    max_pct = float(pct_viz[idx_max]) if idx_max is not None and np.isfinite(pct_viz[idx_max]) else None
     area_max = _area_row(int(idx_max)) if idx_max is not None else None
 
     prox_on_bar = dist_on_bar = True
@@ -1390,8 +1470,13 @@ def _add_peak_ref_area_row_annotations(
         return
     ap_ref = pk_summary.get("area_prox_ref")
     ad_ref = pk_summary.get("area_dist_ref")
-    ymax_a = float(np.nanmax(area_y)) if np.any(np.isfinite(area_y)) else 1.0
-    ymin_a = float(np.nanmin(area_y)) if np.any(np.isfinite(area_y)) else 0.0
+    _fin_a = np.isfinite(area_y)
+    if np.any(_fin_a):
+        _half_span = 0.5 * float(np.nanmax(np.abs(area_y[_fin_a])))
+        ymax_a = _half_span
+        ymin_a = -_half_span
+    else:
+        ymax_a, ymin_a = 1.0, -1.0
     span_a = max(ymax_a - ymin_a, 1e-9)
     y_lbl_off = 0.06 * span_a
 
@@ -1439,9 +1524,11 @@ def _add_peak_ref_area_row_annotations(
             return
         if not np.isfinite(rv):
             return
-        yb = float(area_y[bi])
-        if not np.isfinite(yb):
+        yb_full = float(area_y[bi])
+        if not np.isfinite(yb_full):
             return
+        # Area row uses symmetric bars about y=0; anchor callout at the upper extent (+|A|/2).
+        yb = 0.5 * abs(yb_full)
         extra = extra_html if not ref_on_bar else ""
         fig.add_annotation(
             x=x_labels[bi],
@@ -1501,6 +1588,88 @@ def _add_peak_ref_area_row_annotations(
             font=dict(color="#e8f5e9", size=11),
             align="center",
             row=1,
+            col=1,
+        )
+
+
+def _add_max_pct_as_peak_bar_annotations(
+    fig: go.Figure,
+    *,
+    n: int,
+    x_labels: list[str],
+    idx_max_pct: int | None,
+    pct_y: np.ndarray,
+    area_y: np.ndarray,
+) -> None:
+    """
+    Purple callouts (same structure as green ref boxes) on **Area** and **%AS** rows at the
+    peak-stenosis sample index, so the purple bars are easy to find when many points are similar.
+    """
+    if idx_max_pct is None:
+        return
+    bi = int(idx_max_pct)
+    if bi < 0 or bi >= n:
+        return
+
+    _purple = _BRANCH_EXTREMA_PURPLE
+    _bg = "rgba(48, 18, 72, 0.9)"
+    _font = "#f3e8ff"
+
+    # --- Row 1 (Area): symmetric bar top ---
+    _fa = np.isfinite(area_y)
+    if _fa.any():
+        _half_span = 0.5 * float(np.nanmax(np.abs(area_y[_fa])))
+        span_a = max(2.0 * _half_span, 1e-9)
+    else:
+        _half_span, span_a = 0.5, 1.0
+    y_lbl_off_a = 0.06 * span_a
+    a_full = float(area_y[bi]) if bi < len(area_y) else float("nan")
+    if np.isfinite(a_full):
+        y1 = 0.5 * abs(a_full) + y_lbl_off_a
+        fig.add_annotation(
+            x=x_labels[bi],
+            y=y1,
+            text=f"<b>Max %AS (peak)</b><br>Area {_format_area(a_full)} mm²",
+            showarrow=True,
+            arrowhead=2,
+            arrowsize=1,
+            arrowwidth=1,
+            arrowcolor=_purple,
+            ax=0,
+            ay=-50,
+            bgcolor=_bg,
+            bordercolor=_purple,
+            borderwidth=1,
+            borderpad=4,
+            font=dict(color=_font, size=11),
+            row=1,
+            col=1,
+        )
+
+    # --- Row 2 (%AS): bar top from baseline 0 ---
+    _fp = np.isfinite(pct_y)
+    ymax_p = float(np.nanmax(pct_y[_fp])) if _fp.any() else 0.0
+    span_p = max(ymax_p, 1.0)
+    y_lbl_off_p = 0.06 * span_p
+    pv = float(pct_y[bi]) if bi < len(pct_y) else float("nan")
+    if np.isfinite(pv):
+        fig.add_annotation(
+            x=x_labels[bi],
+            y=pv + y_lbl_off_p,
+            text=f"<b>Max %AS (peak)</b><br>{pv:.2f} %",
+            showarrow=True,
+            arrowhead=2,
+            arrowsize=1,
+            arrowwidth=1,
+            arrowcolor=_purple,
+            ax=0,
+            ay=-52,
+            bgcolor=_bg,
+            bordercolor=_purple,
+            borderwidth=1,
+            borderpad=4,
+            font=dict(color=_font, size=11),
+            row=2,
             col=1,
         )
 
@@ -1726,7 +1895,7 @@ def create_3d_mesh_segment_path_highlight(
         )
 
         area_col_hi = _find_df_column(g_hi, "Area")
-        pct_hi = pd.to_numeric(g_hi["pct_AS"], errors="coerce").to_numpy(dtype=float)
+        pct_hi = _pct_as_viz_array(g_hi["pct_AS"])
         idx_max_pct = _argmax_finite_index(pct_hi)
 
         if idx_max_pct is not None:
@@ -1795,7 +1964,8 @@ def create_segment_centerline_metric_bars(
 ) -> go.Figure:
     """
     Same layout as ``create_branch_centerline_metric_bars`` for **one AHA segment** (all points
-    with that ``Segment_ID`` in the artery table), ordered along the tree. Purple marks max %AS
+    with that ``Segment_ID`` in the artery table), ordered along the tree. **Area** bars are
+    symmetric about ``y=0`` (``-A/2`` … ``+A/2``). Purple marks max %AS
     on both Area and %AS rows. **Green** on the **Area** row only marks proximal / distal reference
     samples (± ``BRANCH_PCT_AS_REFERENCE_WINDOW_MM`` mm along branch geodesic ``gd`` when present,
     same as Block 2 / branch charts), per consecutive ``Branch_ID`` run, when those indices are valid
@@ -1830,7 +2000,7 @@ def create_segment_centerline_metric_bars(
         raise ValueError("Selected segment has no centerline points.")
 
     x_labels = [str(i + 1) for i in range(n)]
-    pct_y = pd.to_numeric(sub[pct_col], errors="coerce").to_numpy(dtype=float)
+    pct_y = _pct_as_viz_array(pd.to_numeric(sub[pct_col], errors="coerce").to_numpy(dtype=float))
     area_y = pd.to_numeric(sub[area_col], errors="coerce").to_numpy(dtype=float)
 
     idx_max_pct = _argmax_finite_index(pct_y)
@@ -1872,6 +2042,8 @@ def create_segment_centerline_metric_bars(
     title_area = f"Cross-sectional area along segment · {art} · {seg_title} (ID {sid})"
     title_pct = f"% area stenosis along segment · {art} · {seg_title} (ID {sid})"
 
+    area_bar_h, area_bar_base = _symmetric_area_bar_base_and_height(area_y)
+
     fig = make_subplots(
         rows=2,
         cols=1,
@@ -1883,7 +2055,8 @@ def create_segment_centerline_metric_bars(
     fig.add_trace(
         go.Bar(
             x=x_labels,
-            y=area_y,
+            y=area_bar_h,
+            base=area_bar_base,
             name="Area",
             marker=dict(color=col_area, line=dict(width=0), opacity=0.92),
             customdata=custom_cd,
@@ -1968,6 +2141,14 @@ def create_segment_centerline_metric_bars(
         idist=idist,
         idx_max_pct=int(idx_max_pct) if idx_max_pct is not None else None,
         chart_scope="segment",
+    )
+    _add_max_pct_as_peak_bar_annotations(
+        fig,
+        n=n,
+        x_labels=x_labels,
+        idx_max_pct=int(idx_max_pct) if idx_max_pct is not None else None,
+        pct_y=pct_y,
+        area_y=area_y,
     )
 
     return fig

@@ -6,12 +6,41 @@ from __future__ import annotations
 
 import base64
 import html
+import importlib
+import importlib.util
 import json
 import math
+import sys
 from pathlib import Path
 
 import pandas as pd
 import streamlit as st
+
+_VIEWER_PLOTS = "src.viewer.plots"
+
+
+def _ensure_viewer_plots_fresh() -> None:
+    """
+    Streamlit re-executes this script on each run, but Python keeps imported modules in
+    ``sys.modules``. Reload ``plots.py`` when its file mtime changes so visualization edits apply
+    without manually killing the Streamlit server.
+    """
+    spec = importlib.util.find_spec(_VIEWER_PLOTS)
+    if spec is None or not getattr(spec, "origin", None):
+        return
+    path = Path(str(spec.origin))
+    if not path.is_file():
+        return
+    mtime = path.stat().st_mtime
+    prev = st.session_state.get("_viewer_plots_mtime")
+    if _VIEWER_PLOTS not in sys.modules:
+        importlib.import_module(_VIEWER_PLOTS)
+    elif prev is not None and mtime != prev:
+        importlib.reload(sys.modules[_VIEWER_PLOTS])
+    st.session_state["_viewer_plots_mtime"] = mtime
+
+
+_ensure_viewer_plots_fresh()
 
 from src.viewer.plots import (
     BRANCH_PCT_AS_REFERENCE_WINDOW_MM,
@@ -1164,7 +1193,10 @@ def main() -> None:
                     _hl = html.escape(str(_cad.get("Highest_Stenosis_Location", "—")), quote=True)
                     try:
                         _hp = float(_cad.get("Highest_Stenosis_pct_AS"))
-                        _hp_s = html.escape(f"{_hp:.2f}", quote=True)
+                        if not math.isfinite(_hp):
+                            _hp_s = "—"
+                        else:
+                            _hp_s = html.escape(f"{max(0.0, _hp):.2f}", quote=True)
                     except (TypeError, ValueError):
                         _hp_s = "—"
                     _cad_html = [
@@ -1299,7 +1331,10 @@ def main() -> None:
                                 x = float(v)
                             except (TypeError, ValueError):
                                 return "—"
-                            return f"{x:.2f} %" if math.isfinite(x) else "—"
+                            if not math.isfinite(x):
+                                return "—"
+                            x = max(0.0, x)
+                            return f"{x:.2f} %"
 
                         _m_pct = html.escape(_fmt_pct_ui(_pk.get("max_pct_as")), quote=True)
                         _m_area = html.escape(_fmt_area_ui(_pk.get("area_at_max")), quote=True)

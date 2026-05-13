@@ -55,7 +55,14 @@ def run_block4(patient_id: str) -> None:
         return
 
     if _is_port_open(STREAMLIT_HOST, STREAMLIT_PORT):
-        sub(logger, "Streamlit already running on %s", STREAMLIT_URL)
+        sub(
+            logger,
+            "Streamlit already running on %s (same process keeps cached Python imports). "
+            "Use 'Always rerun' / refresh the page after editing viewer code, or stop the server "
+            "on port %s and run the pipeline again to guarantee the latest dashboard code.",
+            STREAMLIT_URL,
+            STREAMLIT_PORT,
+        )
         webbrowser.open_new_tab(STREAMLIT_URL)
         sub(logger, "Opening dashboard URL: %s", STREAMLIT_URL)
         return
