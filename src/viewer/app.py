@@ -7,22 +7,89 @@ from __future__ import annotations
 import base64
 import html
 import json
+import math
 from pathlib import Path
 
 import pandas as pd
 import streamlit as st
 
 from src.viewer.plots import (
+    BRANCH_PCT_AS_REFERENCE_WINDOW_MM,
     create_3d_artery_plot,
     create_3d_mesh_branch_path_highlight,
+    create_3d_mesh_segment_path_highlight,
     create_branch_centerline_metric_bars,
+    create_segment_centerline_metric_bars,
     discover_block3_label_branch_xlsx,
+    load_block3_cad_rads_patient_report_row,
+    load_block3_segment_stenosis_summary,
     load_concat_branch_centerlines,
+    segment_id_hex_colors,
+    segment_pct_as_peak_reference_summary,
+    segment_rows_for_artery_ui,
 )
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 VIEWER_FIGURES = Path(__file__).resolve().parent / "figures"
 SESSION_PATH = PROJECT_ROOT / "results" / "current_session.json"
+
+
+def _segment_button_label_text_color(css_color: str) -> str:
+    """Dark or light label for a filled segment button (handles #hex and rgb/rgba)."""
+    s = (css_color or "").strip()
+    r = g = b = 80
+    if s.startswith("#"):
+        h = s[1:]
+        if len(h) == 3:
+            h = "".join(c * 2 for c in h)
+        if len(h) == 6:
+            try:
+                r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+            except ValueError:
+                pass
+    elif s.lower().startswith("rgb"):
+        try:
+            i0 = s.index("(")
+            i1 = s.index(")")
+            parts = [p.strip() for p in s[i0 + 1 : i1].split(",")[:3]]
+            r, g, b = (int(float(parts[i])) for i in range(3))
+        except (ValueError, IndexError):
+            pass
+    lum = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255.0
+    return "#0d0d0d" if lum > 0.58 else "#ffffff"
+
+
+def _segment_pick_button_style_block(
+    artery: str, seg_rows: list[tuple[int, str, float]], id_to_hex: dict[int, str]
+) -> str:
+    """Per-segment Streamlit button colors (matches 3D discrete segment palette)."""
+    art = str(artery).strip().upper()
+    sel_bg = "#101010"
+    sel_bg_hover = "#1c1c1c"
+    chunks: list[str] = []
+    for sid, _name, _mx in seg_rows:
+        key_fragment = f"seg_pick_btn_{art}_{int(sid)}"
+        bc = id_to_hex.get(int(sid), "#404040")
+        tc = _segment_button_label_text_color(bc)
+        base = f'div[class*="st-key-"][class*="{key_fragment}"]'
+        chunks.append(
+            f"{base} button[kind=\"secondary\"]{{background-color:{bc}!important;"
+            f"background-image:none!important;border:1px solid rgba(255,255,255,0.28)!important;"
+            f"color:{tc}!important;box-shadow:none!important;}}"
+            f"{base} button[kind=\"secondary\"] p,{base} button[kind=\"secondary\"] span,"
+            f"{base} button[kind=\"secondary\"] div{{color:{tc}!important;}}"
+            f"{base} button[kind=\"secondary\"]:hover{{filter:brightness(1.12)!important;"
+            f"border-color:rgba(255,255,255,0.45)!important;}}"
+            f"{base} button[kind=\"primary\"]{{background-color:{sel_bg}!important;"
+            f"background-image:none!important;border:2px solid {bc}!important;"
+            f"box-shadow:inset 0 0 0 1px rgba(0,0,0,0.55)!important;color:#ececec!important;}}"
+            f"{base} button[kind=\"primary\"] p,{base} button[kind=\"primary\"] span,"
+            f"{base} button[kind=\"primary\"] div{{color:#ececec!important;}}"
+            f"{base} button[kind=\"primary\"]:hover{{background-color:{sel_bg_hover}!important;"
+            f"filter:none!important;border-color:{bc}!important;}}"
+        )
+    return "".join(chunks)
+
 
 _SANT_PAU_LOGO_NAMES = (
     "sant pau logo.png",
@@ -135,7 +202,8 @@ _APP_STYLE = """
         margin: 0.35rem 0 1rem 0 !important;
     }
     hr.title-below-rule {
-        margin: 0.5rem 0 0.55rem 0 !important;
+        /* Top margin + subtitle wrap padding-bottom: ~symmetric with title-above-rule gap (1rem) */
+        margin: 1rem 0 0.55rem 0 !important;
     }
     hr.section-divider-branch-viz {
         border: none !important;
@@ -153,6 +221,119 @@ _APP_STYLE = """
         font-size: 0;
         overflow: hidden;
         pointer-events: none;
+    }
+    .branch-viz-legend {
+        font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+        font-size: 0.875rem;
+        line-height: 1.45;
+        color: #bdbdbd !important;
+        margin: 0;
+        max-width: none;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .branch-viz-section-intro-fullwidth {
+        width: 100vw;
+        max-width: 100vw;
+        margin-left: calc(50% - 50vw);
+        margin-right: calc(50% - 50vw);
+        margin-bottom: 0.75rem;
+        padding-left: 1rem;
+        padding-right: 1rem;
+        padding-bottom: 1.25rem;
+        box-sizing: border-box;
+    }
+    .branch-viz-section-intro-fullwidth h3.branch-viz-section-title {
+        font-family: 'Inter', 'Segoe UI', system-ui, sans-serif !important;
+        text-align: center;
+        text-transform: uppercase;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        margin: 0 0 0.5rem 0 !important;
+        font-size: clamp(1.35rem, 1rem + 1.1vw, 1.65rem);
+        color: #e8e8e8 !important;
+    }
+    p.branch-viz-window-line {
+        font-family: 'Inter', 'Segoe UI', system-ui, sans-serif !important;
+        font-size: clamp(0.8rem, 0.72rem + 0.3vw, 0.9rem) !important;
+        color: #a3a3a3 !important;
+        line-height: 1.5 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        max-width: none !important;
+        box-sizing: border-box !important;
+        text-align: center;
+    }
+    p.branch-viz-window-line code {
+        font-size: inherit !important;
+        color: #d0d0d0 !important;
+        background: rgba(255,255,255,0.06);
+        padding: 0.08rem 0.3rem;
+        border-radius: 0.25rem;
+    }
+    /* Purple (left col) / green (right col): full column width, swatch + text row */
+    .branch-viz-legend-col-wrap {
+        width: 100%;
+        box-sizing: border-box;
+        margin: 0.35rem 0 0.5rem 0;
+        padding: 0;
+    }
+    .branch-viz-legend-col-wrap .branch-viz-legend-col-inner {
+        display: flex;
+        flex-direction: row;
+        align-items: flex-start;
+        justify-content: flex-start;
+        gap: 0.5rem;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        text-align: left;
+    }
+    .branch-viz-legend-col-wrap .branch-viz-legend-swatch {
+        flex-shrink: 0;
+        width: 0.65rem;
+        height: 0.65rem;
+        margin-top: 0.32em;
+        border-radius: 2px;
+    }
+    .branch-viz-legend-col-wrap .branch-viz-legend-col-text {
+        flex: 1 1 auto;
+        min-width: 0;
+        width: 100%;
+        max-width: none;
+        line-height: 1.5;
+        overflow-wrap: anywhere;
+        word-wrap: break-word;
+    }
+    /* Streamlit column markdown wrappers often cap width; stretch only our legend blocks */
+    div[data-testid="column"] [data-testid="stMarkdownContainer"]:has(.branch-viz-legend-col-wrap),
+    div[data-testid="column"] [data-testid="element-container"]:has(.branch-viz-legend-col-wrap) {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    div[data-testid="column"] [data-testid="stMarkdownContainer"]:has(.branch-viz-legend-col-wrap) > div,
+    div[data-testid="column"] [data-testid="element-container"]:has(.branch-viz-legend-col-wrap) > div {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    .branch-viz-legend code {
+        font-size: 0.82em;
+        color: #d0d0d0 !important;
+        background: rgba(255,255,255,0.06);
+        padding: 0.1rem 0.35rem;
+        border-radius: 0.25rem;
+    }
+    /* Segment 3D + bars: purple + green legend rows, full main width above the two columns */
+    .seg-viz-legends-fullwidth {
+        width: 100%;
+        max-width: 100%;
+        margin: 0 0 0.55rem 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+    .seg-viz-legends-fullwidth .branch-viz-legend-col-wrap {
+        margin: 0.2rem 0 0.35rem 0;
     }
     .branch-viz-artery-row-spacer {
         height: 0.85rem;
@@ -182,9 +363,11 @@ _APP_STYLE = """
         max-width: 100vw;
         margin-left: calc(50% - 50vw);
         margin-right: calc(50% - 50vw);
-        margin-bottom: 0.85rem;
+        margin-bottom: 0;
         padding-left: 1rem;
         padding-right: 1rem;
+        /* Padding avoids margin-collapse with hr.title-below-rule so gap stays visible */
+        padding-bottom: 0.75rem;
         box-sizing: border-box;
     }
     p.coronary-main-subtitle {
@@ -226,13 +409,10 @@ _APP_STYLE = """
     h3.artery-plot-title.branch-panel-heading {
         text-align: left !important;
     }
-    h3.artery-plot-title.branch-viz-heading-above-plot {
-        text-align: left !important;
-    }
-    /* Push right-column “Branches” down to line up with plot (after title + LCA/RCA on left) */
+    /* Minimal top offset for branch list column (section title/legend are full-width above). */
     .branch-panel-align-with-plot-spacer {
-        height: 10.85rem;
-        min-height: 10.85rem;
+        height: 0.45rem;
+        min-height: 0.45rem;
         margin: 0;
         padding: 0;
         line-height: 0;
@@ -244,7 +424,9 @@ _APP_STYLE = """
     [class*="st-key-"][class*="color_btn_pct_as"] button[kind="primary"],
     [class*="st-key-"][class*="color_btn_area"] button[kind="primary"],
     [class*="st-key-"][class*="branch_viz_btn_lca"] button[kind="primary"],
-    [class*="st-key-"][class*="branch_viz_btn_rca"] button[kind="primary"] {
+    [class*="st-key-"][class*="branch_viz_btn_rca"] button[kind="primary"],
+    [class*="st-key-"][class*="seg_viz_btn_lca"] button[kind="primary"],
+    [class*="st-key-"][class*="seg_viz_btn_rca"] button[kind="primary"] {
         font-family: 'Inter', 'Segoe UI', system-ui, sans-serif !important;
         font-weight: 700 !important;
         letter-spacing: 0.06em !important;
@@ -265,7 +447,9 @@ _APP_STYLE = """
     [class*="st-key-"][class*="color_btn_pct_as"] button[kind="secondary"],
     [class*="st-key-"][class*="color_btn_area"] button[kind="secondary"],
     [class*="st-key-"][class*="branch_viz_btn_lca"] button[kind="secondary"],
-    [class*="st-key-"][class*="branch_viz_btn_rca"] button[kind="secondary"] {
+    [class*="st-key-"][class*="branch_viz_btn_rca"] button[kind="secondary"],
+    [class*="st-key-"][class*="seg_viz_btn_lca"] button[kind="secondary"],
+    [class*="st-key-"][class*="seg_viz_btn_rca"] button[kind="secondary"] {
         font-family: 'Inter', 'Segoe UI', system-ui, sans-serif !important;
         font-weight: 700 !important;
         letter-spacing: 0.06em !important;
@@ -287,14 +471,20 @@ _APP_STYLE = """
     [class*="st-key-"][class*="color_btn_area"] button[kind="primary"] p,
     [class*="st-key-"][class*="branch_viz_btn_lca"] button[kind="primary"] p,
     [class*="st-key-"][class*="branch_viz_btn_rca"] button[kind="primary"] p,
+    [class*="st-key-"][class*="seg_viz_btn_lca"] button[kind="primary"] p,
+    [class*="st-key-"][class*="seg_viz_btn_rca"] button[kind="primary"] p,
     [class*="st-key-"][class*="color_btn_pct_as"] button[kind="primary"] span,
     [class*="st-key-"][class*="color_btn_area"] button[kind="primary"] span,
     [class*="st-key-"][class*="branch_viz_btn_lca"] button[kind="primary"] span,
     [class*="st-key-"][class*="branch_viz_btn_rca"] button[kind="primary"] span,
+    [class*="st-key-"][class*="seg_viz_btn_lca"] button[kind="primary"] span,
+    [class*="st-key-"][class*="seg_viz_btn_rca"] button[kind="primary"] span,
     [class*="st-key-"][class*="color_btn_pct_as"] button[kind="primary"] div,
     [class*="st-key-"][class*="color_btn_area"] button[kind="primary"] div,
     [class*="st-key-"][class*="branch_viz_btn_lca"] button[kind="primary"] div,
-    [class*="st-key-"][class*="branch_viz_btn_rca"] button[kind="primary"] div {
+    [class*="st-key-"][class*="branch_viz_btn_rca"] button[kind="primary"] div,
+    [class*="st-key-"][class*="seg_viz_btn_lca"] button[kind="primary"] div,
+    [class*="st-key-"][class*="seg_viz_btn_rca"] button[kind="primary"] div {
         font-family: inherit !important;
         font-weight: 700 !important;
         letter-spacing: 0.06em !important;
@@ -307,14 +497,20 @@ _APP_STYLE = """
     [class*="st-key-"][class*="color_btn_area"] button[kind="secondary"] p,
     [class*="st-key-"][class*="branch_viz_btn_lca"] button[kind="secondary"] p,
     [class*="st-key-"][class*="branch_viz_btn_rca"] button[kind="secondary"] p,
+    [class*="st-key-"][class*="seg_viz_btn_lca"] button[kind="secondary"] p,
+    [class*="st-key-"][class*="seg_viz_btn_rca"] button[kind="secondary"] p,
     [class*="st-key-"][class*="color_btn_pct_as"] button[kind="secondary"] span,
     [class*="st-key-"][class*="color_btn_area"] button[kind="secondary"] span,
     [class*="st-key-"][class*="branch_viz_btn_lca"] button[kind="secondary"] span,
     [class*="st-key-"][class*="branch_viz_btn_rca"] button[kind="secondary"] span,
+    [class*="st-key-"][class*="seg_viz_btn_lca"] button[kind="secondary"] span,
+    [class*="st-key-"][class*="seg_viz_btn_rca"] button[kind="secondary"] span,
     [class*="st-key-"][class*="color_btn_pct_as"] button[kind="secondary"] div,
     [class*="st-key-"][class*="color_btn_area"] button[kind="secondary"] div,
     [class*="st-key-"][class*="branch_viz_btn_lca"] button[kind="secondary"] div,
-    [class*="st-key-"][class*="branch_viz_btn_rca"] button[kind="secondary"] div {
+    [class*="st-key-"][class*="branch_viz_btn_rca"] button[kind="secondary"] div,
+    [class*="st-key-"][class*="seg_viz_btn_lca"] button[kind="secondary"] div,
+    [class*="st-key-"][class*="seg_viz_btn_rca"] button[kind="secondary"] div {
         font-family: inherit !important;
         font-weight: 700 !important;
         letter-spacing: 0.06em !important;
@@ -326,7 +522,9 @@ _APP_STYLE = """
     [class*="st-key-"][class*="color_btn_pct_as"] button[kind="primary"]:hover,
     [class*="st-key-"][class*="color_btn_area"] button[kind="primary"]:hover,
     [class*="st-key-"][class*="branch_viz_btn_lca"] button[kind="primary"]:hover,
-    [class*="st-key-"][class*="branch_viz_btn_rca"] button[kind="primary"]:hover {
+    [class*="st-key-"][class*="branch_viz_btn_rca"] button[kind="primary"]:hover,
+    [class*="st-key-"][class*="seg_viz_btn_lca"] button[kind="primary"]:hover,
+    [class*="st-key-"][class*="seg_viz_btn_rca"] button[kind="primary"]:hover {
         filter: none !important;
         background-color: #ffb74d !important;
         background-image: none !important;
@@ -337,7 +535,9 @@ _APP_STYLE = """
     [class*="st-key-"][class*="color_btn_pct_as"] button[kind="secondary"]:hover,
     [class*="st-key-"][class*="color_btn_area"] button[kind="secondary"]:hover,
     [class*="st-key-"][class*="branch_viz_btn_lca"] button[kind="secondary"]:hover,
-    [class*="st-key-"][class*="branch_viz_btn_rca"] button[kind="secondary"]:hover {
+    [class*="st-key-"][class*="branch_viz_btn_rca"] button[kind="secondary"]:hover,
+    [class*="st-key-"][class*="seg_viz_btn_lca"] button[kind="secondary"]:hover,
+    [class*="st-key-"][class*="seg_viz_btn_rca"] button[kind="secondary"]:hover {
         filter: none !important;
         background-color: #424242 !important;
         border-color: #757575 !important;
@@ -348,7 +548,9 @@ _APP_STYLE = """
     [class*="st-key-"][class*="color_btn_pct_as"] button[kind="primary"]:focus-visible,
     [class*="st-key-"][class*="color_btn_area"] button[kind="primary"]:focus-visible,
     [class*="st-key-"][class*="branch_viz_btn_lca"] button[kind="primary"]:focus-visible,
-    [class*="st-key-"][class*="branch_viz_btn_rca"] button[kind="primary"]:focus-visible {
+    [class*="st-key-"][class*="branch_viz_btn_rca"] button[kind="primary"]:focus-visible,
+    [class*="st-key-"][class*="seg_viz_btn_lca"] button[kind="primary"]:focus-visible,
+    [class*="st-key-"][class*="seg_viz_btn_rca"] button[kind="primary"]:focus-visible {
         filter: none !important;
         background-color: #ffb74d !important;
         outline: none !important;
@@ -357,7 +559,9 @@ _APP_STYLE = """
     [class*="st-key-"][class*="color_btn_pct_as"] button[kind="secondary"]:focus-visible,
     [class*="st-key-"][class*="color_btn_area"] button[kind="secondary"]:focus-visible,
     [class*="st-key-"][class*="branch_viz_btn_lca"] button[kind="secondary"]:focus-visible,
-    [class*="st-key-"][class*="branch_viz_btn_rca"] button[kind="secondary"]:focus-visible {
+    [class*="st-key-"][class*="branch_viz_btn_rca"] button[kind="secondary"]:focus-visible,
+    [class*="st-key-"][class*="seg_viz_btn_lca"] button[kind="secondary"]:focus-visible,
+    [class*="st-key-"][class*="seg_viz_btn_rca"] button[kind="secondary"]:focus-visible {
         filter: none !important;
         background-color: #424242 !important;
         outline: none !important;
@@ -366,7 +570,9 @@ _APP_STYLE = """
     [class*="st-key-"][class*="color_btn_pct_as"] button[kind="primary"]:active,
     [class*="st-key-"][class*="color_btn_area"] button[kind="primary"]:active,
     [class*="st-key-"][class*="branch_viz_btn_lca"] button[kind="primary"]:active,
-    [class*="st-key-"][class*="branch_viz_btn_rca"] button[kind="primary"]:active {
+    [class*="st-key-"][class*="branch_viz_btn_rca"] button[kind="primary"]:active,
+    [class*="st-key-"][class*="seg_viz_btn_lca"] button[kind="primary"]:active,
+    [class*="st-key-"][class*="seg_viz_btn_rca"] button[kind="primary"]:active {
         filter: none !important;
         background-color: #e65100 !important;
         color: #ffffff !important;
@@ -376,16 +582,30 @@ _APP_STYLE = """
     [class*="st-key-"][class*="color_btn_pct_as"] button[kind="secondary"]:active,
     [class*="st-key-"][class*="color_btn_area"] button[kind="secondary"]:active,
     [class*="st-key-"][class*="branch_viz_btn_lca"] button[kind="secondary"]:active,
-    [class*="st-key-"][class*="branch_viz_btn_rca"] button[kind="secondary"]:active {
+    [class*="st-key-"][class*="branch_viz_btn_rca"] button[kind="secondary"]:active,
+    [class*="st-key-"][class*="seg_viz_btn_lca"] button[kind="secondary"]:active,
+    [class*="st-key-"][class*="seg_viz_btn_rca"] button[kind="secondary"]:active {
         filter: none !important;
         background-color: #2d2d2d !important;
         color: #ffffff !important;
         box-shadow: none !important;
         outline: none !important;
     }
-    /* Branch list: selected = orange + ring, unselected = dark neutral */
+    /* Branch list (LCA_B01…): bold labels; segment grid keeps its own weight below */
     [class*="st-key-"][class*="branch_pick_btn_"] button[kind="primary"],
     [class*="st-key-"][class*="branch_pick_btn_"] button[kind="secondary"] {
+        font-family: 'Inter', 'Segoe UI', system-ui, sans-serif !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.03em !important;
+        line-height: 1.2 !important;
+        min-height: 2.5rem !important;
+        padding: 0.45rem 0.65rem !important;
+        border-radius: 0.45rem !important;
+        outline: none !important;
+        transition: background-color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease !important;
+    }
+    [class*="st-key-"][class*="seg_pick_btn_"] button[kind="primary"],
+    [class*="st-key-"][class*="seg_pick_btn_"] button[kind="secondary"] {
         font-family: 'Inter', 'Segoe UI', system-ui, sans-serif !important;
         font-weight: 600 !important;
         letter-spacing: 0.03em !important;
@@ -396,6 +616,16 @@ _APP_STYLE = """
         outline: none !important;
         transition: background-color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease !important;
     }
+    /* Segment ID grid: taller buttons, louder label typography */
+    [class*="st-key-"][class*="seg_pick_btn_"] button[kind="primary"],
+    [class*="st-key-"][class*="seg_pick_btn_"] button[kind="secondary"] {
+        min-height: 3.45rem !important;
+        padding: 0.68rem 0.85rem !important;
+        font-size: 0.88rem !important;
+        font-weight: 800 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.04em !important;
+    }
     [class*="st-key-"][class*="branch_pick_btn_"] button[kind="primary"] {
         color: #ffffff !important;
         border: none !important;
@@ -403,7 +633,15 @@ _APP_STYLE = """
         background-image: none !important;
         box-shadow: 0 0 0 2px rgba(255, 183, 77, 0.45) !important;
     }
-    [class*="st-key-"][class*="branch_pick_btn_"] button[kind="secondary"] {
+    [class*="st-key-"][class*="seg_pick_btn_"] button[kind="primary"] {
+        color: #f0f0f0 !important;
+        border: 1px solid rgba(255, 255, 255, 0.32) !important;
+        background-color: #121212 !important;
+        background-image: none !important;
+        box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.55) !important;
+    }
+    [class*="st-key-"][class*="branch_pick_btn_"] button[kind="secondary"],
+    [class*="st-key-"][class*="seg_pick_btn_"] button[kind="secondary"] {
         color: #bdbdbd !important;
         border: 1px solid #5a5a5a !important;
         background-color: #353535 !important;
@@ -414,40 +652,77 @@ _APP_STYLE = """
     [class*="st-key-"][class*="branch_pick_btn_"] button[kind="primary"] span,
     [class*="st-key-"][class*="branch_pick_btn_"] button[kind="primary"] div {
         color: #ffffff !important;
+        font-weight: 700 !important;
+    }
+    [class*="st-key-"][class*="seg_pick_btn_"] button[kind="primary"] p,
+    [class*="st-key-"][class*="seg_pick_btn_"] button[kind="primary"] span,
+    [class*="st-key-"][class*="seg_pick_btn_"] button[kind="primary"] div {
+        color: #ececec !important;
     }
     [class*="st-key-"][class*="branch_pick_btn_"] button[kind="secondary"] p,
     [class*="st-key-"][class*="branch_pick_btn_"] button[kind="secondary"] span,
     [class*="st-key-"][class*="branch_pick_btn_"] button[kind="secondary"] div {
         color: #bdbdbd !important;
+        font-weight: 700 !important;
+    }
+    [class*="st-key-"][class*="seg_pick_btn_"] button[kind="secondary"] p,
+    [class*="st-key-"][class*="seg_pick_btn_"] button[kind="secondary"] span,
+    [class*="st-key-"][class*="seg_pick_btn_"] button[kind="secondary"] div {
+        color: #bdbdbd !important;
+    }
+    [class*="st-key-"][class*="seg_pick_btn_"] button[kind="primary"] p,
+    [class*="st-key-"][class*="seg_pick_btn_"] button[kind="primary"] span,
+    [class*="st-key-"][class*="seg_pick_btn_"] button[kind="primary"] div,
+    [class*="st-key-"][class*="seg_pick_btn_"] button[kind="secondary"] p,
+    [class*="st-key-"][class*="seg_pick_btn_"] button[kind="secondary"] span,
+    [class*="st-key-"][class*="seg_pick_btn_"] button[kind="secondary"] div {
+        font-weight: 800 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.04em !important;
     }
     [class*="st-key-"][class*="branch_pick_btn_"] button[kind="primary"]:hover {
         background-color: #ffb74d !important;
         box-shadow: 0 0 0 2px rgba(255, 224, 178, 0.55) !important;
     }
-    [class*="st-key-"][class*="branch_pick_btn_"] button[kind="secondary"]:hover {
+    [class*="st-key-"][class*="seg_pick_btn_"] button[kind="primary"]:hover {
+        background-color: #1e1e1e !important;
+        border-color: rgba(255, 255, 255, 0.45) !important;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06) !important;
+    }
+    [class*="st-key-"][class*="branch_pick_btn_"] button[kind="secondary"]:hover,
+    [class*="st-key-"][class*="seg_pick_btn_"] button[kind="secondary"]:hover {
         background-color: #424242 !important;
         border-color: #757575 !important;
         color: #e0e0e0 !important;
     }
     [class*="st-key-"][class*="branch_pick_btn_"] button[kind="primary"]:focus-visible,
-    [class*="st-key-"][class*="branch_pick_btn_"] button[kind="secondary"]:focus-visible {
+    [class*="st-key-"][class*="branch_pick_btn_"] button[kind="secondary"]:focus-visible,
+    [class*="st-key-"][class*="seg_pick_btn_"] button[kind="primary"]:focus-visible,
+    [class*="st-key-"][class*="seg_pick_btn_"] button[kind="secondary"]:focus-visible {
         outline: none !important;
     }
     [class*="st-key-"][class*="branch_pick_btn_"] button[kind="primary"]:active {
         background-color: #e65100 !important;
         box-shadow: none !important;
     }
-    [class*="st-key-"][class*="branch_pick_btn_"] button[kind="secondary"]:active {
+    [class*="st-key-"][class*="seg_pick_btn_"] button[kind="primary"]:active {
+        background-color: #0a0a0a !important;
+        box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.65) !important;
+    }
+    [class*="st-key-"][class*="branch_pick_btn_"] button[kind="secondary"]:active,
+    [class*="st-key-"][class*="seg_pick_btn_"] button[kind="secondary"]:active {
         background-color: #2d2d2d !important;
         color: #ffffff !important;
     }
-    /* Reset view (LCA/RCA/branch viz): Sant Pau–style cyan blue, bold label */
+    /* Reset view (LCA/RCA/branch / segment viz): Sant Pau–style cyan blue, bold label */
     [class*="st-key-"][class*="reset_btn_lca"] button[kind="primary"],
     [class*="st-key-"][class*="reset_btn_lca"] button[kind="secondary"],
     [class*="st-key-"][class*="reset_btn_rca"] button[kind="primary"],
     [class*="st-key-"][class*="reset_btn_rca"] button[kind="secondary"],
     [class*="st-key-"][class*="reset_btn_branch_viz"] button[kind="primary"],
-    [class*="st-key-"][class*="reset_btn_branch_viz"] button[kind="secondary"] {
+    [class*="st-key-"][class*="reset_btn_branch_viz"] button[kind="secondary"],
+    [class*="st-key-"][class*="reset_btn_seg_viz"] button[kind="primary"],
+    [class*="st-key-"][class*="reset_btn_seg_viz"] button[kind="secondary"] {
         font-family: 'Inter', 'Segoe UI', system-ui, sans-serif !important;
         font-weight: 700 !important;
         letter-spacing: 0.04em !important;
@@ -467,12 +742,16 @@ _APP_STYLE = """
     [class*="st-key-"][class*="reset_btn_rca"] button[kind="secondary"] p,
     [class*="st-key-"][class*="reset_btn_branch_viz"] button[kind="primary"] p,
     [class*="st-key-"][class*="reset_btn_branch_viz"] button[kind="secondary"] p,
+    [class*="st-key-"][class*="reset_btn_seg_viz"] button[kind="primary"] p,
+    [class*="st-key-"][class*="reset_btn_seg_viz"] button[kind="secondary"] p,
     [class*="st-key-"][class*="reset_btn_lca"] button[kind="primary"] span,
     [class*="st-key-"][class*="reset_btn_lca"] button[kind="secondary"] span,
     [class*="st-key-"][class*="reset_btn_rca"] button[kind="primary"] span,
     [class*="st-key-"][class*="reset_btn_rca"] button[kind="secondary"] span,
     [class*="st-key-"][class*="reset_btn_branch_viz"] button[kind="primary"] span,
-    [class*="st-key-"][class*="reset_btn_branch_viz"] button[kind="secondary"] span {
+    [class*="st-key-"][class*="reset_btn_branch_viz"] button[kind="secondary"] span,
+    [class*="st-key-"][class*="reset_btn_seg_viz"] button[kind="primary"] span,
+    [class*="st-key-"][class*="reset_btn_seg_viz"] button[kind="secondary"] span {
         font-family: inherit !important;
         font-weight: 700 !important;
         letter-spacing: 0.04em !important;
@@ -481,24 +760,111 @@ _APP_STYLE = """
     }
     [class*="st-key-"][class*="reset_btn_lca"] button:hover,
     [class*="st-key-"][class*="reset_btn_rca"] button:hover,
-    [class*="st-key-"][class*="reset_btn_branch_viz"] button:hover {
+    [class*="st-key-"][class*="reset_btn_branch_viz"] button:hover,
+    [class*="st-key-"][class*="reset_btn_seg_viz"] button:hover {
         background-color: #33b5e0 !important;
         background-image: none !important;
         color: #ffffff !important;
     }
     [class*="st-key-"][class*="reset_btn_lca"] button:focus-visible,
     [class*="st-key-"][class*="reset_btn_rca"] button:focus-visible,
-    [class*="st-key-"][class*="reset_btn_branch_viz"] button:focus-visible {
+    [class*="st-key-"][class*="reset_btn_branch_viz"] button:focus-visible,
+    [class*="st-key-"][class*="reset_btn_seg_viz"] button:focus-visible {
         background-color: #33b5e0 !important;
         background-image: none !important;
     }
     [class*="st-key-"][class*="reset_btn_lca"] button:active,
     [class*="st-key-"][class*="reset_btn_rca"] button:active,
-    [class*="st-key-"][class*="reset_btn_branch_viz"] button:active {
+    [class*="st-key-"][class*="reset_btn_branch_viz"] button:active,
+    [class*="st-key-"][class*="reset_btn_seg_viz"] button:active {
         background-color: #007099 !important;
         background-image: none !important;
         color: #ffffff !important;
     }
+    /* Sant Pau–style institutional purple (aligned with logo burgundy/violet) */
+    .cad-rads-summary-panel {
+        max-width: 52rem;
+        margin: 0 auto 1.35rem auto;
+        padding: 1.25rem 1.5rem 1.35rem 1.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        border-radius: 0.5rem;
+        background: #5b2d78;
+        box-sizing: border-box;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.28);
+    }
+    .cad-rads-summary-panel h3.cad-rads-main-title {
+        font-family: 'Inter', 'Segoe UI', system-ui, sans-serif !important;
+        text-align: center;
+        text-transform: uppercase;
+        font-weight: 800 !important;
+        letter-spacing: 0.06em;
+        margin: 0 0 1rem 0 !important;
+        font-size: clamp(1.85rem, 1.25rem + 2vw, 2.55rem) !important;
+        line-height: 1.18 !important;
+        color: #ffffff !important;
+    }
+    .cad-rads-summary-panel p {
+        font-family: 'Inter', 'Segoe UI', system-ui, sans-serif !important;
+        font-size: clamp(1.05rem, 0.95rem + 0.45vw, 1.22rem) !important;
+        line-height: 1.55 !important;
+        color: rgba(255, 255, 255, 0.94) !important;
+        margin: 0.5rem 0 !important;
+    }
+    .cad-rads-summary-panel code {
+        font-size: 0.92em !important;
+        color: rgba(255, 255, 255, 0.96) !important;
+        background: rgba(0, 0, 0, 0.22) !important;
+        padding: 0.12rem 0.4rem !important;
+        border-radius: 0.28rem !important;
+    }
+    .seg-ref-summary-panel {
+        max-width: 100%;
+        margin: 0.25rem 0 0.75rem 0;
+        padding: 0.55rem 0.9rem 0.65rem 0.9rem;
+        border: 1px solid #4a4a4a;
+        border-radius: 0.45rem;
+        background: rgba(255, 255, 255, 0.03);
+        box-sizing: border-box;
+    }
+    .seg-ref-summary-panel p {
+        font-family: 'Inter', 'Segoe UI', system-ui, sans-serif !important;
+        font-size: 0.88rem !important;
+        line-height: 1.5 !important;
+        color: #c8c8c8 !important;
+        margin: 0.28rem 0 !important;
+    }
+    p.seg-viz-section-intro {
+        font-family: 'Inter', 'Segoe UI', system-ui, sans-serif !important;
+        font-size: clamp(1.02rem, 0.92rem + 0.55vw, 1.2rem) !important;
+        line-height: 1.52 !important;
+        color: #d6d6d6 !important;
+        margin: 0.2rem 0 1rem 0 !important;
+        max-width: none !important;
+        width: 100% !important;
+        padding: 0 !important;
+        text-align: left;
+        box-sizing: border-box;
+    }
+    .seg-ref-summary-panel ul.seg-ref-metrics {
+        font-family: 'Inter', 'Segoe UI', system-ui, sans-serif !important;
+        list-style: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    .seg-ref-summary-panel ul.seg-ref-metrics li {
+        font-size: clamp(0.98rem, 0.88rem + 0.4vw, 1.08rem) !important;
+        line-height: 1.52 !important;
+        color: #e4e4e4 !important;
+        margin: 0.4rem 0 !important;
+        padding: 0 !important;
+    }
+    .seg-ref-summary-panel ul.seg-ref-metrics li .seg-ref-off-seg {
+        font-size: 0.86em !important;
+        color: #a8c4a8 !important;
+        font-style: italic !important;
+        font-weight: 400 !important;
+    }
+
     /* Bottom-of-page author / degree lines — centered in the main content width */
     .footer-app-meta {
         text-align: center !important;
@@ -564,6 +930,10 @@ def _set_branch_viz_selected_branch(bid: str) -> None:
     st.session_state.branch_viz_selected = bid
 
 
+def _set_seg_viz_selected_segment(sid: int) -> None:
+    st.session_state.seg_viz_selected = int(sid)
+
+
 def _filter_artery(df: pd.DataFrame, artery: str) -> pd.DataFrame:
     if "Artery_Type" not in df.columns:
         raise ValueError("Column Artery_Type is required to split LCA/RCA.")
@@ -584,6 +954,12 @@ def main() -> None:
         st.session_state.branch_viz_artery = "LCA"
     if "branch_viz_selected" not in st.session_state:
         st.session_state.branch_viz_selected = None
+    if "reset_seg_viz" not in st.session_state:
+        st.session_state.reset_seg_viz = 0
+    if "seg_viz_artery" not in st.session_state:
+        st.session_state.seg_viz_artery = "LCA"
+    if "seg_viz_selected" not in st.session_state:
+        st.session_state.seg_viz_selected = None
     if "color_column" not in st.session_state:
         st.session_state.color_column = "pct_AS"
 
@@ -771,13 +1147,304 @@ def main() -> None:
                     "<hr class='section-divider-branch-viz' aria-hidden='true'>",
                     unsafe_allow_html=True,
                 )
-                # --- Branch path viewer (LCA/RCA, Block 3 branch spreadsheets) ---
-                # Left: section title + LCA/RCA above the 3D plot; right: branch list (offset to plot top)
+                # --- CAD-RADS 2.0 + AHA segment viewer (Block 3 exports) ---
+                _cad = load_block3_cad_rads_patient_report_row(PROJECT_ROOT, patient_id)
+                if _cad is not None:
+                    _cat_raw = _cad.get("CAD_RADS_Category")
+                    if (
+                        _cat_raw is None
+                        or (isinstance(_cat_raw, float) and pd.isna(_cat_raw))
+                        or str(_cat_raw).strip() == ""
+                    ):
+                        _cat_disp = "—"
+                    else:
+                        _cat_disp = str(_cat_raw).strip()
+                    _cat_esc = html.escape(_cat_disp, quote=True)
+                    _rat = html.escape(str(_cad.get("CAD_RADS_Rationale", "—")), quote=True)
+                    _hl = html.escape(str(_cad.get("Highest_Stenosis_Location", "—")), quote=True)
+                    try:
+                        _hp = float(_cad.get("Highest_Stenosis_pct_AS"))
+                        _hp_s = html.escape(f"{_hp:.2f}", quote=True)
+                    except (TypeError, ValueError):
+                        _hp_s = "—"
+                    _cad_html = [
+                        "<div class='cad-rads-summary-panel'>",
+                        f"<h3 class='cad-rads-main-title'>Patient CAD-RADS 2.0: {_cat_esc}</h3>",
+                        f"<p><strong>Rationale</strong>: {_rat}</p>",
+                        f"<p><strong>Leading stenosis location</strong>: {_hl} "
+                        f"(highest segment %AS ≈ {_hp_s}%).</p>",
+                        "</div>",
+                    ]
+                else:
+                    _cad_html = [
+                        "<div class='cad-rads-summary-panel'>",
+                        "<h3 class='cad-rads-main-title'>Patient CAD-RADS 2.0: —</h3>",
+                        "<p>No CAD-RADS report found. Expected "
+                        f"<code>results/block3_results/cad-rads/{html.escape(patient_id, quote=True)}/"
+                        f"patient_report_{html.escape(patient_id, quote=True)}.xlsx</code>.</p>",
+                        "</div>",
+                    ]
+                st.markdown("".join(_cad_html), unsafe_allow_html=True)
+
+                seg_summary_df = load_block3_segment_stenosis_summary(PROJECT_ROOT, patient_id)
+                st.markdown(
+                    "<h3 class='artery-plot-title'>Coronary artery colored segments</h3>",
+                    unsafe_allow_html=True,
+                )
+                st.markdown(
+                    "<p class='seg-viz-section-intro'>"
+                    "Segments are ordered by descending max %AS. Use buttons to select the specific segment "
+                    "and artery. The 3D view colors centerline markers by segment ID; the selected segment path "
+                    "is redrawn in dark tones with purple at max %AS. Proximal / distal Area reference samples are shown in green "
+                    "on the Area bar chart only."
+                    "</p>",
+                    unsafe_allow_html=True,
+                )
+
+                _rsl, _rsr = st.columns(2, gap="small")
+                with _rsl:
+                    if st.button(
+                        "LCA",
+                        key="seg_viz_btn_lca",
+                        use_container_width=True,
+                        type="primary"
+                        if str(st.session_state.seg_viz_artery).strip().upper() == "LCA"
+                        else "secondary",
+                    ):
+                        st.session_state.seg_viz_artery = "LCA"
+                        st.session_state.seg_viz_selected = None
+                with _rsr:
+                    if st.button(
+                        "RCA",
+                        key="seg_viz_btn_rca",
+                        use_container_width=True,
+                        type="primary"
+                        if str(st.session_state.seg_viz_artery).strip().upper() == "RCA"
+                        else "secondary",
+                    ):
+                        st.session_state.seg_viz_artery = "RCA"
+                        st.session_state.seg_viz_selected = None
+
+                _sv_art = str(st.session_state.seg_viz_artery).strip().upper()
+                if _sv_art not in ("LCA", "RCA"):
+                    _sv_art = "LCA"
+                    st.session_state.seg_viz_artery = _sv_art
+                try:
+                    df_seg_art = _sort_centerline_subset(_filter_artery(total_df, _sv_art))
+                except Exception:
+                    df_seg_art = pd.DataFrame()
+                seg_rows = segment_rows_for_artery_ui(seg_summary_df, df_seg_art, _sv_art)
+                seg_ids = [t[0] for t in seg_rows]
+                _seg_mesh = mesh_lca if _sv_art == "LCA" else mesh_rca
+                _seg_ok = (
+                    _seg_mesh.is_file()
+                    and not df_seg_art.empty
+                    and {"Px", "Py", "Pz", "pct_AS", "Area", "Segment_ID"}.issubset(df_seg_art.columns)
+                    and bool(seg_ids)
+                )
+                if _seg_ok:
+                    if (
+                        st.session_state.seg_viz_selected is None
+                        or int(st.session_state.seg_viz_selected) not in seg_ids
+                    ):
+                        st.session_state.seg_viz_selected = int(seg_ids[0])
+                    _sel_seg = int(st.session_state.seg_viz_selected)
+                else:
+                    _sel_seg = 0
+                    if not seg_ids:
+                        st.caption(
+                            f"No labeled segment IDs (> 0) in {_sv_art} centerline data, "
+                            "or mesh / columns missing."
+                        )
+
+                if _seg_ok:
+                    _seg_id_colors = segment_id_hex_colors(df_seg_art)
+                    st.markdown(
+                        f"<style>{_segment_pick_button_style_block(_sv_art, seg_rows, _seg_id_colors)}</style>",
+                        unsafe_allow_html=True,
+                    )
+                    _seg_btns_per_row = 6
+                    for _row0 in range(0, len(seg_rows), _seg_btns_per_row):
+                        _chunk = seg_rows[_row0 : _row0 + _seg_btns_per_row]
+                        _bcols = st.columns(_seg_btns_per_row)
+                        for _j, (_sid, _sname, _mx) in enumerate(_chunk):
+                            short = (_sname[:22] + "…") if len(_sname) > 23 else _sname
+                            btn_lbl = f"{_sid}: {short} ({_mx:.1f}%)"
+                            with _bcols[_j]:
+                                st.button(
+                                    btn_lbl,
+                                    key=f"seg_pick_btn_{_sv_art}_{_sid}",
+                                    use_container_width=True,
+                                    type="primary" if _sel_seg == _sid else "secondary",
+                                    on_click=_set_seg_viz_selected_segment,
+                                    args=(int(_sid),),
+                                )
+
+                    _pk = segment_pct_as_peak_reference_summary(df_seg_art, _sel_seg)
+                    if _pk.get("ok"):
+
+                        def _fmt_area_ui(v: object) -> str:
+                            if v is None:
+                                return "—"
+                            try:
+                                x = float(v)
+                            except (TypeError, ValueError):
+                                return "—"
+                            return f"{x:.4f} mm²" if math.isfinite(x) else "—"
+
+                        def _fmt_pct_ui(v: object) -> str:
+                            if v is None:
+                                return "—"
+                            try:
+                                x = float(v)
+                            except (TypeError, ValueError):
+                                return "—"
+                            return f"{x:.2f} %" if math.isfinite(x) else "—"
+
+                        _m_pct = html.escape(_fmt_pct_ui(_pk.get("max_pct_as")), quote=True)
+                        _m_area = html.escape(_fmt_area_ui(_pk.get("area_at_max")), quote=True)
+                        _m_prox = html.escape(_fmt_area_ui(_pk.get("area_prox_ref")), quote=True)
+                        _m_dist = html.escape(_fmt_area_ui(_pk.get("area_dist_ref")), quote=True)
+                        _prox_hint = ""
+                        _dist_hint = ""
+                        if not _pk.get("prox_ref_on_segment_bar", True) and _pk.get(
+                            "area_prox_ref"
+                        ) is not None:
+                            try:
+                                _apx = float(_pk.get("area_prox_ref"))  # type: ignore[arg-type]
+                            except (TypeError, ValueError):
+                                _apx = float("nan")
+                            if math.isfinite(_apx):
+                                _prox_hint = (
+                                    ' <span class="seg-ref-off-seg">(Not on this segment’s Area bars; '
+                                    "reference is often on another segment along the branch.)</span>"
+                                )
+                        if not _pk.get("dist_ref_on_segment_bar", True) and _pk.get(
+                            "area_dist_ref"
+                        ) is not None:
+                            try:
+                                _adx = float(_pk.get("area_dist_ref"))  # type: ignore[arg-type]
+                            except (TypeError, ValueError):
+                                _adx = float("nan")
+                            if math.isfinite(_adx):
+                                _dist_hint = (
+                                    ' <span class="seg-ref-off-seg">(Not on this segment’s Area bars; '
+                                    "reference is often on another segment along the branch.)</span>"
+                                )
+                        st.markdown(
+                            "<div class='seg-ref-summary-panel'>"
+                            "<ul class='seg-ref-metrics'>"
+                            f"<li><strong>Max %AS</strong>: {_m_pct}</li>"
+                            f"<li><strong>Area at peak</strong>: {_m_area}</li>"
+                            f"<li><strong>Proximal Reference Area</strong>: {_m_prox}{_prox_hint}</li>"
+                            f"<li><strong>Distal Reference Area</strong>: {_m_dist}{_dist_hint}</li>"
+                            "</ul></div>",
+                            unsafe_allow_html=True,
+                        )
+                    elif _pk.get("reason") == "no_pct_col":
+                        st.caption("Reference Area summary skipped: no %AS column in segment rows.")
+
+                    st.markdown(
+                        "<div class='seg-viz-legends-fullwidth branch-viz-legend' role='note'>"
+                        "<div class='branch-viz-legend-col-wrap'>"
+                        "<div class='branch-viz-legend-col-inner'>"
+                        "<span class='branch-viz-legend-swatch' style='background:#a855f7;'></span>"
+                        "<div class='branch-viz-legend-col-text'>"
+                        "<strong>Purple</strong>: maximum %AS on the segment — <strong>3D</strong>: diamond; "
+                        "<strong>bar charts</strong>: purple on both Area and %AS rows."
+                        "</div></div></div>"
+                        "<div class='branch-viz-legend-col-wrap'>"
+                        "<div class='branch-viz-legend-col-inner'>"
+                        "<span class='branch-viz-legend-swatch' style='background:#2e7d32;'></span>"
+                        "<div class='branch-viz-legend-col-text'>"
+                        "<strong>Green</strong>: proximal / distal <strong>Area</strong> reference samples — "
+                        "<strong>bar charts</strong> only: green on the "
+                        "<strong>Area</strong> row (±window mm along the segment polyline from max %AS)."
+                        "</div></div></div>"
+                        "</div>",
+                        unsafe_allow_html=True,
+                    )
+
+                    seg_plot_3d_col, seg_bars_col = st.columns([0.82, 1.38], gap="medium", vertical_alignment="top")
+                    with seg_plot_3d_col:
+                        try:
+                            fig_seg = create_3d_mesh_segment_path_highlight(
+                                str(_seg_mesh),
+                                df_seg_art,
+                                selected_segment_id=_sel_seg,
+                                trace_name=_sv_art,
+                            )
+                            _sk_seg = dict(
+                                use_container_width=True,
+                                config=plotly_config,
+                                key=f"seg_viz_plot_{st.session_state.reset_seg_viz}_{_sv_art}_{_sel_seg}",
+                            )
+                            try:
+                                st.plotly_chart(fig_seg, **_sk_seg)
+                            except TypeError:
+                                _sk_seg.pop("key", None)
+                                st.plotly_chart(fig_seg, **_sk_seg)
+                            sg1, sg2, sg3 = st.columns([2, 1, 2])
+                            with sg2:
+                                if st.button("RESET VIEW", key="reset_btn_seg_viz"):
+                                    st.session_state.reset_seg_viz += 1
+                        except Exception as e:
+                            st.warning(f"Segment 3D visualization could not be built: {e}")
+
+                    with seg_bars_col:
+                        try:
+                            fig_seg_bars = create_segment_centerline_metric_bars(
+                                df_seg_art,
+                                selected_segment_id=_sel_seg,
+                                artery=_sv_art,
+                            )
+                            _sk_b = dict(
+                                use_container_width=True,
+                                config=plotly_config,
+                                key=(
+                                    f"seg_profile_bars_{patient_id}_{_sv_art}_{_sel_seg}_"
+                                    f"{st.session_state.reset_seg_viz}"
+                                ),
+                            )
+                            try:
+                                st.plotly_chart(fig_seg_bars, **_sk_b)
+                            except TypeError:
+                                _sk_b.pop("key", None)
+                                st.plotly_chart(fig_seg_bars, **_sk_b)
+                        except Exception as ex_s:
+                            st.caption(f"Along-segment Area / %AS charts could not be built: {ex_s}")
+                else:
+                    st.caption("Load Block 3 label `total_df` with Segment_ID, Area, and pct_AS to enable.")
+
+                st.markdown(
+                    "<hr class='section-divider-branch-viz' aria-hidden='true'>",
+                    unsafe_allow_html=True,
+                )
+                # --- Branch path viewer: full-width title + window line; purple/green in each column ---
+                _win_mm = BRANCH_PCT_AS_REFERENCE_WINDOW_MM
+                _win_esc = html.escape(
+                    str(int(_win_mm)) if float(_win_mm) == int(float(_win_mm)) else str(_win_mm),
+                    quote=True,
+                )
+                st.markdown(
+                    "<div class='branch-viz-section-intro-fullwidth'>"
+                    "<h3 class='artery-plot-title branch-viz-section-title'>Coronary branch paths</h3>"
+                    "<p class='branch-viz-window-line'>"
+                    "<strong>REFERENCE WINDOW SIZE:</strong> "
+                    f"±{_win_esc} mm Geodesic Distance"
+                    "</p></div>",
+                    unsafe_allow_html=True,
+                )
                 row2_l, row2_r = st.columns([2.85, 2.55], gap="medium", vertical_alignment="top")
                 with row2_l:
                     st.markdown(
-                        "<h3 class='artery-plot-title branch-viz-heading-above-plot'>"
-                        "Coronary branch paths</h3>",
+                        "<div class='branch-viz-legend branch-viz-legend-col-wrap' role='note'>"
+                        "<div class='branch-viz-legend-col-inner'>"
+                        "<span class='branch-viz-legend-swatch' style='background:#a855f7;'></span>"
+                        "<div class='branch-viz-legend-col-text'>"
+                        "<strong>Purple</strong>: maximum %AS on the branch — <strong>3D</strong>: diamond; "
+                        "<strong>bar charts</strong>: purple on both Area and %AS rows."
+                        "</div></div></div>",
                         unsafe_allow_html=True,
                     )
                     st.markdown(
@@ -876,6 +1543,18 @@ def main() -> None:
                             st.warning(f"Branch path visualization could not be built: {e}")
 
                 with row2_r:
+                    st.markdown(
+                        "<div class='branch-viz-legend branch-viz-legend-col-wrap' role='note'>"
+                        "<div class='branch-viz-legend-col-inner'>"
+                        "<span class='branch-viz-legend-swatch' style='background:#2e7d32;'></span>"
+                        "<div class='branch-viz-legend-col-text'>"
+                        "<strong>Green</strong>: reference cross-sections for <strong>A_ref</strong> at the peak "
+                        "(nearest samples ≈ −/+ window along the centerline). "
+                        "<strong>3D</strong>: green <strong>circles</strong>; "
+                        "<strong>Area</strong> bar row only (not %AS)."
+                        "</div></div></div>",
+                        unsafe_allow_html=True,
+                    )
                     st.markdown(
                         '<div class="branch-panel-align-with-plot-spacer" aria-hidden="true">&nbsp;</div>',
                         unsafe_allow_html=True,

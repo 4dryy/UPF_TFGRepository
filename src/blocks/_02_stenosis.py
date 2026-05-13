@@ -45,7 +45,7 @@ class Block2Outputs(NamedTuple):
     """Area-mapped full-tree table (same rows as Block 1 ``dataset_global``)."""
 
     total_df_merged: pd.DataFrame
-    """Merged branch points with max ``pct_AS`` per rounded coordinate; empty if no branches."""
+    """Merged branch points: max ``pct_AS`` per rounded coordinate **within each branch file**; empty if no branches."""
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DATA_ROOT = PROJECT_ROOT / "data"
@@ -55,6 +55,7 @@ BLOCK2_STENOSIS_PATIENT_DIR_ROOT = PROJECT_ROOT / "results" / "block2_results" /
 BLOCK2_AREA_STENOSIS_PLOTS_ROOT = PROJECT_ROOT / "results" / "block2_results" / "area_stenosis_plots"
 
 # Stenosis reference / merge / %AS figures (``_05_sq_reference_values`` notebook parity)
+# ``WINDOW_MM`` is imported by ``src.viewer.plots`` for branch-path reference markers — single source here.
 # WINDOW_MM = 10.0
 WINDOW_MM = 5.0
 # WINDOW_MM = 2.5
@@ -142,16 +143,25 @@ def merge_branches_max_pct_as(
     processed_branch_data: dict[str, pd.DataFrame],
     coord_round: int = COORD_ROUND,
 ) -> pd.DataFrame:
-    """Concatenate branches, dedupe rounded (Px,Py,Pz) keeping max pct_AS per location."""
-    branch_frames = []
-    for _name, df in processed_branch_data.items():
-        branch_frames.append(df.copy())
+    """Concatenate branches, dedupe rounded (Px,Py,Pz) **per branch spreadsheet**, max ``pct_AS``.
+
+    Deduplication is **not** global on coordinates alone: samples from different branch files can
+    round to identical ``(Px,Py,Pz)`` near bifurcations while carrying different ``Area`` /
+    ``Segment_ID`` / ``pct_AS``. Collapsing them kept one full row (max ``pct_AS``), which could
+    produce merged rows that never appeared in any single branch export. Tagging each row with its
+    source spreadsheet key restricts deduplication to **within** the same ``dataset_*`` table.
+    """
+    branch_frames: list[pd.DataFrame] = []
+    for stem, df in processed_branch_data.items():
+        dfc = df.copy()
+        dfc["__branch_source__"] = str(stem)
+        branch_frames.append(dfc)
     total_concat = pd.concat(branch_frames, ignore_index=True)
     total_concat["_Px_g"] = np.round(total_concat["Px"].to_numpy(dtype=float), coord_round)
     total_concat["_Py_g"] = np.round(total_concat["Py"].to_numpy(dtype=float), coord_round)
     total_concat["_Pz_g"] = np.round(total_concat["Pz"].to_numpy(dtype=float), coord_round)
 
-    _dedup_subset = ["_Px_g", "_Py_g", "_Pz_g"]
+    _dedup_subset = ["_Px_g", "_Py_g", "_Pz_g", "__branch_source__"]
     # Sort so max pct_AS wins ties; preserves Branch_ID, Segment_ID, and other cols from retained row.
     return (
         total_concat.sort_values("pct_AS", ascending=False, na_position="last")
@@ -820,7 +830,7 @@ def run_block2(patient_id: str, block1_dir: Path | None = None) -> Block2Outputs
         )
         log_detail(
             logger,
-            "Merge (max %%AS / site): %d loc · %d valid pct_AS · range %s %%",
+            "Merge (max %%AS / site **per branch**): %d rows · %d valid pct_AS · range %s %%",
             len(total_df_merged),
             n_valid_pct,
             pct_rng,
