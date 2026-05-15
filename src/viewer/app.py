@@ -1199,12 +1199,27 @@ def main() -> None:
                             _hp_s = html.escape(f"{max(0.0, _hp):.2f}", quote=True)
                     except (TypeError, ValueError):
                         _hp_s = "—"
+                    try:
+                        _ss = _cad.get("SIS_Score")
+                        _sd = _cad.get("SIS_Denominator")
+                        if _ss is not None and pd.notna(_ss):
+                            _ss_i = int(float(_ss))
+                            if _sd is not None and pd.notna(_sd):
+                                _sis_disp = f"{_ss_i} / {int(float(_sd))}"
+                            else:
+                                _sis_disp = str(_ss_i)
+                            _sis_esc = html.escape(_sis_disp, quote=True)
+                        else:
+                            _sis_esc = "—"
+                    except (TypeError, ValueError):
+                        _sis_esc = "—"
                     _cad_html = [
                         "<div class='cad-rads-summary-panel'>",
                         f"<h3 class='cad-rads-main-title'>Patient CAD-RADS 2.0: {_cat_esc}</h3>",
                         f"<p><strong>Rationale</strong>: {_rat}</p>",
                         f"<p><strong>Leading stenosis location</strong>: {_hl} "
                         f"(highest segment %AS ≈ {_hp_s}%).</p>",
+                        f"<p><strong>SIS (Segment Involvement Score)</strong>: {_sis_esc}</p>",
                         "</div>",
                     ]
                 else:
