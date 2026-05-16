@@ -36,6 +36,7 @@ from src.blocks._01_extraction import run_block1
 
 from src.blocks._02_stenosis import run_block2
 from src.blocks._04_visualization import run_block4
+from src.synthetic_profile import is_synthetic_patient, resolve_mask_nrrd_path
 
 from src.pipeline_log import banner_pipeline, banner_pipeline_done, configure_logging, sub
 
@@ -119,39 +120,34 @@ def main(patient_id: str) -> None:
 
     t0 = time.perf_counter()
 
-
+    is_synthetic = is_synthetic_patient(patient_id)
 
     banner_pipeline(log, patient_id)
 
-
-
-    label_path = _resolve_segment_label_path(patient_id)
-
-    if label_path is None:
-
-        sub(log, "ASOCA label .nii.gz not found — Block 1 uses scout RCA/LCA pairing.")
-
+    if is_synthetic:
+        sub(log, "Synthetic validation case — single-tube mode (no RCA/LCA split).")
+        nrrd_path = resolve_mask_nrrd_path(patient_id)
+        sub(log, "Synthetic mask: %s", nrrd_path)
     else:
+        label_path = _resolve_segment_label_path(patient_id)
+        if label_path is None:
+            sub(log, "ASOCA label .nii.gz not found — Block 1 uses scout RCA/LCA pairing.")
+        else:
+            sub(log, "ASOCA labels: %s", label_path)
 
-        sub(log, "ASOCA labels: %s", label_path)
+    run_block1(
+        patient_id=patient_id,
+        label_nii_path=None if is_synthetic else _resolve_segment_label_path(patient_id),
+        nrrd_path=resolve_mask_nrrd_path(patient_id) if is_synthetic else None,
+        is_synthetic=is_synthetic,
+    )
 
-
-
-    run_block1(patient_id=patient_id, label_nii_path=label_path)
-
-
-
-    run_block2(patient_id=patient_id)
-
-
+    run_block2(patient_id=patient_id, is_synthetic=is_synthetic)
 
     block3_mod = _load_block3()
+    block3_mod.run_block3(patient_id, is_synthetic=is_synthetic)
 
-    block3_mod.run_block3(patient_id)
-
-
-
-    run_block4(patient_id=patient_id)
+    run_block4(patient_id=patient_id, is_synthetic=is_synthetic)
 
     banner_pipeline_done(log, patient_id, time.perf_counter() - t0)
 

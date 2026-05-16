@@ -17,12 +17,13 @@ import pandas as pd
 import streamlit as st
 
 _VIEWER_PLOTS = "src.viewer.plots"
+_VIEWER_SYNTHETIC_UI = "src.viewer.synthetic_ui"
 
 
-def _ensure_viewer_plots_fresh() -> None:
+def _ensure_viewer_modules_fresh() -> None:
     """
     Streamlit re-executes this script on each run, but Python keeps imported modules in
-    ``sys.modules``. Reload ``plots.py`` when its file mtime changes so visualization edits apply
+    ``sys.modules``. Reload viewer modules when their file mtime changes so edits apply
     without manually killing the Streamlit server.
     """
     spec = importlib.util.find_spec(_VIEWER_PLOTS)
@@ -37,10 +38,12 @@ def _ensure_viewer_plots_fresh() -> None:
         importlib.import_module(_VIEWER_PLOTS)
     elif prev is not None and mtime != prev:
         importlib.reload(sys.modules[_VIEWER_PLOTS])
+        if _VIEWER_SYNTHETIC_UI in sys.modules:
+            importlib.reload(sys.modules[_VIEWER_SYNTHETIC_UI])
     st.session_state["_viewer_plots_mtime"] = mtime
 
 
-_ensure_viewer_plots_fresh()
+_ensure_viewer_modules_fresh()
 
 from src.viewer.plots import (
     BRANCH_PCT_AS_REFERENCE_WINDOW_MM,
@@ -57,6 +60,8 @@ from src.viewer.plots import (
     segment_pct_as_peak_reference_summary,
     segment_rows_for_artery_ui,
 )
+
+from src.synthetic_profile import is_synthetic_patient
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 VIEWER_FIGURES = Path(__file__).resolve().parent / "figures"
@@ -915,17 +920,22 @@ _APP_STYLE = """
 """
 
 
-def _load_patient_id() -> str | None:
+def _load_session() -> tuple[str | None, bool]:
+    """Return (patient_id, is_synthetic) from current_session.json."""
     if not SESSION_PATH.exists():
-        return None
+        return None, False
     try:
         payload = json.loads(SESSION_PATH.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, OSError):
-        return None
+        return None, False
     patient_id = payload.get("patient_id")
-    if isinstance(patient_id, str) and patient_id.strip():
-        return patient_id.strip()
-    return None
+    if not isinstance(patient_id, str) or not patient_id.strip():
+        return None, False
+    pid = patient_id.strip()
+    is_syn = bool(payload.get("is_synthetic"))
+    if not is_syn:
+        is_syn = is_synthetic_patient(pid)
+    return pid, is_syn
 
 
 def _resolve_total_df_path(patient_id: str) -> Path | None:
@@ -985,6 +995,8 @@ def main() -> None:
         st.session_state.branch_viz_selected = None
     if "reset_seg_viz" not in st.session_state:
         st.session_state.reset_seg_viz = 0
+    if "reset_synthetic" not in st.session_state:
+        st.session_state.reset_synthetic = 0
     if "seg_viz_artery" not in st.session_state:
         st.session_state.seg_viz_artery = "LCA"
     if "seg_viz_selected" not in st.session_state:
@@ -992,7 +1004,7 @@ def main() -> None:
     if "color_column" not in st.session_state:
         st.session_state.color_column = "pct_AS"
 
-    patient_id = _load_patient_id()
+    patient_id, is_synthetic = _load_session()
     if patient_id is None:
         st.warning(
             "No active session found at results/current_session.json. "
@@ -1060,6 +1072,19 @@ def main() -> None:
         unsafe_allow_html=True,
     )
 
+    if is_synthetic and patient_id != "Unknown Patient":
+        _sk1, _sk2, _sk3 = st.columns(3, gap="medium")
+        with _sk1:
+            st.metric("CAD-RADS 2.0", "N/A (Synthetic)")
+        with _sk2:
+            st.metric("Case type", "Single-tube phantom")
+        with _sk3:
+            st.metric("Clinical scores", "Not applicable")
+        st.markdown(
+            '<div class="title-to-controls-spacer" aria-hidden="true">&nbsp;</div>',
+            unsafe_allow_html=True,
+        )
+
     pad_l, box_pct, box_area, pad_r = st.columns([1, 2, 2, 1], gap="medium")
     with box_pct:
         is_pct = st.session_state.color_column == "pct_AS"
@@ -1105,557 +1130,568 @@ def main() -> None:
                 total_df = None
 
             if total_df is not None:
-                col_lca, col_rca = st.columns(2, gap="small", vertical_alignment="top")
-                with col_lca:
-                    st.markdown(
-                        "<h3 class='artery-plot-title'>Left Coronary Artery (LCA)</h3>",
-                        unsafe_allow_html=True,
-                    )
-                    try:
-                        df_lca = _sort_centerline_subset(_filter_artery(total_df, "LCA"))
-                        if df_lca.empty:
-                            st.warning("LCA data not found or could not be loaded for this patient.")
-                        else:
-                            fig_lca = create_3d_artery_plot(
-                                str(mesh_lca),
-                                df_lca,
-                                color_column,
-                                trace_name="LCA",
-                            )
-                            _chart_kwargs = dict(
-                                use_container_width=True,
-                                config=plotly_config,
-                                key=f"lca_plot_{st.session_state.reset_lca}",
-                            )
-                            try:
-                                st.plotly_chart(fig_lca, **_chart_kwargs)
-                            except TypeError:
-                                _chart_kwargs.pop("key", None)
-                                st.plotly_chart(fig_lca, **_chart_kwargs)
-                            rl1, rl2, rl3 = st.columns([2, 1, 2])
-                            with rl2:
-                                if st.button("RESET VIEW", key="reset_btn_lca"):
-                                    st.session_state.reset_lca += 1
-                    except Exception:
-                        st.warning("LCA data not found or could not be loaded for this patient.")
+                if is_synthetic:
+                    from src.viewer.synthetic_ui import render_synthetic_dashboard
 
-                with col_rca:
-                    st.markdown(
-                        "<h3 class='artery-plot-title'>Right Coronary Artery (RCA)</h3>",
-                        unsafe_allow_html=True,
+                    render_synthetic_dashboard(
+                        project_root=PROJECT_ROOT,
+                        patient_id=patient_id,
+                        total_df=total_df,
+                        color_column=color_column,
+                        plotly_config=plotly_config,
                     )
-                    try:
-                        df_rca = _sort_centerline_subset(_filter_artery(total_df, "RCA"))
-                        if df_rca.empty:
-                            st.warning("RCA data not found or could not be loaded for this patient.")
-                        else:
-                            fig_rca = create_3d_artery_plot(
-                                str(mesh_rca),
-                                df_rca,
-                                color_column,
-                                trace_name="RCA",
-                            )
-                            _chart_kwargs_r = dict(
-                                use_container_width=True,
-                                config=plotly_config,
-                                key=f"rca_plot_{st.session_state.reset_rca}",
-                            )
-                            try:
-                                st.plotly_chart(fig_rca, **_chart_kwargs_r)
-                            except TypeError:
-                                _chart_kwargs_r.pop("key", None)
-                                st.plotly_chart(fig_rca, **_chart_kwargs_r)
-                            rr1, rr2, rr3 = st.columns([2, 1, 2])
-                            with rr2:
-                                if st.button("RESET VIEW", key="reset_btn_rca"):
-                                    st.session_state.reset_rca += 1
-                    except Exception:
-                        st.warning("RCA data not found or could not be loaded for this patient.")
-
-                st.markdown(
-                    "<hr class='section-divider-branch-viz' aria-hidden='true'>",
-                    unsafe_allow_html=True,
-                )
-                # --- CAD-RADS 2.0 + AHA segment viewer (Block 3 exports) ---
-                _cad = load_block3_cad_rads_patient_report_row(PROJECT_ROOT, patient_id)
-                if _cad is not None:
-                    _cat_raw = _cad.get("CAD_RADS_Category")
-                    if (
-                        _cat_raw is None
-                        or (isinstance(_cat_raw, float) and pd.isna(_cat_raw))
-                        or str(_cat_raw).strip() == ""
-                    ):
-                        _cat_disp = "—"
-                    else:
-                        _cat_disp = str(_cat_raw).strip()
-                    _cat_esc = html.escape(_cat_disp, quote=True)
-                    _rat = html.escape(str(_cad.get("CAD_RADS_Rationale", "—")), quote=True)
-                    _hl = html.escape(str(_cad.get("Highest_Stenosis_Location", "—")), quote=True)
-                    try:
-                        _hp = float(_cad.get("Highest_Stenosis_pct_AS"))
-                        if not math.isfinite(_hp):
-                            _hp_s = "—"
-                        else:
-                            _hp_s = html.escape(f"{max(0.0, _hp):.2f}", quote=True)
-                    except (TypeError, ValueError):
-                        _hp_s = "—"
-                    try:
-                        _ss = _cad.get("SIS_Score")
-                        _sd = _cad.get("SIS_Denominator")
-                        if _ss is not None and pd.notna(_ss):
-                            _ss_i = int(float(_ss))
-                            if _sd is not None and pd.notna(_sd):
-                                _sis_disp = f"{_ss_i} / {int(float(_sd))}"
-                            else:
-                                _sis_disp = str(_ss_i)
-                            _sis_esc = html.escape(_sis_disp, quote=True)
-                        else:
-                            _sis_esc = "—"
-                    except (TypeError, ValueError):
-                        _sis_esc = "—"
-                    _cad_html = [
-                        "<div class='cad-rads-summary-panel'>",
-                        f"<h3 class='cad-rads-main-title'>Patient CAD-RADS 2.0: {_cat_esc}</h3>",
-                        f"<p><strong>Rationale</strong>: {_rat}</p>",
-                        f"<p><strong>Leading stenosis location</strong>: {_hl} "
-                        f"(highest segment %AS ≈ {_hp_s}%).</p>",
-                        f"<p><strong>SIS (Segment Involvement Score)</strong>: {_sis_esc}</p>",
-                        "</div>",
-                    ]
                 else:
-                    _cad_html = [
-                        "<div class='cad-rads-summary-panel'>",
-                        "<h3 class='cad-rads-main-title'>Patient CAD-RADS 2.0: —</h3>",
-                        "<p>No CAD-RADS report found. Expected "
-                        f"<code>results/block3_results/cad-rads/{html.escape(patient_id, quote=True)}/"
-                        f"patient_report_{html.escape(patient_id, quote=True)}.xlsx</code>.</p>",
-                        "</div>",
-                    ]
-                st.markdown("".join(_cad_html), unsafe_allow_html=True)
-
-                seg_summary_df = load_block3_segment_stenosis_summary(PROJECT_ROOT, patient_id)
-                st.markdown(
-                    "<h3 class='artery-plot-title'>Coronary artery colored segments</h3>",
-                    unsafe_allow_html=True,
-                )
-                st.markdown(
-                    "<p class='seg-viz-section-intro'>"
-                    "Segments are ordered by descending max %AS. Use buttons to select the specific segment "
-                    "and artery. The 3D view colors centerline markers by segment ID; the selected segment path "
-                    "is redrawn in dark tones with purple at max %AS. Proximal / distal Area reference samples are shown in green "
-                    "on the Area bar chart only."
-                    "</p>",
-                    unsafe_allow_html=True,
-                )
-
-                _rsl, _rsr = st.columns(2, gap="small")
-                with _rsl:
-                    if st.button(
-                        "LCA",
-                        key="seg_viz_btn_lca",
-                        use_container_width=True,
-                        type="primary"
-                        if str(st.session_state.seg_viz_artery).strip().upper() == "LCA"
-                        else "secondary",
-                    ):
-                        st.session_state.seg_viz_artery = "LCA"
-                        st.session_state.seg_viz_selected = None
-                with _rsr:
-                    if st.button(
-                        "RCA",
-                        key="seg_viz_btn_rca",
-                        use_container_width=True,
-                        type="primary"
-                        if str(st.session_state.seg_viz_artery).strip().upper() == "RCA"
-                        else "secondary",
-                    ):
-                        st.session_state.seg_viz_artery = "RCA"
-                        st.session_state.seg_viz_selected = None
-
-                _sv_art = str(st.session_state.seg_viz_artery).strip().upper()
-                if _sv_art not in ("LCA", "RCA"):
-                    _sv_art = "LCA"
-                    st.session_state.seg_viz_artery = _sv_art
-                try:
-                    df_seg_art = _sort_centerline_subset(_filter_artery(total_df, _sv_art))
-                except Exception:
-                    df_seg_art = pd.DataFrame()
-                seg_rows = segment_rows_for_artery_ui(seg_summary_df, df_seg_art, _sv_art)
-                seg_ids = [t[0] for t in seg_rows]
-                _seg_mesh = mesh_lca if _sv_art == "LCA" else mesh_rca
-                _seg_ok = (
-                    _seg_mesh.is_file()
-                    and not df_seg_art.empty
-                    and {"Px", "Py", "Pz", "pct_AS", "Area", "Segment_ID"}.issubset(df_seg_art.columns)
-                    and bool(seg_ids)
-                )
-                if _seg_ok:
-                    if (
-                        st.session_state.seg_viz_selected is None
-                        or int(st.session_state.seg_viz_selected) not in seg_ids
-                    ):
-                        st.session_state.seg_viz_selected = int(seg_ids[0])
-                    _sel_seg = int(st.session_state.seg_viz_selected)
-                else:
-                    _sel_seg = 0
-                    if not seg_ids:
-                        st.caption(
-                            f"No labeled segment IDs (> 0) in {_sv_art} centerline data, "
-                            "or mesh / columns missing."
-                        )
-
-                if _seg_ok:
-                    _seg_id_colors = segment_id_hex_colors(df_seg_art)
-                    st.markdown(
-                        f"<style>{_segment_pick_button_style_block(_sv_art, seg_rows, _seg_id_colors)}</style>",
-                        unsafe_allow_html=True,
-                    )
-                    _seg_btns_per_row = 6
-                    for _row0 in range(0, len(seg_rows), _seg_btns_per_row):
-                        _chunk = seg_rows[_row0 : _row0 + _seg_btns_per_row]
-                        _bcols = st.columns(_seg_btns_per_row)
-                        for _j, (_sid, _sname, _mx) in enumerate(_chunk):
-                            short = (_sname[:22] + "…") if len(_sname) > 23 else _sname
-                            btn_lbl = f"{_sid}: {short} ({_mx:.1f}%)"
-                            with _bcols[_j]:
-                                st.button(
-                                    btn_lbl,
-                                    key=f"seg_pick_btn_{_sv_art}_{_sid}",
-                                    use_container_width=True,
-                                    type="primary" if _sel_seg == _sid else "secondary",
-                                    on_click=_set_seg_viz_selected_segment,
-                                    args=(int(_sid),),
-                                )
-
-                    _pk = segment_pct_as_peak_reference_summary(df_seg_art, _sel_seg)
-                    if _pk.get("ok"):
-
-                        def _fmt_area_ui(v: object) -> str:
-                            if v is None:
-                                return "—"
-                            try:
-                                x = float(v)
-                            except (TypeError, ValueError):
-                                return "—"
-                            return f"{x:.4f} mm²" if math.isfinite(x) else "—"
-
-                        def _fmt_pct_ui(v: object) -> str:
-                            if v is None:
-                                return "—"
-                            try:
-                                x = float(v)
-                            except (TypeError, ValueError):
-                                return "—"
-                            if not math.isfinite(x):
-                                return "—"
-                            x = max(0.0, x)
-                            return f"{x:.2f} %"
-
-                        _m_pct = html.escape(_fmt_pct_ui(_pk.get("max_pct_as")), quote=True)
-                        _m_area = html.escape(_fmt_area_ui(_pk.get("area_at_max")), quote=True)
-                        _m_prox = html.escape(_fmt_area_ui(_pk.get("area_prox_ref")), quote=True)
-                        _m_dist = html.escape(_fmt_area_ui(_pk.get("area_dist_ref")), quote=True)
-                        _prox_hint = ""
-                        _dist_hint = ""
-                        if not _pk.get("prox_ref_on_segment_bar", True) and _pk.get(
-                            "area_prox_ref"
-                        ) is not None:
-                            try:
-                                _apx = float(_pk.get("area_prox_ref"))  # type: ignore[arg-type]
-                            except (TypeError, ValueError):
-                                _apx = float("nan")
-                            if math.isfinite(_apx):
-                                _prox_hint = (
-                                    ' <span class="seg-ref-off-seg">(Not on this segment’s Area bars; '
-                                    "reference is often on another segment along the branch.)</span>"
-                                )
-                        if not _pk.get("dist_ref_on_segment_bar", True) and _pk.get(
-                            "area_dist_ref"
-                        ) is not None:
-                            try:
-                                _adx = float(_pk.get("area_dist_ref"))  # type: ignore[arg-type]
-                            except (TypeError, ValueError):
-                                _adx = float("nan")
-                            if math.isfinite(_adx):
-                                _dist_hint = (
-                                    ' <span class="seg-ref-off-seg">(Not on this segment’s Area bars; '
-                                    "reference is often on another segment along the branch.)</span>"
-                                )
+                    col_lca, col_rca = st.columns(2, gap="small", vertical_alignment="top")
+                    with col_lca:
                         st.markdown(
-                            "<div class='seg-ref-summary-panel'>"
-                            "<ul class='seg-ref-metrics'>"
-                            f"<li><strong>Max %AS</strong>: {_m_pct}</li>"
-                            f"<li><strong>Area at peak</strong>: {_m_area}</li>"
-                            f"<li><strong>Proximal Reference Area</strong>: {_m_prox}{_prox_hint}</li>"
-                            f"<li><strong>Distal Reference Area</strong>: {_m_dist}{_dist_hint}</li>"
-                            "</ul></div>",
+                            "<h3 class='artery-plot-title'>Left Coronary Artery (LCA)</h3>",
                             unsafe_allow_html=True,
                         )
-                    elif _pk.get("reason") == "no_pct_col":
-                        st.caption("Reference Area summary skipped: no %AS column in segment rows.")
-
-                    st.markdown(
-                        "<div class='seg-viz-legends-fullwidth branch-viz-legend' role='note'>"
-                        "<div class='branch-viz-legend-col-wrap'>"
-                        "<div class='branch-viz-legend-col-inner'>"
-                        "<span class='branch-viz-legend-swatch' style='background:#a855f7;'></span>"
-                        "<div class='branch-viz-legend-col-text'>"
-                        "<strong>Purple</strong>: maximum %AS on the segment — <strong>3D</strong>: diamond; "
-                        "<strong>bar charts</strong>: purple on both Area and %AS rows."
-                        "</div></div></div>"
-                        "<div class='branch-viz-legend-col-wrap'>"
-                        "<div class='branch-viz-legend-col-inner'>"
-                        "<span class='branch-viz-legend-swatch' style='background:#2e7d32;'></span>"
-                        "<div class='branch-viz-legend-col-text'>"
-                        "<strong>Green</strong>: proximal / distal <strong>Area</strong> reference samples — "
-                        "<strong>bar charts</strong> only: green on the "
-                        "<strong>Area</strong> row (±window mm along the segment polyline from max %AS)."
-                        "</div></div></div>"
-                        "</div>",
-                        unsafe_allow_html=True,
-                    )
-
-                    seg_plot_3d_col, seg_bars_col = st.columns([0.82, 1.38], gap="medium", vertical_alignment="top")
-                    with seg_plot_3d_col:
                         try:
-                            fig_seg = create_3d_mesh_segment_path_highlight(
-                                str(_seg_mesh),
-                                df_seg_art,
-                                selected_segment_id=_sel_seg,
-                                trace_name=_sv_art,
-                            )
-                            _sk_seg = dict(
-                                use_container_width=True,
-                                config=plotly_config,
-                                key=f"seg_viz_plot_{st.session_state.reset_seg_viz}_{_sv_art}_{_sel_seg}",
-                            )
-                            try:
-                                st.plotly_chart(fig_seg, **_sk_seg)
-                            except TypeError:
-                                _sk_seg.pop("key", None)
-                                st.plotly_chart(fig_seg, **_sk_seg)
-                            sg1, sg2, sg3 = st.columns([2, 1, 2])
-                            with sg2:
-                                if st.button("RESET VIEW", key="reset_btn_seg_viz"):
-                                    st.session_state.reset_seg_viz += 1
-                        except Exception as e:
-                            st.warning(f"Segment 3D visualization could not be built: {e}")
+                            df_lca = _sort_centerline_subset(_filter_artery(total_df, "LCA"))
+                            if df_lca.empty:
+                                st.warning("LCA data not found or could not be loaded for this patient.")
+                            else:
+                                fig_lca = create_3d_artery_plot(
+                                    str(mesh_lca),
+                                    df_lca,
+                                    color_column,
+                                    trace_name="LCA",
+                                )
+                                _chart_kwargs = dict(
+                                    use_container_width=True,
+                                    config=plotly_config,
+                                    key=f"lca_plot_{st.session_state.reset_lca}",
+                                )
+                                try:
+                                    st.plotly_chart(fig_lca, **_chart_kwargs)
+                                except TypeError:
+                                    _chart_kwargs.pop("key", None)
+                                    st.plotly_chart(fig_lca, **_chart_kwargs)
+                                rl1, rl2, rl3 = st.columns([2, 1, 2])
+                                with rl2:
+                                    if st.button("RESET VIEW", key="reset_btn_lca"):
+                                        st.session_state.reset_lca += 1
+                        except Exception:
+                            st.warning("LCA data not found or could not be loaded for this patient.")
 
-                    with seg_bars_col:
+                    with col_rca:
+                        st.markdown(
+                            "<h3 class='artery-plot-title'>Right Coronary Artery (RCA)</h3>",
+                            unsafe_allow_html=True,
+                        )
                         try:
-                            fig_seg_bars = create_segment_centerline_metric_bars(
-                                df_seg_art,
-                                selected_segment_id=_sel_seg,
-                                artery=_sv_art,
-                            )
-                            _sk_b = dict(
-                                use_container_width=True,
-                                config=plotly_config,
-                                key=(
-                                    f"seg_profile_bars_{patient_id}_{_sv_art}_{_sel_seg}_"
-                                    f"{st.session_state.reset_seg_viz}"
-                                ),
-                            )
-                            try:
-                                st.plotly_chart(fig_seg_bars, **_sk_b)
-                            except TypeError:
-                                _sk_b.pop("key", None)
-                                st.plotly_chart(fig_seg_bars, **_sk_b)
-                        except Exception as ex_s:
-                            st.caption(f"Along-segment Area / %AS charts could not be built: {ex_s}")
-                else:
-                    st.caption("Load Block 3 label `total_df` with Segment_ID, Area, and pct_AS to enable.")
+                            df_rca = _sort_centerline_subset(_filter_artery(total_df, "RCA"))
+                            if df_rca.empty:
+                                st.warning("RCA data not found or could not be loaded for this patient.")
+                            else:
+                                fig_rca = create_3d_artery_plot(
+                                    str(mesh_rca),
+                                    df_rca,
+                                    color_column,
+                                    trace_name="RCA",
+                                )
+                                _chart_kwargs_r = dict(
+                                    use_container_width=True,
+                                    config=plotly_config,
+                                    key=f"rca_plot_{st.session_state.reset_rca}",
+                                )
+                                try:
+                                    st.plotly_chart(fig_rca, **_chart_kwargs_r)
+                                except TypeError:
+                                    _chart_kwargs_r.pop("key", None)
+                                    st.plotly_chart(fig_rca, **_chart_kwargs_r)
+                                rr1, rr2, rr3 = st.columns([2, 1, 2])
+                                with rr2:
+                                    if st.button("RESET VIEW", key="reset_btn_rca"):
+                                        st.session_state.reset_rca += 1
+                        except Exception:
+                            st.warning("RCA data not found or could not be loaded for this patient.")
 
-                st.markdown(
-                    "<hr class='section-divider-branch-viz' aria-hidden='true'>",
-                    unsafe_allow_html=True,
-                )
-                # --- Branch path viewer: full-width title + window line; purple/green in each column ---
-                _win_mm = BRANCH_PCT_AS_REFERENCE_WINDOW_MM
-                _win_esc = html.escape(
-                    str(int(_win_mm)) if float(_win_mm) == int(float(_win_mm)) else str(_win_mm),
-                    quote=True,
-                )
-                st.markdown(
-                    "<div class='branch-viz-section-intro-fullwidth'>"
-                    "<h3 class='artery-plot-title branch-viz-section-title'>Coronary branch paths</h3>"
-                    "<p class='branch-viz-window-line'>"
-                    "<strong>REFERENCE WINDOW SIZE:</strong> "
-                    f"±{_win_esc} mm Geodesic Distance"
-                    "</p></div>",
-                    unsafe_allow_html=True,
-                )
-                row2_l, row2_r = st.columns([2.85, 2.55], gap="medium", vertical_alignment="top")
-                with row2_l:
                     st.markdown(
-                        "<div class='branch-viz-legend branch-viz-legend-col-wrap' role='note'>"
-                        "<div class='branch-viz-legend-col-inner'>"
-                        "<span class='branch-viz-legend-swatch' style='background:#a855f7;'></span>"
-                        "<div class='branch-viz-legend-col-text'>"
-                        "<strong>Purple</strong>: maximum %AS on the branch — <strong>3D</strong>: diamond; "
-                        "<strong>bar charts</strong>: purple on both Area and %AS rows."
-                        "</div></div></div>",
+                        "<hr class='section-divider-branch-viz' aria-hidden='true'>",
+                        unsafe_allow_html=True,
+                    )
+                    # --- CAD-RADS 2.0 + AHA segment viewer (Block 3 exports) ---
+                    _cad = load_block3_cad_rads_patient_report_row(PROJECT_ROOT, patient_id)
+                    if _cad is not None:
+                        _cat_raw = _cad.get("CAD_RADS_Category")
+                        if (
+                            _cat_raw is None
+                            or (isinstance(_cat_raw, float) and pd.isna(_cat_raw))
+                            or str(_cat_raw).strip() == ""
+                        ):
+                            _cat_disp = "—"
+                        else:
+                            _cat_disp = str(_cat_raw).strip()
+                        _cat_esc = html.escape(_cat_disp, quote=True)
+                        _rat = html.escape(str(_cad.get("CAD_RADS_Rationale", "—")), quote=True)
+                        _hl = html.escape(str(_cad.get("Highest_Stenosis_Location", "—")), quote=True)
+                        try:
+                            _hp = float(_cad.get("Highest_Stenosis_pct_AS"))
+                            if not math.isfinite(_hp):
+                                _hp_s = "—"
+                            else:
+                                _hp_s = html.escape(f"{max(0.0, _hp):.2f}", quote=True)
+                        except (TypeError, ValueError):
+                            _hp_s = "—"
+                        try:
+                            _ss = _cad.get("SIS_Score")
+                            _sd = _cad.get("SIS_Denominator")
+                            if _ss is not None and pd.notna(_ss):
+                                _ss_i = int(float(_ss))
+                                if _sd is not None and pd.notna(_sd):
+                                    _sis_disp = f"{_ss_i} / {int(float(_sd))}"
+                                else:
+                                    _sis_disp = str(_ss_i)
+                                _sis_esc = html.escape(_sis_disp, quote=True)
+                            else:
+                                _sis_esc = "—"
+                        except (TypeError, ValueError):
+                            _sis_esc = "—"
+                        _cad_html = [
+                            "<div class='cad-rads-summary-panel'>",
+                            f"<h3 class='cad-rads-main-title'>Patient CAD-RADS 2.0: {_cat_esc}</h3>",
+                            f"<p><strong>Rationale</strong>: {_rat}</p>",
+                            f"<p><strong>Leading stenosis location</strong>: {_hl} "
+                            f"(highest segment %AS ≈ {_hp_s}%).</p>",
+                            f"<p><strong>SIS (Segment Involvement Score)</strong>: {_sis_esc}</p>",
+                            "</div>",
+                        ]
+                    else:
+                        _cad_html = [
+                            "<div class='cad-rads-summary-panel'>",
+                            "<h3 class='cad-rads-main-title'>Patient CAD-RADS 2.0: —</h3>",
+                            "<p>No CAD-RADS report found. Expected "
+                            f"<code>results/block3_results/cad-rads/{html.escape(patient_id, quote=True)}/"
+                            f"patient_report_{html.escape(patient_id, quote=True)}.xlsx</code>.</p>",
+                            "</div>",
+                        ]
+                    st.markdown("".join(_cad_html), unsafe_allow_html=True)
+
+                    seg_summary_df = load_block3_segment_stenosis_summary(PROJECT_ROOT, patient_id)
+                    st.markdown(
+                        "<h3 class='artery-plot-title'>Coronary artery colored segments</h3>",
                         unsafe_allow_html=True,
                     )
                     st.markdown(
-                        '<div class="branch-viz-title-spacer" aria-hidden="true">&nbsp;</div>',
+                        "<p class='seg-viz-section-intro'>"
+                        "Segments are ordered by descending max %AS. Use buttons to select the specific segment "
+                        "and artery. The 3D view colors centerline markers by segment ID; the selected segment path "
+                        "is redrawn in dark tones with purple at max %AS. Proximal / distal Area reference samples are shown in green "
+                        "on the Area bar chart only."
+                        "</p>",
                         unsafe_allow_html=True,
                     )
-                    _ab_lca, _ab_rca = st.columns(2, gap="small")
-                    with _ab_lca:
+
+                    _rsl, _rsr = st.columns(2, gap="small")
+                    with _rsl:
                         if st.button(
                             "LCA",
-                            key="branch_viz_btn_lca",
+                            key="seg_viz_btn_lca",
                             use_container_width=True,
                             type="primary"
-                            if str(st.session_state.branch_viz_artery).strip().upper() == "LCA"
+                            if str(st.session_state.seg_viz_artery).strip().upper() == "LCA"
                             else "secondary",
                         ):
-                            st.session_state.branch_viz_artery = "LCA"
-                            st.session_state.branch_viz_selected = None
-                    with _ab_rca:
+                            st.session_state.seg_viz_artery = "LCA"
+                            st.session_state.seg_viz_selected = None
+                    with _rsr:
                         if st.button(
                             "RCA",
-                            key="branch_viz_btn_rca",
+                            key="seg_viz_btn_rca",
                             use_container_width=True,
                             type="primary"
-                            if str(st.session_state.branch_viz_artery).strip().upper() == "RCA"
+                            if str(st.session_state.seg_viz_artery).strip().upper() == "RCA"
                             else "secondary",
                         ):
-                            st.session_state.branch_viz_artery = "RCA"
-                            st.session_state.branch_viz_selected = None
+                            st.session_state.seg_viz_artery = "RCA"
+                            st.session_state.seg_viz_selected = None
+
+                    _sv_art = str(st.session_state.seg_viz_artery).strip().upper()
+                    if _sv_art not in ("LCA", "RCA"):
+                        _sv_art = "LCA"
+                        st.session_state.seg_viz_artery = _sv_art
+                    try:
+                        df_seg_art = _sort_centerline_subset(_filter_artery(total_df, _sv_art))
+                    except Exception:
+                        df_seg_art = pd.DataFrame()
+                    seg_rows = segment_rows_for_artery_ui(seg_summary_df, df_seg_art, _sv_art)
+                    seg_ids = [t[0] for t in seg_rows]
+                    _seg_mesh = mesh_lca if _sv_art == "LCA" else mesh_rca
+                    _seg_ok = (
+                        _seg_mesh.is_file()
+                        and not df_seg_art.empty
+                        and {"Px", "Py", "Pz", "pct_AS", "Area", "Segment_ID"}.issubset(df_seg_art.columns)
+                        and bool(seg_ids)
+                    )
+                    if _seg_ok:
+                        if (
+                            st.session_state.seg_viz_selected is None
+                            or int(st.session_state.seg_viz_selected) not in seg_ids
+                        ):
+                            st.session_state.seg_viz_selected = int(seg_ids[0])
+                        _sel_seg = int(st.session_state.seg_viz_selected)
+                    else:
+                        _sel_seg = 0
+                        if not seg_ids:
+                            st.caption(
+                                f"No labeled segment IDs (> 0) in {_sv_art} centerline data, "
+                                "or mesh / columns missing."
+                            )
+
+                    if _seg_ok:
+                        _seg_id_colors = segment_id_hex_colors(df_seg_art)
+                        st.markdown(
+                            f"<style>{_segment_pick_button_style_block(_sv_art, seg_rows, _seg_id_colors)}</style>",
+                            unsafe_allow_html=True,
+                        )
+                        _seg_btns_per_row = 6
+                        for _row0 in range(0, len(seg_rows), _seg_btns_per_row):
+                            _chunk = seg_rows[_row0 : _row0 + _seg_btns_per_row]
+                            _bcols = st.columns(_seg_btns_per_row)
+                            for _j, (_sid, _sname, _mx) in enumerate(_chunk):
+                                short = (_sname[:22] + "…") if len(_sname) > 23 else _sname
+                                btn_lbl = f"{_sid}: {short} ({_mx:.1f}%)"
+                                with _bcols[_j]:
+                                    st.button(
+                                        btn_lbl,
+                                        key=f"seg_pick_btn_{_sv_art}_{_sid}",
+                                        use_container_width=True,
+                                        type="primary" if _sel_seg == _sid else "secondary",
+                                        on_click=_set_seg_viz_selected_segment,
+                                        args=(int(_sid),),
+                                    )
+
+                        _pk = segment_pct_as_peak_reference_summary(df_seg_art, _sel_seg)
+                        if _pk.get("ok"):
+
+                            def _fmt_area_ui(v: object) -> str:
+                                if v is None:
+                                    return "—"
+                                try:
+                                    x = float(v)
+                                except (TypeError, ValueError):
+                                    return "—"
+                                return f"{x:.4f} mm²" if math.isfinite(x) else "—"
+
+                            def _fmt_pct_ui(v: object) -> str:
+                                if v is None:
+                                    return "—"
+                                try:
+                                    x = float(v)
+                                except (TypeError, ValueError):
+                                    return "—"
+                                if not math.isfinite(x):
+                                    return "—"
+                                x = max(0.0, x)
+                                return f"{x:.2f} %"
+
+                            _m_pct = html.escape(_fmt_pct_ui(_pk.get("max_pct_as")), quote=True)
+                            _m_area = html.escape(_fmt_area_ui(_pk.get("area_at_max")), quote=True)
+                            _m_prox = html.escape(_fmt_area_ui(_pk.get("area_prox_ref")), quote=True)
+                            _m_dist = html.escape(_fmt_area_ui(_pk.get("area_dist_ref")), quote=True)
+                            _prox_hint = ""
+                            _dist_hint = ""
+                            if not _pk.get("prox_ref_on_segment_bar", True) and _pk.get(
+                                "area_prox_ref"
+                            ) is not None:
+                                try:
+                                    _apx = float(_pk.get("area_prox_ref"))  # type: ignore[arg-type]
+                                except (TypeError, ValueError):
+                                    _apx = float("nan")
+                                if math.isfinite(_apx):
+                                    _prox_hint = (
+                                        ' <span class="seg-ref-off-seg">(Not on this segment’s Area bars; '
+                                        "reference is often on another segment along the branch.)</span>"
+                                    )
+                            if not _pk.get("dist_ref_on_segment_bar", True) and _pk.get(
+                                "area_dist_ref"
+                            ) is not None:
+                                try:
+                                    _adx = float(_pk.get("area_dist_ref"))  # type: ignore[arg-type]
+                                except (TypeError, ValueError):
+                                    _adx = float("nan")
+                                if math.isfinite(_adx):
+                                    _dist_hint = (
+                                        ' <span class="seg-ref-off-seg">(Not on this segment’s Area bars; '
+                                        "reference is often on another segment along the branch.)</span>"
+                                    )
+                            st.markdown(
+                                "<div class='seg-ref-summary-panel'>"
+                                "<ul class='seg-ref-metrics'>"
+                                f"<li><strong>Max %AS</strong>: {_m_pct}</li>"
+                                f"<li><strong>Area at peak</strong>: {_m_area}</li>"
+                                f"<li><strong>Proximal Reference Area</strong>: {_m_prox}{_prox_hint}</li>"
+                                f"<li><strong>Distal Reference Area</strong>: {_m_dist}{_dist_hint}</li>"
+                                "</ul></div>",
+                                unsafe_allow_html=True,
+                            )
+                        elif _pk.get("reason") == "no_pct_col":
+                            st.caption("Reference Area summary skipped: no %AS column in segment rows.")
+
+                        st.markdown(
+                            "<div class='seg-viz-legends-fullwidth branch-viz-legend' role='note'>"
+                            "<div class='branch-viz-legend-col-wrap'>"
+                            "<div class='branch-viz-legend-col-inner'>"
+                            "<span class='branch-viz-legend-swatch' style='background:#a855f7;'></span>"
+                            "<div class='branch-viz-legend-col-text'>"
+                            "<strong>Purple</strong>: maximum %AS on the segment — <strong>3D</strong>: diamond; "
+                            "<strong>bar charts</strong>: purple on both Area and %AS rows."
+                            "</div></div></div>"
+                            "<div class='branch-viz-legend-col-wrap'>"
+                            "<div class='branch-viz-legend-col-inner'>"
+                            "<span class='branch-viz-legend-swatch' style='background:#2e7d32;'></span>"
+                            "<div class='branch-viz-legend-col-text'>"
+                            "<strong>Green</strong>: proximal / distal <strong>Area</strong> reference samples — "
+                            "<strong>bar charts</strong> only: green on the "
+                            "<strong>Area</strong> row (±window mm along the segment polyline from max %AS)."
+                            "</div></div></div>"
+                            "</div>",
+                            unsafe_allow_html=True,
+                        )
+
+                        seg_plot_3d_col, seg_bars_col = st.columns([0.82, 1.38], gap="medium", vertical_alignment="top")
+                        with seg_plot_3d_col:
+                            try:
+                                fig_seg = create_3d_mesh_segment_path_highlight(
+                                    str(_seg_mesh),
+                                    df_seg_art,
+                                    selected_segment_id=_sel_seg,
+                                    trace_name=_sv_art,
+                                )
+                                _sk_seg = dict(
+                                    use_container_width=True,
+                                    config=plotly_config,
+                                    key=f"seg_viz_plot_{st.session_state.reset_seg_viz}_{_sv_art}_{_sel_seg}",
+                                )
+                                try:
+                                    st.plotly_chart(fig_seg, **_sk_seg)
+                                except TypeError:
+                                    _sk_seg.pop("key", None)
+                                    st.plotly_chart(fig_seg, **_sk_seg)
+                                sg1, sg2, sg3 = st.columns([2, 1, 2])
+                                with sg2:
+                                    if st.button("RESET VIEW", key="reset_btn_seg_viz"):
+                                        st.session_state.reset_seg_viz += 1
+                            except Exception as e:
+                                st.warning(f"Segment 3D visualization could not be built: {e}")
+
+                        with seg_bars_col:
+                            try:
+                                fig_seg_bars = create_segment_centerline_metric_bars(
+                                    df_seg_art,
+                                    selected_segment_id=_sel_seg,
+                                    artery=_sv_art,
+                                )
+                                _sk_b = dict(
+                                    use_container_width=True,
+                                    config=plotly_config,
+                                    key=(
+                                        f"seg_profile_bars_{patient_id}_{_sv_art}_{_sel_seg}_"
+                                        f"{st.session_state.reset_seg_viz}"
+                                    ),
+                                )
+                                try:
+                                    st.plotly_chart(fig_seg_bars, **_sk_b)
+                                except TypeError:
+                                    _sk_b.pop("key", None)
+                                    st.plotly_chart(fig_seg_bars, **_sk_b)
+                            except Exception as ex_s:
+                                st.caption(f"Along-segment Area / %AS charts could not be built: {ex_s}")
+                    else:
+                        st.caption("Load Block 3 label `total_df` with Segment_ID, Area, and pct_AS to enable.")
+
                     st.markdown(
-                        '<div class="branch-viz-artery-row-spacer" aria-hidden="true">&nbsp;</div>',
+                        "<hr class='section-divider-branch-viz' aria-hidden='true'>",
                         unsafe_allow_html=True,
                     )
-                    # Re-read artery after button clicks (same run)
-                    _bv_art = str(st.session_state.branch_viz_artery).strip().upper()
-                    if _bv_art not in ("LCA", "RCA"):
-                        _bv_art = "LCA"
-                        st.session_state.branch_viz_artery = _bv_art
-                    _bv_mesh = mesh_lca if _bv_art == "LCA" else mesh_rca
-                    branch_pairs = discover_block3_label_branch_xlsx(PROJECT_ROOT, patient_id, _bv_art)
-                    branch_df_all = load_concat_branch_centerlines(branch_pairs)
-                    _branch_viz_ok = (
-                        bool(branch_pairs)
-                        and not branch_df_all.empty
-                        and _bv_mesh.is_file()
-                        and {"Px", "Py", "Pz", "pct_AS", "Branch_ID"}.issubset(branch_df_all.columns)
+                    # --- Branch path viewer: full-width title + window line; purple/green in each column ---
+                    _win_mm = BRANCH_PCT_AS_REFERENCE_WINDOW_MM
+                    _win_esc = html.escape(
+                        str(int(_win_mm)) if float(_win_mm) == int(float(_win_mm)) else str(_win_mm),
+                        quote=True,
                     )
-                    if not _branch_viz_ok:
-                        if not branch_pairs or branch_df_all.empty:
-                            st.caption(
-                                f"No {_bv_art} branch spreadsheets under "
-                                f"`results/block3_results/label/{patient_id}/branches/dataframes/` "
-                                f"(expected `dataset_{_bv_art}_B##_{patient_id}.xlsx`)."
-                            )
-                        elif not _bv_mesh.is_file():
-                            st.caption(f"{_bv_art} surface mesh missing; branch path viewer skipped.")
+                    st.markdown(
+                        "<div class='branch-viz-section-intro-fullwidth'>"
+                        "<h3 class='artery-plot-title branch-viz-section-title'>Coronary branch paths</h3>"
+                        "<p class='branch-viz-window-line'>"
+                        "<strong>REFERENCE WINDOW SIZE:</strong> "
+                        f"±{_win_esc} mm Geodesic Distance"
+                        "</p></div>",
+                        unsafe_allow_html=True,
+                    )
+                    row2_l, row2_r = st.columns([2.85, 2.55], gap="medium", vertical_alignment="top")
+                    with row2_l:
+                        st.markdown(
+                            "<div class='branch-viz-legend branch-viz-legend-col-wrap' role='note'>"
+                            "<div class='branch-viz-legend-col-inner'>"
+                            "<span class='branch-viz-legend-swatch' style='background:#a855f7;'></span>"
+                            "<div class='branch-viz-legend-col-text'>"
+                            "<strong>Purple</strong>: maximum %AS on the branch — <strong>3D</strong>: diamond; "
+                            "<strong>bar charts</strong>: purple on both Area and %AS rows."
+                            "</div></div></div>",
+                            unsafe_allow_html=True,
+                        )
+                        st.markdown(
+                            '<div class="branch-viz-title-spacer" aria-hidden="true">&nbsp;</div>',
+                            unsafe_allow_html=True,
+                        )
+                        _ab_lca, _ab_rca = st.columns(2, gap="small")
+                        with _ab_lca:
+                            if st.button(
+                                "LCA",
+                                key="branch_viz_btn_lca",
+                                use_container_width=True,
+                                type="primary"
+                                if str(st.session_state.branch_viz_artery).strip().upper() == "LCA"
+                                else "secondary",
+                            ):
+                                st.session_state.branch_viz_artery = "LCA"
+                                st.session_state.branch_viz_selected = None
+                        with _ab_rca:
+                            if st.button(
+                                "RCA",
+                                key="branch_viz_btn_rca",
+                                use_container_width=True,
+                                type="primary"
+                                if str(st.session_state.branch_viz_artery).strip().upper() == "RCA"
+                                else "secondary",
+                            ):
+                                st.session_state.branch_viz_artery = "RCA"
+                                st.session_state.branch_viz_selected = None
+                        st.markdown(
+                            '<div class="branch-viz-artery-row-spacer" aria-hidden="true">&nbsp;</div>',
+                            unsafe_allow_html=True,
+                        )
+                        # Re-read artery after button clicks (same run)
+                        _bv_art = str(st.session_state.branch_viz_artery).strip().upper()
+                        if _bv_art not in ("LCA", "RCA"):
+                            _bv_art = "LCA"
+                            st.session_state.branch_viz_artery = _bv_art
+                        _bv_mesh = mesh_lca if _bv_art == "LCA" else mesh_rca
+                        branch_pairs = discover_block3_label_branch_xlsx(PROJECT_ROOT, patient_id, _bv_art)
+                        branch_df_all = load_concat_branch_centerlines(branch_pairs)
+                        _branch_viz_ok = (
+                            bool(branch_pairs)
+                            and not branch_df_all.empty
+                            and _bv_mesh.is_file()
+                            and {"Px", "Py", "Pz", "pct_AS", "Branch_ID"}.issubset(branch_df_all.columns)
+                        )
+                        if not _branch_viz_ok:
+                            if not branch_pairs or branch_df_all.empty:
+                                st.caption(
+                                    f"No {_bv_art} branch spreadsheets under "
+                                    f"`results/block3_results/label/{patient_id}/branches/dataframes/` "
+                                    f"(expected `dataset_{_bv_art}_B##_{patient_id}.xlsx`)."
+                                )
+                            elif not _bv_mesh.is_file():
+                                st.caption(f"{_bv_art} surface mesh missing; branch path viewer skipped.")
+                            else:
+                                st.warning(
+                                    "Branch dataframes are missing required columns "
+                                    "(Px, Py, Pz, pct_AS, Branch_ID). Cannot build branch highlight plot."
+                                )
                         else:
-                            st.warning(
-                                "Branch dataframes are missing required columns "
-                                "(Px, Py, Pz, pct_AS, Branch_ID). Cannot build branch highlight plot."
-                            )
-                    else:
-                        branch_ids = [b for b, _ in branch_pairs]
-                        if (
-                            st.session_state.branch_viz_selected is None
-                            or st.session_state.branch_viz_selected not in branch_ids
-                        ):
-                            st.session_state.branch_viz_selected = branch_ids[0]
-                        _sel_bid = st.session_state.branch_viz_selected
+                            branch_ids = [b for b, _ in branch_pairs]
+                            if (
+                                st.session_state.branch_viz_selected is None
+                                or st.session_state.branch_viz_selected not in branch_ids
+                            ):
+                                st.session_state.branch_viz_selected = branch_ids[0]
+                            _sel_bid = st.session_state.branch_viz_selected
 
+                            try:
+                                fig_br = create_3d_mesh_branch_path_highlight(
+                                    str(_bv_mesh),
+                                    branch_df_all,
+                                    selected_branch_id=str(_sel_bid),
+                                    trace_name=_bv_art,
+                                )
+                                _bk = dict(
+                                    use_container_width=True,
+                                    config=plotly_config,
+                                    key=(
+                                        f"branch_viz_plot_{st.session_state.reset_branch_viz}_"
+                                        f"{_bv_art}_{_sel_bid}"
+                                    ),
+                                )
+                                try:
+                                    st.plotly_chart(fig_br, **_bk)
+                                except TypeError:
+                                    _bk.pop("key", None)
+                                    st.plotly_chart(fig_br, **_bk)
+                                br1, br2, br3 = st.columns([2, 1, 2])
+                                with br2:
+                                    if st.button("RESET VIEW", key="reset_btn_branch_viz"):
+                                        st.session_state.reset_branch_viz += 1
+                            except Exception as e:
+                                st.warning(f"Branch path visualization could not be built: {e}")
+
+                    with row2_r:
+                        st.markdown(
+                            "<div class='branch-viz-legend branch-viz-legend-col-wrap' role='note'>"
+                            "<div class='branch-viz-legend-col-inner'>"
+                            "<span class='branch-viz-legend-swatch' style='background:#2e7d32;'></span>"
+                            "<div class='branch-viz-legend-col-text'>"
+                            "<strong>Green</strong>: reference cross-sections for <strong>A_ref</strong> at the peak "
+                            "(nearest samples ≈ −/+ window along the centerline). "
+                            "<strong>3D</strong>: green <strong>circles</strong>; "
+                            "<strong>Area</strong> bar row only (not %AS)."
+                            "</div></div></div>",
+                            unsafe_allow_html=True,
+                        )
+                        st.markdown(
+                            '<div class="branch-panel-align-with-plot-spacer" aria-hidden="true">&nbsp;</div>',
+                            unsafe_allow_html=True,
+                        )
+                        st.markdown(
+                            "<h3 class='artery-plot-title branch-panel-heading'>Branches</h3>",
+                            unsafe_allow_html=True,
+                        )
+                        if _branch_viz_ok:
+                            _sel_r = st.session_state.branch_viz_selected
+                            for bid, _p in branch_pairs:
+                                st.button(
+                                    bid,
+                                    key=f"branch_pick_btn_{_bv_art}_{bid}",
+                                    use_container_width=True,
+                                    type="primary" if _sel_r == bid else "secondary",
+                                    on_click=_set_branch_viz_selected_branch,
+                                    args=(bid,),
+                                )
+                        elif not branch_pairs:
+                            st.caption("No branch files for this artery.")
+                        else:
+                            st.caption("Load branch tables or mesh to enable selection.")
+
+                    if _branch_viz_ok:
+                        st.markdown(
+                            '<div class="branch-viz-artery-row-spacer" aria-hidden="true">&nbsp;</div>',
+                            unsafe_allow_html=True,
+                        )
                         try:
-                            fig_br = create_3d_mesh_branch_path_highlight(
-                                str(_bv_mesh),
+                            _sel_prof = str(st.session_state.branch_viz_selected)
+                            fig_prof = create_branch_centerline_metric_bars(
                                 branch_df_all,
-                                selected_branch_id=str(_sel_bid),
-                                trace_name=_bv_art,
+                                selected_branch_id=_sel_prof,
+                                artery=_bv_art,
                             )
-                            _bk = dict(
+                            _prof_kw = dict(
                                 use_container_width=True,
                                 config=plotly_config,
                                 key=(
-                                    f"branch_viz_plot_{st.session_state.reset_branch_viz}_"
-                                    f"{_bv_art}_{_sel_bid}"
+                                    f"branch_profile_bars_{patient_id}_{_bv_art}_{_sel_prof}_"
+                                    f"{st.session_state.reset_branch_viz}"
                                 ),
                             )
                             try:
-                                st.plotly_chart(fig_br, **_bk)
+                                st.plotly_chart(fig_prof, **_prof_kw)
                             except TypeError:
-                                _bk.pop("key", None)
-                                st.plotly_chart(fig_br, **_bk)
-                            br1, br2, br3 = st.columns([2, 1, 2])
-                            with br2:
-                                if st.button("RESET VIEW", key="reset_btn_branch_viz"):
-                                    st.session_state.reset_branch_viz += 1
-                        except Exception as e:
-                            st.warning(f"Branch path visualization could not be built: {e}")
-
-                with row2_r:
-                    st.markdown(
-                        "<div class='branch-viz-legend branch-viz-legend-col-wrap' role='note'>"
-                        "<div class='branch-viz-legend-col-inner'>"
-                        "<span class='branch-viz-legend-swatch' style='background:#2e7d32;'></span>"
-                        "<div class='branch-viz-legend-col-text'>"
-                        "<strong>Green</strong>: reference cross-sections for <strong>A_ref</strong> at the peak "
-                        "(nearest samples ≈ −/+ window along the centerline). "
-                        "<strong>3D</strong>: green <strong>circles</strong>; "
-                        "<strong>Area</strong> bar row only (not %AS)."
-                        "</div></div></div>",
-                        unsafe_allow_html=True,
-                    )
-                    st.markdown(
-                        '<div class="branch-panel-align-with-plot-spacer" aria-hidden="true">&nbsp;</div>',
-                        unsafe_allow_html=True,
-                    )
-                    st.markdown(
-                        "<h3 class='artery-plot-title branch-panel-heading'>Branches</h3>",
-                        unsafe_allow_html=True,
-                    )
-                    if _branch_viz_ok:
-                        _sel_r = st.session_state.branch_viz_selected
-                        for bid, _p in branch_pairs:
-                            st.button(
-                                bid,
-                                key=f"branch_pick_btn_{_bv_art}_{bid}",
-                                use_container_width=True,
-                                type="primary" if _sel_r == bid else "secondary",
-                                on_click=_set_branch_viz_selected_branch,
-                                args=(bid,),
-                            )
-                    elif not branch_pairs:
-                        st.caption("No branch files for this artery.")
-                    else:
-                        st.caption("Load branch tables or mesh to enable selection.")
-
-                if _branch_viz_ok:
-                    st.markdown(
-                        '<div class="branch-viz-artery-row-spacer" aria-hidden="true">&nbsp;</div>',
-                        unsafe_allow_html=True,
-                    )
-                    try:
-                        _sel_prof = str(st.session_state.branch_viz_selected)
-                        fig_prof = create_branch_centerline_metric_bars(
-                            branch_df_all,
-                            selected_branch_id=_sel_prof,
-                            artery=_bv_art,
-                        )
-                        _prof_kw = dict(
-                            use_container_width=True,
-                            config=plotly_config,
-                            key=(
-                                f"branch_profile_bars_{patient_id}_{_bv_art}_{_sel_prof}_"
-                                f"{st.session_state.reset_branch_viz}"
-                            ),
-                        )
-                        try:
-                            st.plotly_chart(fig_prof, **_prof_kw)
-                        except TypeError:
-                            _prof_kw.pop("key", None)
-                            st.plotly_chart(fig_prof, **_prof_kw)
-                    except Exception as ex_prof:
-                        st.caption(f"Along-branch %AS / Area charts could not be built: {ex_prof}")
+                                _prof_kw.pop("key", None)
+                                st.plotly_chart(fig_prof, **_prof_kw)
+                        except Exception as ex_prof:
+                            st.caption(f"Along-branch %AS / Area charts could not be built: {ex_prof}")
 
     st.markdown("---")
     _au_f = html.escape(AUTHOR_NAME, quote=True)

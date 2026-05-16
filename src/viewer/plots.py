@@ -204,14 +204,40 @@ def _parse_branch_id_from_dataset_xlsx_name(filename: str, patient_id: str) -> s
     return head[len("dataset_") :]
 
 
+def discover_synthetic_branch_xlsx(project_root: Path, patient_id: str) -> list[tuple[str, Path]]:
+    """Branch spreadsheets for a synthetic single-tube case (``Artery_Type == Synthetic``)."""
+    base = project_root / "results" / "block3_results" / "label" / patient_id / "branches" / "dataframes"
+    if not base.is_dir():
+        return []
+    out: list[tuple[str, Path]] = []
+    for p in sorted(base.glob("dataset_*.xlsx")):
+        bid = _parse_branch_id_from_dataset_xlsx_name(p.name, patient_id)
+        if not bid:
+            continue
+        try:
+            df = pd.read_excel(p, nrows=1)
+        except (OSError, ValueError):
+            continue
+        if df.empty or "Artery_Type" not in df.columns:
+            continue
+        if str(df["Artery_Type"].iloc[0]).strip() != "Synthetic":
+            continue
+        branch_key = str(df["Branch_ID"].iloc[0]).strip() if "Branch_ID" in df.columns else bid
+        out.append((branch_key, p.resolve()))
+    out.sort(key=lambda t: _branch_sort_key(str(t[0])))
+    return out
+
+
 def discover_block3_label_branch_xlsx(project_root: Path, patient_id: str, artery: str) -> list[tuple[str, Path]]:
     """
     Branch spreadsheets (``dataset_<Branch_ID>_<patient_id>.xlsx``) under
     ``results/block3_results/label/<patient_id>/branches/dataframes/`` for ``artery`` ``LCA`` or ``RCA``.
     """
     art = str(artery).strip().upper()
+    if art == "SYNTHETIC":
+        return discover_synthetic_branch_xlsx(project_root, patient_id)
     if art not in ("LCA", "RCA"):
-        raise ValueError("artery must be 'LCA' or 'RCA'")
+        raise ValueError("artery must be 'LCA', 'RCA', or 'Synthetic'")
     base = project_root / "results" / "block3_results" / "label" / patient_id / "branches" / "dataframes"
     if not base.is_dir():
         return []
@@ -1045,6 +1071,23 @@ def create_branch_centerline_metric_bars(
     )
 
     return fig
+
+
+def create_synthetic_tube_geodesic_profile(centerline_df: pd.DataFrame) -> go.Figure:
+    """
+    Single continuous Area + %AS profile along the synthetic vessel (one branch, no LCA/RCA split).
+    """
+    if centerline_df.empty:
+        raise ValueError("Synthetic centerline dataframe is empty.")
+    d = _sort_branch_rows(centerline_df.copy())
+    if "Branch_ID" not in d.columns:
+        d["Branch_ID"] = 0
+    branch_key = str(d["Branch_ID"].iloc[0]).strip()
+    return create_branch_centerline_metric_bars(
+        d,
+        selected_branch_id=branch_key,
+        artery="Synthetic",
+    )
 
 
 def load_block3_cad_rads_patient_report_row(project_root: Path, patient_id: str) -> pd.Series | None:

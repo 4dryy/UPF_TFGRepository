@@ -1,0 +1,10 @@
+{
+  "patient_id": "Synthetic_1",
+  "is_synthetic": true,
+  "cad_rads_category": "N/A (Synthetic Case)",
+  "final_cad_rads_code": "N/A (Synthetic Case)",
+  "highest_stenosis_location": "Synthetic Vessel",
+  "highest_stenosis_pct_as": 0.01141856347632864,
+  "sis_score": null,
+  "clinical_scores_note": "Placeholder \u2014 synthetic validation only."
+}

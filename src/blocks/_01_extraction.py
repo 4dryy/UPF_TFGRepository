@@ -26,6 +26,12 @@ import scipy.ndimage as ndi
 from scipy.spatial import cKDTree
 from skimage.morphology import skeletonize
 from src.pipeline_log import configure_logging, footer_block, phase, short_path, sub
+from src.synthetic_profile import (
+    SYNTHETIC_ARTERY,
+    apply_synthetic_metadata,
+    resolve_mask_nrrd_path,
+    synthetic_branch_file_stem,
+)
 from vmtk import vmtkscripts
 from vtkmodules.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 from vtkmodules.vtkCommonDataModel import vtkImageData
@@ -532,6 +538,57 @@ def _load_and_separate_mask(
 load_and_separate_mask = _load_and_separate_mask
 
 
+def _load_single_mask(
+    nrrd_path: Path,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Load a binary mask as one vessel (no RCA/LCA connected-component split)."""
+    reader = vmtkscripts.vmtkImageReader()
+    reader.InputFileName = str(nrrd_path)
+    reader.Execute()
+
+    vtk_image = reader.Image
+    spacing = np.array(vtk_image.GetSpacing())
+    origin = np.array(vtk_image.GetOrigin())
+    dims = vtk_image.GetDimensions()
+    vtk_scalars = vtk_image.GetPointData().GetScalars()
+    mask = vtk_to_numpy(vtk_scalars).reshape(dims[2], dims[1], dims[0]).astype(np.uint8)
+    mask = (mask > 0).astype(np.uint8)
+    if int(mask.sum()) == 0:
+        raise RuntimeError(f"Empty mask: {nrrd_path}")
+    return mask, spacing, origin
+
+
+def _collapse_to_synthetic_single_branch(out: dict, sample_id: int) -> dict:
+    """
+  Replace multi-branch packaging with one ordered path and synthetic placeholder columns.
+    """
+    df = out["df_artery"].copy()
+    ost = np.asarray(out["source_phys"], dtype=float)
+    pts = df[["Px", "Py", "Pz"]].to_numpy(dtype=float)
+    order = np.argsort(np.linalg.norm(pts - ost[None, :], axis=1))
+    df = df.iloc[order].reset_index(drop=True)
+    df = apply_synthetic_metadata(df)
+    df["Path_Point_Index"] = np.arange(len(df), dtype=int)
+    if "PointType" in df.columns:
+        ptype = np.array(["Path"] * len(df), dtype=object)
+        if len(ptype) > 0:
+            ptype[0] = "Ostium"
+        if len(ptype) > 1:
+            ptype[-1] = "Endpoint"
+        df["PointType"] = ptype
+
+    branch_pts = df[["Px", "Py", "Pz"]].to_numpy(dtype=float)
+    branch_poly = pv.lines_from_points(branch_pts, close=False)
+    if "Radius" in df.columns:
+        branch_poly.point_data["MaximumInscribedSphereRadius"] = df["Radius"].to_numpy(dtype=float)
+
+    branch_id = synthetic_branch_file_stem()
+    branch = {"branch_id": branch_id, "poly": branch_poly, "df": df}
+    out["df_artery"] = df
+    out["branches"] = [branch]
+    return out
+
+
 def _process_artery(
     artery_name: str,
     artery_mask: np.ndarray,
@@ -739,6 +796,8 @@ def run_block1(
     patient_id: str,
     nrrd_path: Path | None = None,
     label_nii_path: Path | None = None,
+    *,
+    is_synthetic: bool = False,
 ) -> pd.DataFrame:
     t_start = time.perf_counter()
     sample_name = patient_id
@@ -746,9 +805,18 @@ def run_block1(
     phase(logger, "1", "Centerlines · branching · export")
 
     if nrrd_path is None:
-        nrrd_path = DATA_ROOT / "ASOCA Normal" / "Annotations" / f"{patient_id}.nrrd"
+        nrrd_path = resolve_mask_nrrd_path(patient_id)
     if not nrrd_path.exists():
         raise FileNotFoundError(f"Mask not found: {nrrd_path}")
+
+    if is_synthetic:
+        return _run_block1_synthetic(
+            patient_id=patient_id,
+            nrrd_path=nrrd_path,
+            sample_name=sample_name,
+            sample_id=sample_id,
+            t_start=t_start,
+        )
 
     artery_arrays, spacing, origin = _load_and_separate_mask(nrrd_path)
 
@@ -936,6 +1004,121 @@ def run_block1(
             f"{len(df_centerlines)} pts",
             f"RCA {rca_n} · LCA {lca_n}",
             f"{n_branches} branches",
+            f"out {short_path(sample_dir)}",
+        ],
+    )
+    return df_centerlines
+
+
+def _run_block1_synthetic(
+    *,
+    patient_id: str,
+    nrrd_path: Path,
+    sample_name: str,
+    sample_id: int,
+    t_start: float,
+) -> pd.DataFrame:
+    """Single-tube synthetic mask: one centerline, no RCA/LCA split or AHA segments."""
+    sub(logger, "Synthetic mode: %s", short_path(nrrd_path))
+    artery_mask, spacing, origin = _load_single_mask(nrrd_path)
+
+    skeleton = skeletonize(artery_mask)
+    endpoints_zyx = _find_skeleton_endpoints(skeleton)
+    if len(endpoints_zyx) < 2:
+        raise RuntimeError(
+            f"Synthetic mask {patient_id} has fewer than 2 skeleton endpoints "
+            f"(found {len(endpoints_zyx)})."
+        )
+
+    ost0_idx, d_edt, d_geo, d_calib, score = _identify_ostium(
+        endpoints_zyx,
+        skeleton,
+        artery_mask,
+        edt_weight=0.35,
+        centroid_weight=0.15,
+        caliber_weight=0.30,
+        calib_steps=10,
+    )
+    endpoints_phys = _voxel_to_physical(endpoints_zyx, origin, spacing)
+    source_zyx = endpoints_zyx[ost0_idx : ost0_idx + 1]
+    target_mask = np.ones(len(endpoints_zyx), dtype=bool)
+    target_mask[ost0_idx] = False
+    targets_zyx = endpoints_zyx[target_mask]
+
+    sub(
+        logger,
+        "%s ostium #%d | score=%.2f | EDT=%.2fm",
+        SYNTHETIC_ARTERY,
+        int(ost0_idx),
+        float(score[ost0_idx]),
+        float(d_edt[ost0_idx]),
+    )
+
+    out = _process_artery(
+        artery_name=SYNTHETIC_ARTERY,
+        artery_mask=artery_mask,
+        spacing=spacing,
+        origin=origin,
+        sample_id=sample_id,
+        source_zyx=source_zyx,
+        targets_zyx=targets_zyx,
+        label_arr_asoca=None,
+    )
+    if out is None:
+        raise RuntimeError(f"No centerline extracted for synthetic case {patient_id}")
+
+    out = _collapse_to_synthetic_single_branch(out, sample_id)
+    df_centerlines = out["df_artery"]
+    artery_outputs = {SYNTHETIC_ARTERY: out}
+
+    RESULTS_ROOT.mkdir(parents=True, exist_ok=True)
+    sample_dir = RESULTS_ROOT / sample_name
+    if sample_dir.exists():
+        shutil.rmtree(sample_dir)
+    branches_center_dir = sample_dir / "branches" / "centerlines"
+    branches_df_dir = sample_dir / "branches" / "dataframes"
+    for d in (sample_dir, branches_center_dir, branches_df_dir):
+        d.mkdir(parents=True, exist_ok=True)
+
+    global_xlsx = sample_dir / f"dataset_global_{sample_name}.xlsx"
+    df_centerlines.to_excel(global_xlsx, index=False)
+
+    info = artery_outputs[SYNTHETIC_ARTERY]
+    centerline_path = sample_dir / f"centerline_{SYNTHETIC_ARTERY}.vtp"
+    surface_path = sample_dir / f"surface_{SYNTHETIC_ARTERY}.vtp"
+    artery_df_xlsx = sample_dir / f"dataset_{SYNTHETIC_ARTERY}_{sample_name}.xlsx"
+    info["centerline_poly"].save(str(centerline_path))
+    info["mesh_smooth"].save(str(surface_path))
+    info["df_artery"].to_excel(artery_df_xlsx, index=False)
+
+    for b in info["branches"]:
+        branch_id = b["branch_id"]
+        branch_vtp = branches_center_dir / f"centerline_{branch_id}_{sample_name}.vtp"
+        branch_xlsx = branches_df_dir / f"dataset_{branch_id}_{sample_name}.xlsx"
+        b["poly"].save(str(branch_vtp))
+        b["df"].to_excel(branch_xlsx, index=False)
+
+    n_qc_png = _export_branch_qc_figures(sample_dir, sample_name, artery_outputs)
+    tree_meta = _export_centerline_tree_figure(sample_dir, sample_name, artery_outputs)
+    fig_bits: list[str] = []
+    if tree_meta is not None:
+        fig_bits.append(
+            f"tree({tree_meta['lines']}L·{tree_meta['ostia']}O·{tree_meta['endpoints']}E)"
+        )
+    fig_bits.append(f"branch_QC×{n_qc_png}")
+    sub(logger, "Figures: %s → %s", " · ".join(fig_bits), short_path(sample_dir))
+
+    elapsed = time.perf_counter() - t_start
+    n_branches = len(info["branches"])
+    footer_block(
+        logger,
+        block_id="1",
+        title="centerlines (synthetic)",
+        seconds=elapsed,
+        parts=[
+            f"{len(df_centerlines)} pts",
+            f"{SYNTHETIC_ARTERY} single tube",
+            f"{n_branches} branch",
             f"out {short_path(sample_dir)}",
         ],
     )

@@ -37,12 +37,12 @@ def _is_port_open(host: str, port: int, timeout_s: float = 0.25) -> bool:
         return sock.connect_ex((host, port)) == 0
 
 
-def run_block4(patient_id: str) -> None:
+def run_block4(patient_id: str, *, is_synthetic: bool = False) -> None:
     """Persist current patient context and launch Streamlit in background."""
     phase(logger, "4", "Visualization dashboard")
 
     RESULTS_ROOT.mkdir(parents=True, exist_ok=True)
-    session_payload = {"patient_id": patient_id}
+    session_payload = {"patient_id": patient_id, "is_synthetic": bool(is_synthetic)}
     SESSION_PATH.write_text(json.dumps(session_payload, indent=2), encoding="utf-8")
     sub(logger, "Session file updated: %s", SESSION_PATH)
 

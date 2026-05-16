@@ -34,6 +34,12 @@ from vtkmodules.vtkFiltersCore import vtkCleanPolyData
 
 from src.pipeline_log import footer_block, phase, short_path
 from src.pipeline_log import sub as log_detail
+from src.synthetic_profile import (
+    SYNTHETIC_ARTERY,
+    apply_synthetic_metadata,
+    is_synthetic_patient,
+    resolve_mask_nrrd_path,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -175,9 +181,11 @@ def infer_artery_type(branch_or_df_name: str, df_plot: pd.DataFrame | None = Non
         v = df_plot["Artery_Type"].iloc[0]
         if pd.notna(v):
             sv = str(v).strip().upper()
-            if sv in ("RCA", "LCA"):
-                return sv
+            if sv in ("RCA", "LCA", SYNTHETIC_ARTERY.upper()):
+                return sv if sv != SYNTHETIC_ARTERY.upper() else SYNTHETIC_ARTERY
     bn = branch_or_df_name.upper()
+    if SYNTHETIC_ARTERY.upper() in bn:
+        return SYNTHETIC_ARTERY
     if "LCA" in bn:
         return "LCA"
     if "RCA" in bn:
@@ -605,7 +613,12 @@ def _save_area_plot(
     pl.show(screenshot=str(out_path), auto_close=True)
 
 
-def run_block2(patient_id: str, block1_dir: Path | None = None) -> Block2Outputs:
+def run_block2(
+    patient_id: str,
+    block1_dir: Path | None = None,
+    *,
+    is_synthetic: bool = False,
+) -> Block2Outputs:
     """Run Block 2: area extraction, optional stenosis columns + merge + figures.
 
     **Area phase** → ``results/block2_results/area/<patient_id>/``:
@@ -630,6 +643,8 @@ def run_block2(patient_id: str, block1_dir: Path | None = None) -> Block2Outputs
     """
     sample_name = patient_id
     t_start = time.perf_counter()
+    is_synthetic = bool(is_synthetic or is_synthetic_patient(patient_id))
+    arteries: tuple[str, ...] = (SYNTHETIC_ARTERY,) if is_synthetic else ("RCA", "LCA")
     if block1_dir is None:
         block1_dir = BLOCK1_PATIENT_DIR_ROOT / sample_name
     if not block1_dir.exists():
@@ -657,24 +672,34 @@ def run_block2(patient_id: str, block1_dir: Path | None = None) -> Block2Outputs
     artery_surfaces_vtk.update(loaded_vtk)
     artery_surfaces_pv.update(loaded_pv)
 
-    missing_surface_arteries = [a for a in ("RCA", "LCA") if a not in artery_surfaces_vtk]
+    missing_surface_arteries = [a for a in arteries if a not in artery_surfaces_vtk]
     if missing_surface_arteries:
-        nrrd_path = DATA_ROOT / "ASOCA Normal" / "Annotations" / f"{patient_id}.nrrd"
+        nrrd_path = resolve_mask_nrrd_path(patient_id)
         if not nrrd_path.exists():
             raise FileNotFoundError(f"Mask not found: {nrrd_path}")
         log_detail(logger, "Surfaces: rebuild from NRRD (%s)", ", ".join(missing_surface_arteries))
-        artery_arrays, spacing, origin = _load_and_separate_mask(nrrd_path)
+        if is_synthetic:
+            from src.blocks._01_extraction import _load_single_mask
+
+            full_mask, spacing, origin = _load_single_mask(nrrd_path)
+            artery_arrays = {SYNTHETIC_ARTERY: full_mask}
+        else:
+            artery_arrays, spacing, origin = _load_and_separate_mask(nrrd_path)
         for name in missing_surface_arteries:
             surf_vtk, surf_pv = _build_surface_from_mask(artery_arrays[name], spacing, origin)
             artery_surfaces_vtk[name] = surf_vtk
             artery_surfaces_pv[name] = surf_pv
     else:
-        log_detail(logger, "Surfaces: reuse Block1 (RCA+LCA)")
+        log_detail(
+            logger,
+            "Surfaces: reuse Block1 (%s)",
+            "+".join(arteries),
+        )
 
     centerlines: dict[str, pv.PolyData] = {}
     ref_points: dict[str, np.ndarray] = {}
     ref_area: dict[str, np.ndarray] = {}
-    for artery in ("RCA", "LCA"):
+    for artery in arteries:
         cl_path = block1_dir / f"centerline_{artery}.vtp"
         if not cl_path.exists():
             raise FileNotFoundError(f"Missing Block 1 centerline: {cl_path}")
@@ -713,7 +738,7 @@ def run_block2(patient_id: str, block1_dir: Path | None = None) -> Block2Outputs
     df_global = pd.read_excel(global_in)
     df_global["Area"] = np.nan
     global_bits: list[str] = []
-    for artery in ("RCA", "LCA"):
+    for artery in arteries:
         mask = df_global["Artery_Type"].astype(str).values == artery
         if not np.any(mask):
             continue
@@ -727,7 +752,7 @@ def run_block2(patient_id: str, block1_dir: Path | None = None) -> Block2Outputs
     # Artery dataframes
     artery_dfs: dict[str, pd.DataFrame] = {}
     art_bits: list[str] = []
-    for artery in ("RCA", "LCA"):
+    for artery in arteries:
         artery_in = block1_dir / f"dataset_{artery}_{sample_name}.xlsx"
         if not artery_in.exists():
             raise FileNotFoundError(f"Missing artery dataframe: {artery_in}")
@@ -852,7 +877,7 @@ def run_block2(patient_id: str, block1_dir: Path | None = None) -> Block2Outputs
             total_df_merged,
             title=f"{sample_name} — Unified tree — %AS (max per location)",
             surfaces=surfaces_pv,
-            surface_keys=("RCA", "LCA"),
+            surface_keys=arteries,
             ordered_branch_paths=processed_branch_data,
             out_path=unified_path,
         )
@@ -898,9 +923,7 @@ def run_block2(patient_id: str, block1_dir: Path | None = None) -> Block2Outputs
         log_detail(logger, "%%AS figures: 1 tree + %d branch → %s", n_br_st, short_path(out_stenosis_dir))
 
     # Figures: full tree + artery-level (area colormap)
-    tree_hulls = tuple(
-        h for k in ("RCA", "LCA") if (h := artery_surfaces_pv.get(k)) is not None
-    )
+    tree_hulls = tuple(h for k in arteries if (h := artery_surfaces_pv.get(k)) is not None)
     _save_area_plot(
         points_xyz=df_global[["Px", "Py", "Pz"]].to_numpy(dtype=float),
         area=df_global["Area"].to_numpy(dtype=float),
@@ -909,7 +932,7 @@ def run_block2(patient_id: str, block1_dir: Path | None = None) -> Block2Outputs
         mesh=None,
         extra_hulls=tree_hulls if tree_hulls else None,
     )
-    for artery in ("RCA", "LCA"):
+    for artery in arteries:
         df_art = artery_dfs[artery]
         _save_area_plot(
             points_xyz=df_art[["Px", "Py", "Pz"]].to_numpy(dtype=float),
@@ -918,6 +941,29 @@ def run_block2(patient_id: str, block1_dir: Path | None = None) -> Block2Outputs
             title=f"{sample_name} - {artery} Area",
             mesh=artery_surfaces_pv.get(artery),
         )
+
+    if is_synthetic:
+        df_global = apply_synthetic_metadata(df_global)
+        df_global.to_excel(out_area_dir / f"dataset_global_{sample_name}.xlsx", index=False)
+        for artery in arteries:
+            artery_dfs[artery] = apply_synthetic_metadata(artery_dfs[artery])
+            artery_dfs[artery].to_excel(
+                out_area_dir / f"dataset_{artery}_{sample_name}.xlsx", index=False
+            )
+        for key in list(processed_branch_data.keys()):
+            processed_branch_data[key] = apply_synthetic_metadata(processed_branch_data[key])
+            processed_branch_data[key].to_excel(
+                out_branches_df_dir / f"{key}.xlsx", index=False
+            )
+        if not total_df_merged.empty:
+            total_df_merged = apply_synthetic_metadata(total_df_merged)
+            stenosis_path = out_stenosis_dir / f"total_df_{sample_name}.xlsx"
+            if stenosis_path.parent.exists():
+                total_df_merged.to_excel(stenosis_path, index=False)
+                for key in processed_branch_data:
+                    branch_xlsx = out_stenosis_dir / "branches" / "dataframes" / f"{key}.xlsx"
+                    if branch_xlsx.parent.exists():
+                        processed_branch_data[key].to_excel(branch_xlsx, index=False)
 
     av = df_global["Area"].to_numpy(dtype=float)
     n_area_ok = int(np.sum(np.isfinite(av) & (av > 0)))

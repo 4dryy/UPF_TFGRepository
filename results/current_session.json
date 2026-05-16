@@ -1,3 +1,4 @@
 {
-  "patient_id": "Normal_1"
+  "patient_id": "Synthetic_1",
+  "is_synthetic": true
 }

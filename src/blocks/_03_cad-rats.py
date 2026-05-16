@@ -8,6 +8,7 @@ Phase 3 scores CAD-RADS 2.0 and writes ``cad-rads/`` report + patient ID card.
 
 from __future__ import annotations
 
+import json
 import logging
 import shutil
 import sys
@@ -29,6 +30,14 @@ import pyvista as pv
 import seaborn as sns
 
 from src.pipeline_log import footer_block, phase, short_path, sub
+from src.synthetic_profile import (
+    SYNTHETIC_ARTERY,
+    SYNTHETIC_CAD_RADS_LABEL,
+    SYNTHETIC_SEGMENT_ID,
+    SYNTHETIC_SEGMENT_NAME,
+    apply_synthetic_metadata,
+    is_synthetic_patient,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -220,6 +229,15 @@ def _export_seg_tree_figure(
     pl.show(screenshot=str(out_path), auto_close=True)
 
 
+def _segment_id_vtk_scalars(seg: pd.Series) -> np.ndarray:
+    """Map ``Segment_ID`` column to float scalars for PyVista (handles synthetic string placeholders)."""
+    numeric = pd.to_numeric(seg, errors="coerce")
+    if numeric.notna().all():
+        return numeric.to_numpy(dtype=float)
+    # Legacy / placeholder string IDs (e.g. ``Synthetic_Vessel``) → single color bucket.
+    return np.ones(len(seg), dtype=float)
+
+
 def _attach_segment_scalars(
     cl_poly: pv.PolyData, df_art: pd.DataFrame
 ) -> pv.PolyData | None:
@@ -231,7 +249,7 @@ def _attach_segment_scalars(
         )
         return None
     out = cl_poly.copy(deep=True)
-    out["Segment_ID"] = df_art["Segment_ID"].to_numpy(dtype=float)
+    out["Segment_ID"] = _segment_id_vtk_scalars(df_art["Segment_ID"])
     return out
 
 
@@ -272,6 +290,8 @@ def run_block3_phase1(patient_id: str, *, emit_footer: bool = True) -> Path:
         df_total = pd.read_excel(total_src)
         if "source_branch" in df_total.columns:
             df_total = df_total.drop(columns=["source_branch"])
+        if is_synthetic_patient(sample_name):
+            df_total = apply_synthetic_metadata(df_total)
         df_total.to_excel(total_out, index=False)
         sub(logger, "Total tree export: %d rows → %s", len(df_total), total_out.name)
     else:
@@ -282,7 +302,8 @@ def run_block3_phase1(patient_id: str, *, emit_footer: bool = True) -> Path:
     ostium_all: list[np.ndarray] = []
     endpoint_all: list[np.ndarray] = []
 
-    for artery in ("RCA", "LCA"):
+    artery_keys = (SYNTHETIC_ARTERY,) if is_synthetic_patient(sample_name) else ("RCA", "LCA")
+    for artery in artery_keys:
         surf_p = b1 / f"surface_{artery}.vtp"
         cl_p = b1 / f"centerline_{artery}.vtp"
         art_xlsx = b1 / f"dataset_{artery}_{sample_name}.xlsx"
@@ -875,12 +896,137 @@ def run_cad_rads_export_phase(patient_id: str, segment_summary: pd.DataFrame) ->
     return report_path, card_path, str(cad["final_cad_rads_code"])
 
 
-def run_block3(patient_id: str) -> Block3Outputs:
+def run_block3_synthetic(patient_id: str) -> Block3Outputs:
+    """Label mirror + placeholder segment summary and CAD-RADS for synthetic validation cases."""
+    t0 = time.perf_counter()
+    sample_name = patient_id
+    phase(logger, "3", "Synthetic clinical placeholders")
+
+    label_dir = run_block3_phase1(patient_id, emit_footer=False)
+
+    tree_path = resolve_global_tree_path(sample_name)
+    df_tree = pd.read_excel(tree_path)
+    pct_col = resolve_pct_as_column(df_tree)
+    max_pct = float(df_tree[pct_col].max()) if len(df_tree) else float("nan")
+    if not np.isfinite(max_pct):
+        max_pct = float("nan")
+
+    seg_summary = pd.DataFrame(
+        [
+            {
+                "Segment_ID": SYNTHETIC_SEGMENT_ID,
+                "Segment_Name": SYNTHETIC_SEGMENT_NAME,
+                "Artery_Type": SYNTHETIC_ARTERY,
+                "max_pct_AS": max_pct,
+                "Stenosis_Severity_Grade": pd.NA,
+                "Stenosis_Severity_Label": "Synthetic validation (not scored)",
+                "n_points": int(len(df_tree)),
+            }
+        ]
+    )
+    st_dir = BLOCK3_SEGMENT_STENOSIS_ROOT / sample_name
+    st_dir.mkdir(parents=True, exist_ok=True)
+    st_path = st_dir / f"stenosis_summary_{sample_name}.xlsx"
+    seg_summary.to_excel(st_path, index=False)
+
+    cad_dir = BLOCK3_CADRADS_ROOT / sample_name
+    cad_dir.mkdir(parents=True, exist_ok=True)
+    na_label = SYNTHETIC_CAD_RADS_LABEL
+    patient_report = pd.DataFrame(
+        [
+            {
+                "Sample_Name": sample_name,
+                "Final_CAD_RADS_Code": na_label,
+                "CAD_RADS_Category": na_label,
+                "CAD_RADS_Rationale": (
+                    "Synthetic single-tube validation case. Clinical CAD-RADS 2.0 scoring "
+                    "and territory rules are not applicable."
+                ),
+                "Highest_Stenosis_Location": SYNTHETIC_SEGMENT_NAME,
+                "Highest_Stenosis_pct_AS": max_pct,
+                "Vessel_Involvement_Count_50plus": pd.NA,
+                "Severe_Vessel_Count_70plus": pd.NA,
+                "Left_Main_50plus": pd.NA,
+                "Three_Vessel_Severe_70plus": pd.NA,
+                "SIS_Score": pd.NA,
+                "SIS_Denominator": pd.NA,
+                "Plaque_Modifier": "N/A",
+                "Plaque_Category": "N/A (Synthetic)",
+                "Priority_Risk_Score": pd.NA,
+                "Priority_Risk_Label": "N/A (Synthetic)",
+            }
+        ]
+    )
+    report_path = cad_dir / f"patient_report_{sample_name}.xlsx"
+    with pd.ExcelWriter(report_path, engine="openpyxl") as writer:
+        patient_report.to_excel(writer, sheet_name="patient_report", index=False)
+
+    summary_json = {
+        "patient_id": sample_name,
+        "is_synthetic": True,
+        "cad_rads_category": na_label,
+        "final_cad_rads_code": na_label,
+        "highest_stenosis_location": SYNTHETIC_SEGMENT_NAME,
+        "highest_stenosis_pct_as": None if not np.isfinite(max_pct) else float(max_pct),
+        "sis_score": None,
+        "clinical_scores_note": "Placeholder — synthetic validation only.",
+    }
+    json_path = cad_dir / f"summary_metrics_{sample_name}.json"
+    json_path.write_text(json.dumps(summary_json, indent=2), encoding="utf-8")
+
+    card_path = cad_dir / f"patient_id_card_{sample_name}.png"
+    if not card_path.exists():
+        fig, ax = plt.subplots(figsize=(8, 3), dpi=150)
+        ax.axis("off")
+        ax.text(
+            0.5,
+            0.55,
+            sample_name,
+            ha="center",
+            va="center",
+            fontsize=16,
+            fontweight="bold",
+        )
+        ax.text(
+            0.5,
+            0.35,
+            na_label,
+            ha="center",
+            va="center",
+            fontsize=12,
+            color="#555555",
+        )
+        fig.savefig(card_path, bbox_inches="tight", facecolor="#eef2f3")
+        plt.close(fig)
+
+    sub(logger, "Synthetic CAD-RADS: %s", na_label)
+    sub(logger, "Summary JSON → %s", short_path(json_path))
+
+    footer_block(
+        logger,
+        block_id="3",
+        title="synthetic placeholders",
+        seconds=time.perf_counter() - t0,
+        parts=[short_path(label_dir), short_path(st_path.parent), na_label],
+    )
+    return Block3Outputs(
+        label_dir=label_dir,
+        stenosis_summary_path=st_path,
+        patient_report_path=report_path,
+        patient_id_card_path=card_path,
+        final_cad_rads_code=na_label,
+    )
+
+
+def run_block3(patient_id: str, *, is_synthetic: bool = False) -> Block3Outputs:
     """
     Full Block 3: phase 1 labels/QC, segment stenosis table, CAD-RADS + exports.
 
     Terminal log ends with the final CAD-RADS string (``sub``).
     """
+    if is_synthetic or is_synthetic_patient(patient_id):
+        return run_block3_synthetic(patient_id)
+
     t0 = time.perf_counter()
     sample_name = patient_id
 
