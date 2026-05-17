@@ -92,12 +92,14 @@ The key idea is to provide a **support visualization tool** that the clinician c
 
 ### The Proposed Pipeline
 
-The automated layer is implemented as a 4-block modular pipeline:
+The automated layer is implemented as a 4-block modular pipeline (`python -m src._pipeline`):
 
-1. **Block 1 — Automated Anatomy Extraction:** Automatically extracts centerlines and geometric properties (3D coordinates, vessel radii) from the binary artery segmentation mask, eliminating the need for manual seed selection.
-2. **Block 2 — Geometric Stenosis Quantification:** Computes cross-sectional areas along the centerline and compares them against an interpolated healthy reference to calculate the Percentage Diameter Stenosis (%DS) at each point.
-3. **Block 3 — CAD-RADS Scoring Prediction:** Maps the computed stenosis values to the standardized CAD-RADS clinical scale, providing an automated severity classification per artery segment.
-4. **Block 4 — Visualization Dashboard:** Presents all computed data — 3D artery meshes, stenosis maps, CAD-RADS scores, and patient information — in an interactive clinical tool designed for rapid assessment.
+1. **Block 1 — Automated Anatomy Extraction:** Extracts centerlines and geometric properties (3D coordinates, vessel radii) from the binary segmentation mask. **ASOCA:** RCA/LCA split, automated ostium scout, branching, optional AHA segment labels. **Synthetic:** single-tube path — one centerline, one branch, no coronary tree logic.
+2. **Block 2 — Geometric Stenosis Quantification:** Computes cross-sectional **Area** (VMTK sections) and **%AS** via a sliding geodesic reference window (±5 mm in production code). **ASOCA:** processes RCA and LCA. **Synthetic:** processes the `Synthetic` artery only.
+3. **Block 3 — CAD-RADS & segment reporting:** **ASOCA:** label mirror, AHA segment stenosis aggregation, CAD-RADS 2.0 patient report and ID card. **Synthetic:** placeholder segment summary, `patient_report` with `N/A (Synthetic Case)`, and `summary_metrics_<Patient>.json` — no territory or SIS scoring.
+4. **Block 4 — Visualization Dashboard:** Writes `results/current_session.json` (`patient_id`, `is_synthetic`) and launches Streamlit (`src/viewer/app.py`). **ASOCA:** dual LCA/RCA 3D views, segment and branch explorers, CAD-RADS panel. **Synthetic:** `src/viewer/synthetic_ui.py` — centered single-vessel 3D plot, N/A KPI row, continuous along-vessel profile.
+
+Shared configuration lives in `src/synthetic_profile.py` (mask paths, placeholder columns, CAD-RADS label constants).
 
 ### What This Enables
 
@@ -124,14 +126,32 @@ This project does not exist in isolation. It is part of a larger AI framework de
 
 ---
 
-## 6. Dataset: ASOCA
+## 6. Datasets
+
+### 6.1 ASOCA (primary clinical cohort)
 
 | | |
 |---|---|
 | **Source** | MICCAI 2020 Challenge — Automated Segmentation of Coronary Arteries |
 | **Cases** | 40 total: 20 Healthy ("Normal") + 20 with CAD ("Diseased") |
 | **Input Format** | `.nrrd` binary masks where coronary artery voxels = 1, background = 0 |
-| **Usage** | Development and validation of the automated pipeline |
+| **Mask location** | `data/ASOCA Normal/Annotations/` (and Diseased cohort when used) |
+| **Optional labels** | `data/ASOCA Labels/` (or Normal/Diseased label folders) — AHA 17-segment `.nii.gz` for segment-aware Block 1 |
+| **Usage** | End-to-end pipeline validation, CAD-RADS scoring, Streamlit clinical layout (LCA + RCA) |
+
+### 6.2 Synthetic single-tube phantoms (algorithm validation)
+
+| | |
+|---|---|
+| **Purpose** | Controlled ground-truth validation of centerline extraction, sectional **Area**, and **%AS** without coronary branching or AHA anatomy |
+| **Patient IDs** | `Synthetic_1` (healthy straight tube), `Synthetic_2` (cosine stenosis phantom) — any ID starting with `Synthetic_` |
+| **Input Format** | `.nrrd` binary masks under `data/Synthetic Samples/{Patient_ID}.nrrd` |
+| **Geometry** | 100×100×100 voxels, 1 mm isotropic spacing; single vertical cylinder along Z (see `notebooks/experiments/synthetic quantification/synthetic_data_gen.ipynb`) |
+| **Pipeline mode** | Detected automatically in `src/_pipeline.py` via `is_synthetic_patient()`; blocks receive `is_synthetic=True` |
+| **Clinical scoring** | **Not applicable** — CAD-RADS, SIS, and AHA segment rules are bypassed; outputs use placeholders (`N/A (Synthetic Case)`) |
+| **Metadata placeholders** | `Artery_Type=Synthetic`, `Branch_ID=0`, `Segment_ID=99`, `Segment_Name=Synthetic Vessel` (numeric segment ID required for VTK/PyVista scalars) |
+
+Synthetic cases exercise the **same** Blocks 1–2 geometry stack as ASOCA but skip RCA/LCA connected-component splitting, coronary branching, and label-driven segment classification. Block 3 writes a minimal label mirror plus placeholder reports; Block 4 opens a **single-vessel** Streamlit layout (centered 3D plot + along-vessel Area/%AS profile).
 
 ---
 
@@ -164,4 +184,8 @@ When assisting with this repository, Cursor must adhere to the following rules:
 | **TFG** | Treball de Fi de Grau (Final Degree Project) |
 | **VMTK** | Vascular Modeling Toolkit |
 | **%DS** | Percentage Diameter Stenosis |
+| **%AS** | Percentage Area Stenosis |
 | **ASOCA** | Automated Segmentation of Coronary Arteries (MICCAI 2020) |
+| **AHA** | American Heart Association (17-segment coronary model) |
+| **SIS** | Segment Involvement Score (CAD-RADS modifier) |
+| **VTK** | Visualization Toolkit (underlying VMTK/PyVista geometry) |

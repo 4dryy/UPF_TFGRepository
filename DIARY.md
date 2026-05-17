@@ -394,6 +394,60 @@ Every work session must be recorded using the following structure:
 
 ---
 
+### 2026-05-16 — Synthetic validation cohort: dual-mode pipeline + Streamlit layout
+
+* **🎯 Objectives:** Extend the production pipeline and Streamlit dashboard so **synthetic single-tube phantoms** (`Synthetic_1`, `Synthetic_2`) can be processed end-to-end for ground-truth validation of **Area** and **%AS**, while **ASOCA cases** (e.g. `Normal_1`) remain behavior-identical to the pre-existing clinical workflow.
+
+* **✅ Progress & Tasks Completed:**
+  * **Phantom generation (`notebooks/experiments/synthetic quantification/synthetic_data_gen.ipynb`):**
+    * 100×100×100 mm³ volumes, 1 mm isotropic spacing, straight cylinder along Z.
+    * `synthetic_healthy` / healthy phantom and `synthetic_stenosis` with cosine narrowing (target ~75% area stenosis at mid-tube).
+    * YZ slice QA plots and documented expected areas.
+  * **Shared module (`src/synthetic_profile.py`):**
+    * `is_synthetic_patient()` — `patient_id.startswith("Synthetic_")`.
+    * `resolve_mask_nrrd_path()` — `data/Synthetic Samples/{Patient_ID}.nrrd` vs ASOCA annotation paths.
+    * `apply_synthetic_metadata()` — uniform placeholder columns on dataframes.
+    * Constants: `SYNTHETIC_ARTERY`, `SYNTHETIC_BRANCH_ID=0`, `SYNTHETIC_SEGMENT_ID=99`, `SYNTHETIC_SEGMENT_NAME`, `SYNTHETIC_CAD_RADS_LABEL`.
+  * **Pipeline orchestration (`src/_pipeline.py`):**
+    * Detects synthetic cases, logs mask path, passes `is_synthetic` to Blocks 1–4; skips ASOCA label lookup for synthetic IDs.
+  * **Block 1 (`_01_extraction.py`):**
+    * `_run_block1_synthetic()` — single mask load, one ostium scout, VMTK centerline, `_collapse_to_synthetic_single_branch()`.
+    * Exports: `centerline_Synthetic.vtp`, `surface_Synthetic.vtp`, `dataset_Synthetic_<Patient>.xlsx`, branch `dataset_Synthetic_0_<Patient>.xlsx`.
+  * **Block 2 (`_02_stenosis.py`):**
+    * Artery loop `(Synthetic,)` only; rebuilds surface from NRRD; applies synthetic metadata on global/artery/branch/`total_df` exports.
+  * **Block 3 (`_03_cad-rats.py`):**
+    * `run_block3_synthetic()` — label phase mirror + placeholder `stenosis_summary`, `patient_report` with **N/A (Synthetic Case)**, `summary_metrics_<Patient>.json`, optional ID card PNG.
+    * `_segment_id_vtk_scalars()` — maps non-numeric legacy `Segment_ID` strings to VTK-safe float scalars for QC figures.
+  * **Block 4 (`_04_visualization.py`):**
+    * Session JSON extended: `{"patient_id", "is_synthetic"}`.
+  * **Streamlit (`src/viewer/app.py`, `synthetic_ui.py`, `plots.py`):**
+    * `_load_session()` reads `is_synthetic` from session file (with ID-prefix fallback).
+    * Synthetic KPI row: CAD-RADS / case type / clinical scores → **N/A**.
+    * **Conditional layout:** synthetic → `render_synthetic_dashboard()` (centered 3D + CAD-RADS placeholder panel + geodesic profile); ASOCA → unchanged dual LCA/RCA + segment + branch sections.
+    * `discover_synthetic_branch_xlsx()` and geodesic profile helpers; synthetic plot utilities colocated in `synthetic_ui.py` to avoid stale-import issues with long-running Streamlit servers.
+    * Lazy import of `synthetic_ui` only when `is_synthetic` is true so ASOCA runs are not blocked by synthetic-only dependencies.
+  * **Data folder:** `data/Synthetic Samples/` reserved for `Synthetic_1.nrrd`, `Synthetic_2.nrrd` (rename/copy from notebook outputs if needed).
+
+* **🐛 Bugs & Challenges:**
+  * *Issue:* Streamlit crashed on startup for **all** patients with `ImportError: cannot import name 'create_synthetic_tube_geodesic_profile' from plots`.
+    * *Cause:* Top-level import of `synthetic_ui` at app load + Streamlit process on port 8501 holding an **older cached** `plots` module without the new symbol.
+    * *Fix:* Moved synthetic-specific plot helpers into `synthetic_ui.py`; lazy-import dashboard only for synthetic sessions; reload `synthetic_ui` when `plots` mtime changes.
+  * *Issue:* Block 3 failed on `Synthetic_1` with `ValueError: could not convert string to float: 'Synthetic_Vessel'`.
+    * *Cause:* `_attach_segment_scalars()` forced `Segment_ID` to `float` for PyVista, but early synthetic exports used string placeholder `'Synthetic_Vessel'`.
+    * *Fix:* `SYNTHETIC_SEGMENT_ID` changed to numeric **99**; `_segment_id_vtk_scalars()` fallback for legacy string IDs in QC PNG generation.
+
+* **💡 Key Decisions:**
+  * **Purely conditional architecture** — no change to ASOCA code paths when `is_synthetic=False`.
+  * **Numeric `Segment_ID` for VTK**, human-readable **`Segment_Name`** for reports and UI.
+  * **Synthetic validation is explicitly out of CAD-RADS scope** — dashboard communicates N/A rather than fabricating clinical scores.
+
+* **⏭️ Next Steps:**
+  * Run full pipeline on `Synthetic_2` (stenosis phantom) and compare measured peak **%AS** / **Area** against notebook ground truth.
+  * Optional: add README note mapping `Synthetic_1` ↔ healthy phantom, `Synthetic_2` ↔ stenosis phantom.
+  * Clinical review of synthetic Streamlit layout; tune geodesic profile axis labels if needed for thesis figures.
+
+---
+
 ## Acronym Legend
 
 | Acronym | Definition |
