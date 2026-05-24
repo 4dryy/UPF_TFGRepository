@@ -8,8 +8,12 @@ branches with max-%AS deduplication, and exports figures (area + %AS).
 
 from __future__ import annotations
 
+import gc
 import logging
 import shutil
+import subprocess
+import sys
+import tempfile
 import time
 from collections import Counter
 from pathlib import Path
@@ -28,9 +32,9 @@ from scipy.spatial import cKDTree
 from vmtk import vmtkscripts
 from vtkmodules.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 from vtkmodules.vtkCommonDataModel import vtkImageData
-from vtkmodules.vtkIOXML import vtkXMLPolyDataReader
-from vtkmodules.vtkFiltersCore import vtkTriangleFilter
-from vtkmodules.vtkFiltersCore import vtkCleanPolyData
+from vtkmodules.vtkCommonDataModel import vtkPlane
+from vtkmodules.vtkIOXML import vtkXMLPolyDataReader, vtkXMLPolyDataWriter
+from vtkmodules.vtkFiltersCore import vtkCleanPolyData, vtkCutter, vtkTriangleFilter
 
 from src.pipeline_log import footer_block, phase, short_path
 from src.pipeline_log import sub as log_detail
@@ -39,6 +43,7 @@ from src.synthetic_profile import (
     apply_synthetic_metadata,
     is_synthetic_patient,
     resolve_mask_nrrd_path,
+    synthetic_analytical_area_mm2,
 )
 
 logger = logging.getLogger(__name__)
@@ -65,10 +70,27 @@ BLOCK2_AREA_STENOSIS_PLOTS_ROOT = PROJECT_ROOT / "results" / "block2_results" / 
 # WINDOW_MM = 10.0
 WINDOW_MM = 5.0
 # WINDOW_MM = 2.5
+
+
+def reference_window_mm() -> float:
+    """Geodesic half-window (mm) for proximal/distal reference areas — single source of truth."""
+    return float(WINDOW_MM)
+
+
 COORD_ROUND = 6
 A_REF_EPS = 1e-12
 PCT_AS_VMIN = 0.0
 PCT_AS_VMAX = 100.0
+
+# VMTK ``vmtkCenterlineSections`` — dense 0.1 mm resampling can exceed ~15k sections per artery
+# and crash VTK on Windows (OOM / native fault with no Python traceback). Coarsen adaptively.
+SECTION_RESAMPLE_STEP_MM = 0.1
+SECTION_MAX_POINTS = 12_000
+VMTK_SUBPROCESS_TIMEOUT_S = 900
+CUTTER_FALLBACK_MAX_POINTS = 400
+
+# Per-branch VMTK subprocess isolation (added for MACS-18 experiments). Off for ASOCA production runs.
+MACS_PER_BRANCH_SECTIONS_ENABLED = False
 
 GREEN_YELLOW_RED_STENOSIS = LinearSegmentedColormap.from_list(
     "pct_as_gyr", ["#1a9850", "#fee08b", "#d73027"], N=64
@@ -124,19 +146,30 @@ def compute_reference_columns(df_branch: pd.DataFrame, window_mm: float) -> pd.D
     area_prox[prox_valid] = area_vals[prox_idx[prox_valid]]
     area_dist[dist_valid] = area_vals[dist_idx[dist_valid]]
 
+    both_valid = prox_valid & dist_valid
+    a_ref = np.full(len(df_out), np.nan, dtype=float)
+    a_ref[both_valid] = (area_prox[both_valid] + area_dist[both_valid]) / 2.0
+
     df_out["Area_prox"] = area_prox
     df_out["Area_dist"] = area_dist
-    df_out["A_ref"] = (df_out["Area_prox"] + df_out["Area_dist"]) / 2.0
+    df_out["A_ref"] = a_ref
+    df_out["ref_window_ok"] = both_valid
 
     return df_out
 
 
 def add_pct_as(df_branch: pd.DataFrame, eps: float = A_REF_EPS) -> pd.DataFrame:
-    """Append % area stenosis (pct_AS). NaN A_ref and near-zero A_ref yield NaN pct_AS."""
+    """Append % area stenosis (pct_AS). Requires full ±window reference (``ref_window_ok``)."""
     df_out = df_branch.copy()
     a_ref = df_out["A_ref"].to_numpy(dtype=float)
     area = df_out["Area"].to_numpy(dtype=float)
-    valid = np.isfinite(a_ref) & (np.abs(a_ref) > eps)
+    if "ref_window_ok" in df_out.columns:
+        ref_ok = df_out["ref_window_ok"].to_numpy(dtype=bool)
+    else:
+        ref_ok = np.isfinite(df_out.get("Area_prox", np.nan)) & np.isfinite(
+            df_out.get("Area_dist", np.nan)
+        )
+    valid = ref_ok & np.isfinite(a_ref) & (np.abs(a_ref) > eps)
 
     ratio = np.full(len(df_out), np.nan, dtype=float)
     ratio[valid] = area[valid] / a_ref[valid]
@@ -361,20 +394,212 @@ def _read_vtp_as_vtk(vtp_path: Path) -> object:
     return out
 
 
-def _load_surfaces_from_block1(block1_dir: Path) -> tuple[dict[str, object], dict[str, pv.PolyData]]:
-    """Load persisted artery surfaces from Block 1 package when available."""
-    out_vtk: dict[str, object] = {}
-    out_pv: dict[str, pv.PolyData] = {}
-    for artery in ("RCA", "LCA"):
-        p = block1_dir / f"surface_{artery}.vtp"
-        if not p.exists():
-            continue
-        out_vtk[artery] = _read_vtp_as_vtk(p)
-        out_pv[artery] = pv.read(str(p))
-    return out_vtk, out_pv
+def _sanitize_centerline_vtk(centerlines_vtk: object) -> object:
+    """Merge near-duplicate points (Block 1 ``AppendEndPoints`` can crash ``vmtkCenterlineSections``)."""
+    clean = vtkCleanPolyData()
+    clean.SetInputData(centerlines_vtk)
+    clean.SetTolerance(1e-5)
+    clean.ConvertLinesToPointsOff()
+    clean.ConvertPolysToLinesOff()
+    clean.PointMergingOn()
+    clean.Update()
+    return clean.GetOutput()
+
+
+def _branch_centerline_paths(block1_dir: Path, artery: str, sample_name: str) -> list[Path]:
+    branch_dir = block1_dir / "branches" / "centerlines"
+    if not branch_dir.is_dir():
+        return []
+    suffix = f"_{sample_name}.vtp"
+    prefix = f"centerline_{artery}_"
+    return sorted(
+        p for p in branch_dir.glob(f"{prefix}*{suffix}") if p.is_file() and p.name.endswith(suffix)
+    )
+
+
+def _centerline_tangents(points: np.ndarray) -> np.ndarray:
+    pts = np.asarray(points, dtype=float)
+    n = len(pts)
+    tangents = np.zeros((n, 3), dtype=float)
+    if n == 0:
+        return tangents
+    if n == 1:
+        tangents[0] = (1.0, 0.0, 0.0)
+        return tangents
+    tangents[0] = pts[1] - pts[0]
+    tangents[-1] = pts[-1] - pts[-2]
+    if n > 2:
+        tangents[1:-1] = pts[2:] - pts[:-2]
+    norms = np.linalg.norm(tangents, axis=1, keepdims=True)
+    norms[norms < 1e-12] = 1.0
+    return tangents / norms
+
+
+def _loop_area_mm2_from_cut(cut_poly: pv.PolyData) -> float:
+    """Shoelace area of the largest cut loop (2D PCA projection)."""
+    if cut_poly.n_points < 3:
+        return float("nan")
+    largest = cut_poly.connectivity(extraction_mode="largest")
+    if largest.n_points < 3:
+        return float("nan")
+    pts = np.asarray(largest.points, dtype=float)
+    centroid = pts.mean(axis=0)
+    centered = pts - centroid
+    _, _, vh = np.linalg.svd(centered, full_matrices=False)
+    u, v = vh[0], vh[1]
+    xy = np.column_stack([centered @ u, centered @ v])
+    angles = np.arctan2(xy[:, 1], xy[:, 0])
+    xy_ord = xy[np.argsort(angles)]
+    x, y = xy_ord[:, 0], xy_ord[:, 1]
+    return float(0.5 * abs(np.dot(x, np.roll(y, -1)) - np.dot(y, np.roll(x, -1))))
+
+
+def _compute_centerline_area_cutter(surface_vtk: object, points: np.ndarray) -> np.ndarray:
+    """VTK plane-cut fallback (subsampled + interpolated — full dense loops take hours)."""
+    surface = pv.wrap(surface_vtk)
+    pts = np.asarray(points, dtype=float)
+    n = len(pts)
+    if n == 0:
+        return np.array([], dtype=float)
+
+    eval_idx = np.arange(n, dtype=int)
+    if n > CUTTER_FALLBACK_MAX_POINTS:
+        eval_idx = np.unique(
+            np.linspace(0, n - 1, CUTTER_FALLBACK_MAX_POINTS, dtype=int)
+        )
+        log_detail(
+            logger,
+            "cutter fallback: evaluating %d / %d points, then interpolating",
+            len(eval_idx),
+            n,
+        )
+
+    areas_sparse = np.full(len(eval_idx), np.nan, dtype=float)
+    tangents = _centerline_tangents(pts)
+    for j, i in enumerate(eval_idx):
+        origin, normal = pts[i], tangents[i]
+        plane = vtkPlane()
+        plane.SetOrigin(float(origin[0]), float(origin[1]), float(origin[2]))
+        plane.SetNormal(float(normal[0]), float(normal[1]), float(normal[2]))
+        cutter = vtkCutter()
+        cutter.SetInputData(surface)
+        cutter.SetCutFunction(plane)
+        cutter.Update()
+        areas_sparse[j] = _loop_area_mm2_from_cut(pv.wrap(cutter.GetOutput()))
+        if j > 0 and j % 50 == 0:
+            log_detail(logger, "cutter fallback: %d / %d slices", j, len(eval_idx))
+
+    if len(eval_idx) == n:
+        return areas_sparse
+
+    arc = np.zeros(n, dtype=float)
+    arc[1:] = np.cumsum(np.linalg.norm(np.diff(pts, axis=0), axis=1))
+    arc_sparse = arc[eval_idx]
+    valid = np.isfinite(areas_sparse)
+    areas = np.full(n, np.nan, dtype=float)
+    if np.count_nonzero(valid) >= 2:
+        areas = np.interp(arc, arc_sparse[valid], areas_sparse[valid])
+    return areas
+
+
+def _write_vtp(vtk_obj: object, path: Path) -> None:
+    writer = vtkXMLPolyDataWriter()
+    writer.SetFileName(str(path))
+    writer.SetInputData(vtk_obj)
+    writer.Write()
+
+
+def _compute_centerline_area_vmtk_subprocess(
+    centerline_vtk: object,
+    surface_vtk: object,
+    *,
+    tag: str,
+) -> tuple[np.ndarray, np.ndarray] | None:
+    """Run VMTK sections in a child process; return ``None`` if the child crashes."""
+    surface_clean = _clean_triangulate_surface(surface_vtk)
+    with tempfile.TemporaryDirectory(prefix=f"vmtk_{tag}_") as tmp:
+        work = Path(tmp)
+        cl_path = work / "centerline.vtp"
+        surf_path = work / "surface.vtp"
+        out_path = work / "sections.npz"
+        _write_vtp(centerline_vtk, cl_path)
+        _write_vtp(surface_clean, surf_path)
+        cmd = [
+            sys.executable,
+            "-m",
+            "src.blocks._vmtk_sections_worker",
+            str(cl_path),
+            str(surf_path),
+            str(out_path),
+        ]
+        log_detail(logger, "VMTK worker start (%s)", tag)
+        try:
+            proc = subprocess.run(
+                cmd,
+                cwd=str(PROJECT_ROOT),
+                capture_output=True,
+                text=True,
+                timeout=VMTK_SUBPROCESS_TIMEOUT_S,
+            )
+        except subprocess.TimeoutExpired:
+            log_detail(
+                logger,
+                "VMTK worker timeout (%ds) for %s — using cutter fallback",
+                VMTK_SUBPROCESS_TIMEOUT_S,
+                tag,
+            )
+            return None
+        if proc.returncode != 0:
+            if proc.stderr:
+                log_detail(logger, "VMTK worker failed (%s): %s", tag, proc.stderr.strip()[:240])
+            return None
+        log_detail(logger, "VMTK worker done (%s)", tag)
+        data = np.load(out_path)
+        return np.asarray(data["points"], dtype=float), np.asarray(data["area"], dtype=float)
+
+
+def _sections_from_prepared_centerline(
+    cl_vtk_prep: object,
+    surface_vtk: object,
+    *,
+    tag: str,
+) -> tuple[np.ndarray, np.ndarray]:
+    n_pts = int(pv.wrap(cl_vtk_prep).n_points)
+    log_detail(logger, "%s: %d resampled points → VMTK subprocess", tag, n_pts)
+    isolated = _compute_centerline_area_vmtk_subprocess(cl_vtk_prep, surface_vtk, tag=tag)
+    if isolated is not None:
+        return isolated
+    pts = np.asarray(pv.wrap(cl_vtk_prep).points, dtype=float)
+    log_detail(
+        logger,
+        "%s sections: VMTK subprocess failed — VTK plane-cut fallback (%d pts)",
+        tag,
+        len(pts),
+    )
+    area = _compute_centerline_area_cutter(surface_vtk, pts)
+    return pts, area
+
+
+def _prep_centerline_from_path(cl_path: Path) -> tuple[object, float]:
+    cl_vtk = _sanitize_centerline_vtk(_read_vtp_as_vtk(cl_path))
+    resample_step = _adaptive_section_resample_step_mm(cl_vtk)
+    log_detail(
+        logger,
+        "prep %s: smooth+resample (step=%.3f mm)",
+        cl_path.name,
+        resample_step,
+    )
+    cl_prep = _prepare_centerline_for_sections(
+        cl_vtk,
+        resample_step=resample_step,
+        smoothing_factor=0.15,
+        iterations=20,
+    )
+    return cl_prep, resample_step
 
 
 def _compute_centerline_area(centerline_vtk: object, surface_vtk: object) -> np.ndarray:
+    """Standard ASOCA path: in-process ``vmtkCenterlineSections`` on the full artery centerline."""
     sections = vmtkscripts.vmtkCenterlineSections()
     sections.Surface = surface_vtk
     sections.Centerlines = centerline_vtk
@@ -392,6 +617,115 @@ def _compute_centerline_area(centerline_vtk: object, surface_vtk: object) -> np.
     area[~np.isfinite(area)] = np.nan
     area[area <= 0.0] = np.nan
     return area
+
+
+def _compute_artery_reference_areas(
+    *,
+    artery: str,
+    sample_name: str,
+    block1_dir: Path,
+    surface_vtk: object,
+) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Cross-sectional areas for one artery.
+
+    Default (ASOCA): full-tree ``centerline_<Artery>.vtp`` + in-process VMTK sections.
+    Optional (MACS-18): per-branch VMTK subprocess + VTK cutter fallback when enabled.
+    """
+    if not MACS_PER_BRANCH_SECTIONS_ENABLED:
+        cl_path = block1_dir / f"centerline_{artery}.vtp"
+        cl_prep, _ = _prep_centerline_from_path(cl_path)
+        pts = np.asarray(pv.wrap(cl_prep).points, dtype=float)
+        surface_clean = _clean_triangulate_surface(surface_vtk)
+        return pts, _compute_centerline_area(cl_prep, surface_clean)
+
+    branch_paths = _branch_centerline_paths(block1_dir, artery, sample_name)
+    if not branch_paths:
+        cl_path = block1_dir / f"centerline_{artery}.vtp"
+        log_detail(logger, "%s sections: full-tree fallback (no branch VTPs)", artery)
+        cl_prep, _ = _prep_centerline_from_path(cl_path)
+        return _sections_from_prepared_centerline(
+            cl_prep,
+            surface_vtk,
+            tag=f"{artery}_tree",
+        )
+
+    log_detail(
+        logger,
+        "%s sections: per-branch mode (%d centerlines)",
+        artery,
+        len(branch_paths),
+    )
+    pts_chunks: list[np.ndarray] = []
+    area_chunks: list[np.ndarray] = []
+    for bi, branch_path in enumerate(branch_paths, start=1):
+        bid = branch_path.stem
+        log_detail(logger, "%s [%d/%d] %s", artery, bi, len(branch_paths), bid)
+        cl_prep, _ = _prep_centerline_from_path(branch_path)
+        pts, area = _sections_from_prepared_centerline(
+            cl_prep,
+            surface_vtk,
+            tag=f"{artery}_{bid}",
+        )
+        pts_chunks.append(pts)
+        area_chunks.append(area)
+        del cl_prep
+        gc.collect()
+    return np.vstack(pts_chunks), np.concatenate(area_chunks)
+
+
+def _load_surfaces_from_block1(block1_dir: Path) -> tuple[dict[str, object], dict[str, pv.PolyData]]:
+    """Load persisted artery surfaces from Block 1 package when available."""
+    out_vtk: dict[str, object] = {}
+    out_pv: dict[str, pv.PolyData] = {}
+    for artery in ("RCA", "LCA"):
+        p = block1_dir / f"surface_{artery}.vtp"
+        if not p.exists():
+            continue
+        out_vtk[artery] = _read_vtp_as_vtk(p)
+        out_pv[artery] = pv.read(str(p))
+    return out_vtk, out_pv
+
+
+def _centerline_arc_length_mm(centerlines_vtk: object) -> float:
+    """Sum polyline cell lengths (mm); avoids bogus chords on multi-branch trees."""
+    n_cells = int(centerlines_vtk.GetNumberOfCells())
+    if n_cells > 0:
+        total = 0.0
+        for ci in range(n_cells):
+            cell = centerlines_vtk.GetCell(ci)
+            if cell is None or cell.GetNumberOfPoints() < 2:
+                continue
+            ids = cell.GetPointIds()
+            prev = np.array(centerlines_vtk.GetPoint(ids.GetId(0)), dtype=float)
+            for pi in range(1, ids.GetNumberOfIds()):
+                cur = np.array(centerlines_vtk.GetPoint(ids.GetId(pi)), dtype=float)
+                total += float(np.linalg.norm(cur - prev))
+                prev = cur
+        if total > 0.0:
+            return total
+    pts_vtk = centerlines_vtk.GetPoints()
+    if pts_vtk is None:
+        return 0.0
+    pts = vtk_to_numpy(pts_vtk.GetData())
+    if pts is None or len(pts) < 2:
+        return 0.0
+    pts = np.asarray(pts, dtype=float)
+    return float(np.sum(np.linalg.norm(np.diff(pts, axis=0), axis=1)))
+
+
+def _adaptive_section_resample_step_mm(
+    centerlines_vtk: object,
+    *,
+    base_step_mm: float = SECTION_RESAMPLE_STEP_MM,
+    max_section_points: int = SECTION_MAX_POINTS,
+) -> float:
+    """Keep section count bounded while preserving ≤0.1 mm spacing on short trees."""
+    length_mm = _centerline_arc_length_mm(centerlines_vtk)
+    if length_mm <= 0.0:
+        return float(base_step_mm)
+    step = max(float(base_step_mm), length_mm / float(max_section_points))
+    return step
 
 
 def _clean_triangulate_surface(surface_vtk: object) -> object:
@@ -427,6 +761,41 @@ def _prepare_centerline_for_sections(
     resample.Length = float(resample_step)
     resample.Execute()
     return resample.Centerlines
+
+
+def _repair_synthetic_area_artifacts(area: np.ndarray) -> np.ndarray:
+    """
+    Remove short runs of near-zero VMTK section areas (flat-cap artifacts) on synthetic tubes.
+
+    Real stenosis min area (~79 mm²) is preserved; isolated spikes (e.g. 0.06 mm²) between
+    healthy sections are interpolated away.
+    """
+    a = np.asarray(area, dtype=float).copy()
+    n = len(a)
+    if n < 3:
+        return a
+    spike_max = 10.0
+    healthy_min = 200.0
+    bad = np.isfinite(a) & (a < spike_max)
+    i = 0
+    while i < n:
+        if not bad[i]:
+            i += 1
+            continue
+        j = i
+        while j < n and bad[j]:
+            j += 1
+        run_len = j - i
+        left_ok = i > 0 and np.isfinite(a[i - 1]) and a[i - 1] >= healthy_min
+        right_ok = j < n and np.isfinite(a[j]) and a[j] >= healthy_min
+        if run_len <= 3 and left_ok and right_ok:
+            a[i:j] = np.nan
+        i = j
+    valid = np.isfinite(a)
+    if np.count_nonzero(valid) >= 2:
+        idx = np.arange(n, dtype=float)
+        a[~valid] = np.interp(idx[~valid], idx[valid], a[valid])
+    return a
 
 
 def _map_area_to_df(df: pd.DataFrame, ref_points: np.ndarray, ref_area: np.ndarray) -> tuple[pd.DataFrame, str]:
@@ -668,54 +1037,67 @@ def run_block2(
 
     artery_surfaces_vtk: dict[str, object] = {}
     artery_surfaces_pv: dict[str, pv.PolyData] = {}
-    loaded_vtk, loaded_pv = _load_surfaces_from_block1(block1_dir)
-    artery_surfaces_vtk.update(loaded_vtk)
-    artery_surfaces_pv.update(loaded_pv)
 
-    missing_surface_arteries = [a for a in arteries if a not in artery_surfaces_vtk]
-    if missing_surface_arteries:
+    if is_synthetic:
+        loaded_vtk, loaded_pv = _load_surfaces_from_block1(block1_dir)
+        artery_surfaces_vtk.update(loaded_vtk)
+        artery_surfaces_pv.update(loaded_pv)
         nrrd_path = resolve_mask_nrrd_path(patient_id)
-        if not nrrd_path.exists():
-            raise FileNotFoundError(f"Mask not found: {nrrd_path}")
-        log_detail(logger, "Surfaces: rebuild from NRRD (%s)", ", ".join(missing_surface_arteries))
-        if is_synthetic:
+        if SYNTHETIC_ARTERY not in artery_surfaces_vtk:
+            if not nrrd_path.exists():
+                raise FileNotFoundError(f"Mask not found: {nrrd_path}")
             from src.blocks._01_extraction import _load_single_mask
 
             full_mask, spacing, origin = _load_single_mask(nrrd_path)
-            artery_arrays = {SYNTHETIC_ARTERY: full_mask}
-        else:
-            artery_arrays, spacing, origin = _load_and_separate_mask(nrrd_path)
-        for name in missing_surface_arteries:
-            surf_vtk, surf_pv = _build_surface_from_mask(artery_arrays[name], spacing, origin)
-            artery_surfaces_vtk[name] = surf_vtk
-            artery_surfaces_pv[name] = surf_pv
+            surf_vtk, surf_pv = _build_surface_from_mask(full_mask, spacing, origin)
+            artery_surfaces_vtk[SYNTHETIC_ARTERY] = surf_vtk
+            artery_surfaces_pv[SYNTHETIC_ARTERY] = surf_pv
+            log_detail(logger, "Surfaces: rebuilt from NRRD (synthetic)")
     else:
-        log_detail(
-            logger,
-            "Surfaces: reuse Block1 (%s)",
-            "+".join(arteries),
-        )
+        loaded_vtk, loaded_pv = _load_surfaces_from_block1(block1_dir)
+        artery_surfaces_vtk.update(loaded_vtk)
+        artery_surfaces_pv.update(loaded_pv)
+        missing = [a for a in arteries if a not in artery_surfaces_vtk]
+        if missing:
+            nrrd_path = resolve_mask_nrrd_path(patient_id)
+            if not nrrd_path.exists():
+                raise FileNotFoundError(f"Mask not found: {nrrd_path}")
+            log_detail(logger, "Surfaces: rebuild from NRRD (%s)", ", ".join(missing))
+            artery_arrays, spacing, origin = _load_and_separate_mask(nrrd_path)
+            for name in missing:
+                surf_vtk, surf_pv = _build_surface_from_mask(artery_arrays[name], spacing, origin)
+                artery_surfaces_vtk[name] = surf_vtk
+                artery_surfaces_pv[name] = surf_pv
+        else:
+            log_detail(logger, "Surfaces: reuse Block1 (%s)", "+".join(arteries))
 
-    centerlines: dict[str, pv.PolyData] = {}
     ref_points: dict[str, np.ndarray] = {}
     ref_area: dict[str, np.ndarray] = {}
     for artery in arteries:
         cl_path = block1_dir / f"centerline_{artery}.vtp"
         if not cl_path.exists():
             raise FileNotFoundError(f"Missing Block 1 centerline: {cl_path}")
-        cl_vtk = _read_vtp_as_vtk(cl_path)
-        cl_vtk_prep = _prepare_centerline_for_sections(
-            cl_vtk,
-            resample_step=0.1,
-            smoothing_factor=0.15,
-            iterations=20,
-        )
-        cl_poly = pv.wrap(cl_vtk_prep)
-        centerlines[artery] = cl_poly
-        ref_points[artery] = np.asarray(cl_poly.points, dtype=float)
-
-        surface_clean_vtk = _clean_triangulate_surface(artery_surfaces_vtk[artery])
-        ref_area[artery] = _compute_centerline_area(cl_vtk_prep, surface_clean_vtk)
+        if is_synthetic:
+            cl_poly = pv.read(str(cl_path))
+            ref_points[artery] = np.asarray(cl_poly.points, dtype=float)
+            ref_area[artery] = synthetic_analytical_area_mm2(ref_points[artery], sample_name)
+            log_detail(
+                logger,
+                "%s area: analytical phantom πR(z)² (n=%d, no VMTK sections)",
+                artery,
+                len(ref_area[artery]),
+            )
+        else:
+            cl_vtk = _read_vtp_as_vtk(cl_path)
+            cl_vtk_prep = _prepare_centerline_for_sections(
+                cl_vtk,
+                resample_step=SECTION_RESAMPLE_STEP_MM,
+                smoothing_factor=0.15,
+                iterations=20,
+            )
+            ref_points[artery] = np.asarray(pv.wrap(cl_vtk_prep).points, dtype=float)
+            surface_clean_vtk = _clean_triangulate_surface(artery_surfaces_vtk[artery])
+            ref_area[artery] = _compute_centerline_area(cl_vtk_prep, surface_clean_vtk)
 
         a = ref_area[artery]
         valid = np.isfinite(a)

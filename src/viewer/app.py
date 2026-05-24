@@ -18,38 +18,65 @@ import streamlit as st
 
 _VIEWER_PLOTS = "src.viewer.plots"
 _VIEWER_SYNTHETIC_UI = "src.viewer.synthetic_ui"
+_SYNTHETIC_PROFILE = "src.synthetic_profile"
+_STENOSIS_BLOCK = "src.blocks._02_stenosis"
+
+# Reload order: Block 2 imports synthetic_profile; viewer imports Block 2 constants.
+_MODULE_RELOAD_ORDER: tuple[str, ...] = (
+    _SYNTHETIC_PROFILE,
+    _STENOSIS_BLOCK,
+    _VIEWER_PLOTS,
+    _VIEWER_SYNTHETIC_UI,
+)
+
+
+def _module_file_mtime(mod_name: str) -> float | None:
+    spec = importlib.util.find_spec(mod_name)
+    if spec is None or not getattr(spec, "origin", None):
+        return None
+    path = Path(str(spec.origin))
+    if not path.is_file():
+        return None
+    return path.stat().st_mtime
+
+
+def _reload_modules_in_order(mod_names: tuple[str, ...]) -> None:
+    for mod_name in mod_names:
+        if mod_name in sys.modules:
+            importlib.reload(sys.modules[mod_name])
 
 
 def _ensure_viewer_modules_fresh() -> None:
     """
     Streamlit re-executes this script on each run, but Python keeps imported modules in
-    ``sys.modules``. Reload viewer modules when their file mtime changes so edits apply
-    without manually killing the Streamlit server.
+    ``sys.modules``. Reload pipeline/viewer modules when Block 2 (or dependencies) change on
+    disk so ``WINDOW_MM`` and viewer code stay in sync without restarting the server.
     """
-    spec = importlib.util.find_spec(_VIEWER_PLOTS)
-    if spec is None or not getattr(spec, "origin", None):
-        return
-    path = Path(str(spec.origin))
-    if not path.is_file():
-        return
-    mtime = path.stat().st_mtime
-    prev = st.session_state.get("_viewer_plots_mtime")
-    if _VIEWER_PLOTS not in sys.modules:
-        importlib.import_module(_VIEWER_PLOTS)
-    elif prev is not None and mtime != prev:
-        importlib.reload(sys.modules[_VIEWER_PLOTS])
-        if _VIEWER_SYNTHETIC_UI in sys.modules:
-            importlib.reload(sys.modules[_VIEWER_SYNTHETIC_UI])
-    st.session_state["_viewer_plots_mtime"] = mtime
+    stenosis_mtime = _module_file_mtime(_STENOSIS_BLOCK)
+    last_stenosis_mtime = st.session_state.get("_pipeline_stenosis_mtime")
+
+    for mod_name in _MODULE_RELOAD_ORDER:
+        if mod_name not in sys.modules:
+            importlib.import_module(mod_name)
+
+    if stenosis_mtime is not None and last_stenosis_mtime != stenosis_mtime:
+        _reload_modules_in_order(_MODULE_RELOAD_ORDER)
+        st.session_state["_pipeline_stenosis_mtime"] = stenosis_mtime
+    elif last_stenosis_mtime is None and stenosis_mtime is not None:
+        st.session_state["_pipeline_stenosis_mtime"] = stenosis_mtime
 
 
 _ensure_viewer_modules_fresh()
 
 from src.viewer.plots import (
-    BRANCH_PCT_AS_REFERENCE_WINDOW_MM,
+    reference_window_mm,
     create_3d_artery_plot,
     create_3d_mesh_branch_path_highlight,
     create_3d_mesh_segment_path_highlight,
+    PROFILE_AREA_OUTSIDE_REFERENCE_GREY,
+    PROFILE_QUANTIFIED_AREA_BLUE,
+    branch_peak_reference_summary,
+    branch_rows_for_artery_ui,
     create_branch_centerline_metric_bars,
     create_segment_centerline_metric_bars,
     discover_block3_label_branch_xlsx,
@@ -62,6 +89,9 @@ from src.viewer.plots import (
 )
 
 from src.synthetic_profile import is_synthetic_patient
+
+# Align import cache with ``WINDOW_MM`` on disk (fixes stale 5 mm after editing Block 2).
+reference_window_mm()
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 VIEWER_FIGURES = Path(__file__).resolve().parent / "figures"
@@ -91,6 +121,61 @@ def _segment_button_label_text_color(css_color: str) -> str:
             pass
     lum = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255.0
     return "#0d0d0d" if lum > 0.58 else "#ffffff"
+
+
+def _pipeline_reference_window_mm() -> float:
+    """Always match ``WINDOW_MM`` in ``src/blocks/_02_stenosis.py``."""
+    return reference_window_mm()
+
+
+def _reference_window_mm_label() -> str:
+    w = _pipeline_reference_window_mm()
+    return str(int(w)) if w == int(w) else f"{w:g}"
+
+
+def _reference_window_line_html() -> str:
+    esc = html.escape(_reference_window_mm_label(), quote=True)
+    return (
+        "<p class='branch-viz-window-line'>"
+        "<strong>REFERENCE WINDOW SIZE:</strong> "
+        f"±{esc} mm geodesic distance along each branch."
+        "</p>"
+    )
+
+
+def _profile_legend_item_html(color: str, body_html: str) -> str:
+    c = html.escape(color, quote=True)
+    return (
+        "<div class='branch-viz-legend-col-wrap'>"
+        "<div class='branch-viz-legend-col-inner'>"
+        f"<span class='branch-viz-legend-swatch' style='background:{c};'></span>"
+        f"<div class='branch-viz-legend-col-text'>{body_html}</div>"
+        "</div></div>"
+    )
+
+
+def _profile_area_outside_window_legend_html() -> str:
+    return _profile_legend_item_html(
+        PROFILE_AREA_OUTSIDE_REFERENCE_GREY,
+        "<strong>Grey</strong>: samples on the <strong>Area</strong> profile outside the ±window "
+        "reference band (typically branch endpoints); <strong>%AS</strong> is not computed there.",
+    )
+
+
+def _profile_quantified_blue_legend_html() -> str:
+    return _profile_legend_item_html(
+        PROFILE_QUANTIFIED_AREA_BLUE,
+        "<strong>Blue</strong>: quantified centerline samples on the profile <strong>Area</strong> row "
+        "(inside the ±window reference band, with <strong>Area</strong> and <strong>%AS</strong> computed).",
+    )
+
+
+def _profile_bar_legends_block_html(*items: str) -> str:
+    return (
+        "<div class='seg-viz-legends-fullwidth branch-viz-legend' role='note'>"
+        + "".join(items)
+        + "</div>"
+    )
 
 
 def _segment_pick_button_style_block(
@@ -339,6 +424,11 @@ _APP_STYLE = """
         line-height: 1.5;
         overflow-wrap: anywhere;
         word-wrap: break-word;
+        color: #bdbdbd !important;
+    }
+    .branch-viz-legend-col-wrap .branch-viz-legend-col-text strong,
+    .branch-viz-legend-col-wrap .branch-viz-legend-col-text em {
+        color: #bdbdbd !important;
     }
     /* Streamlit column markdown wrappers often cap width; stretch only our legend blocks */
     div[data-testid="column"] [data-testid="stMarkdownContainer"]:has(.branch-viz-legend-col-wrap),
@@ -1106,6 +1196,15 @@ def main() -> None:
             st.session_state.color_column = "Area"
     color_column = st.session_state.color_column
 
+    if patient_id != "Unknown Patient":
+        st.markdown(
+            "<div class='branch-viz-section-intro-fullwidth'>"
+            "<h3 class='artery-plot-title branch-viz-section-title'>Coronary artery trees</h3>"
+            f"{_reference_window_line_html()}"
+            "</div>",
+            unsafe_allow_html=True,
+        )
+
     plotly_config = {
         "displayModeBar": True,
         "displaylogo": False,
@@ -1271,7 +1370,11 @@ def main() -> None:
 
                     seg_summary_df = load_block3_segment_stenosis_summary(PROJECT_ROOT, patient_id)
                     st.markdown(
-                        "<h3 class='artery-plot-title'>Coronary artery colored segments</h3>",
+                        "<div class='branch-viz-section-intro-fullwidth'>"
+                        "<h3 class='artery-plot-title branch-viz-section-title'>"
+                        "Coronary artery colored segments</h3>"
+                        f"{_reference_window_line_html()}"
+                        "</div>",
                         unsafe_allow_html=True,
                     )
                     st.markdown(
@@ -1401,10 +1504,22 @@ def main() -> None:
                                 except (TypeError, ValueError):
                                     _apx = float("nan")
                                 if math.isfinite(_apx):
-                                    _prox_hint = (
-                                        ' <span class="seg-ref-off-seg">(Not on this segment’s Area bars; '
-                                        "reference is often on another segment along the branch.)</span>"
-                                    )
+                                    if _pk.get("prox_ref_highlight_index") is not None:
+                                        _prox_hint = (
+                                            ' <span class="seg-ref-off-seg">(Value used for %AS at peak; '
+                                            "green bar marks the ±window sample on this segment.)</span>"
+                                        )
+                                    else:
+                                        _loc = _pk.get("prox_ref_location_hint")
+                                        if _loc:
+                                            _prox_hint = (
+                                                f' <span class="seg-ref-off-seg">({html.escape(str(_loc), quote=True)})</span>'
+                                            )
+                                        else:
+                                            _prox_hint = (
+                                                ' <span class="seg-ref-off-seg">(Reference is on another segment '
+                                                "along the branch — not shown on this segment’s Area bars.)</span>"
+                                            )
                             if not _pk.get("dist_ref_on_segment_bar", True) and _pk.get(
                                 "area_dist_ref"
                             ) is not None:
@@ -1413,10 +1528,22 @@ def main() -> None:
                                 except (TypeError, ValueError):
                                     _adx = float("nan")
                                 if math.isfinite(_adx):
-                                    _dist_hint = (
-                                        ' <span class="seg-ref-off-seg">(Not on this segment’s Area bars; '
-                                        "reference is often on another segment along the branch.)</span>"
-                                    )
+                                    if _pk.get("dist_ref_highlight_index") is not None:
+                                        _dist_hint = (
+                                            ' <span class="seg-ref-off-seg">(Value used for %AS at peak; '
+                                            "green bar marks the ±window sample on this segment.)</span>"
+                                        )
+                                    else:
+                                        _loc = _pk.get("dist_ref_location_hint")
+                                        if _loc:
+                                            _dist_hint = (
+                                                f' <span class="seg-ref-off-seg">({html.escape(str(_loc), quote=True)})</span>'
+                                            )
+                                        else:
+                                            _dist_hint = (
+                                                ' <span class="seg-ref-off-seg">(Reference is on another segment '
+                                                "along the branch — not shown on this segment’s Area bars.)</span>"
+                                            )
                             st.markdown(
                                 "<div class='seg-ref-summary-panel'>"
                                 "<ul class='seg-ref-metrics'>"
@@ -1431,23 +1558,22 @@ def main() -> None:
                             st.caption("Reference Area summary skipped: no %AS column in segment rows.")
 
                         st.markdown(
-                            "<div class='seg-viz-legends-fullwidth branch-viz-legend' role='note'>"
-                            "<div class='branch-viz-legend-col-wrap'>"
-                            "<div class='branch-viz-legend-col-inner'>"
-                            "<span class='branch-viz-legend-swatch' style='background:#a855f7;'></span>"
-                            "<div class='branch-viz-legend-col-text'>"
-                            "<strong>Purple</strong>: maximum %AS on the segment — <strong>3D</strong>: diamond; "
-                            "<strong>bar charts</strong>: purple on both Area and %AS rows."
-                            "</div></div></div>"
-                            "<div class='branch-viz-legend-col-wrap'>"
-                            "<div class='branch-viz-legend-col-inner'>"
-                            "<span class='branch-viz-legend-swatch' style='background:#2e7d32;'></span>"
-                            "<div class='branch-viz-legend-col-text'>"
-                            "<strong>Green</strong>: proximal / distal <strong>Area</strong> reference samples — "
-                            "<strong>bar charts</strong> only: green on the "
-                            "<strong>Area</strong> row (±window mm along the segment polyline from max %AS)."
-                            "</div></div></div>"
-                            "</div>",
+                            _profile_bar_legends_block_html(
+                                _profile_legend_item_html(
+                                    "#a855f7",
+                                    "<strong>Purple</strong>: maximum %AS on the segment — <strong>3D</strong>: diamond; "
+                                    "<strong>bar charts</strong>: purple on both Area and %AS rows.",
+                                ),
+                                _profile_legend_item_html(
+                                    "#2e7d32",
+                                    "<strong>Green</strong>: proximal / distal <strong>Area</strong> reference samples "
+                                    "that lie <em>on this segment</em> — <strong>bar charts</strong> only (Area row). "
+                                    "If a reference is on another segment, it is listed in the summary above, "
+                                    "not as a green bar.",
+                                ),
+                                _profile_area_outside_window_legend_html(),
+                                _profile_quantified_blue_legend_html(),
+                            ),
                             unsafe_allow_html=True,
                         )
 
@@ -1507,30 +1633,24 @@ def main() -> None:
                         unsafe_allow_html=True,
                     )
                     # --- Branch path viewer: full-width title + window line; purple/green in each column ---
-                    _win_mm = BRANCH_PCT_AS_REFERENCE_WINDOW_MM
-                    _win_esc = html.escape(
-                        str(int(_win_mm)) if float(_win_mm) == int(float(_win_mm)) else str(_win_mm),
-                        quote=True,
-                    )
                     st.markdown(
                         "<div class='branch-viz-section-intro-fullwidth'>"
                         "<h3 class='artery-plot-title branch-viz-section-title'>Coronary branch paths</h3>"
-                        "<p class='branch-viz-window-line'>"
-                        "<strong>REFERENCE WINDOW SIZE:</strong> "
-                        f"±{_win_esc} mm Geodesic Distance"
-                        "</p></div>",
+                        f"{_reference_window_line_html()}"
+                        "</div>",
                         unsafe_allow_html=True,
                     )
                     row2_l, row2_r = st.columns([2.85, 2.55], gap="medium", vertical_alignment="top")
                     with row2_l:
                         st.markdown(
-                            "<div class='branch-viz-legend branch-viz-legend-col-wrap' role='note'>"
-                            "<div class='branch-viz-legend-col-inner'>"
-                            "<span class='branch-viz-legend-swatch' style='background:#a855f7;'></span>"
-                            "<div class='branch-viz-legend-col-text'>"
-                            "<strong>Purple</strong>: maximum %AS on the branch — <strong>3D</strong>: diamond; "
-                            "<strong>bar charts</strong>: purple on both Area and %AS rows."
-                            "</div></div></div>",
+                            "<div class='branch-viz-legend' role='note'>"
+                            + _profile_legend_item_html(
+                                "#a855f7",
+                                "<strong>Purple</strong>: maximum %AS on the branch — <strong>3D</strong>: diamond; "
+                                "<strong>bar charts</strong>: purple on both Area and %AS rows.",
+                            )
+                            + _profile_area_outside_window_legend_html()
+                            + "</div>",
                             unsafe_allow_html=True,
                         )
                         st.markdown(
@@ -1570,20 +1690,37 @@ def main() -> None:
                             _bv_art = "LCA"
                             st.session_state.branch_viz_artery = _bv_art
                         _bv_mesh = mesh_lca if _bv_art == "LCA" else mesh_rca
+                        try:
+                            branch_df_all = _sort_centerline_subset(_filter_artery(total_df, _bv_art))
+                        except Exception:
+                            branch_df_all = pd.DataFrame()
                         branch_pairs = discover_block3_label_branch_xlsx(PROJECT_ROOT, patient_id, _bv_art)
-                        branch_df_all = load_concat_branch_centerlines(branch_pairs)
+                        branch_rows = branch_rows_for_artery_ui(
+                            branch_df_all, artery_prefix=_bv_art
+                        )
+                        branch_ids = [b for b, _ in branch_rows]
+                        if not branch_ids and branch_pairs:
+                            branch_df_all = load_concat_branch_centerlines(branch_pairs)
+                            branch_rows = branch_rows_for_artery_ui(
+                                branch_df_all, artery_prefix=_bv_art
+                            )
+                            branch_ids = [b for b, _ in branch_rows]
+                            if not branch_ids:
+                                branch_ids = [b for b, _ in branch_pairs]
+                                branch_rows = [(b, 0.0) for b in branch_ids]
                         _branch_viz_ok = (
-                            bool(branch_pairs)
+                            bool(branch_ids)
                             and not branch_df_all.empty
                             and _bv_mesh.is_file()
-                            and {"Px", "Py", "Pz", "pct_AS", "Branch_ID"}.issubset(branch_df_all.columns)
+                            and {"Px", "Py", "Pz", "pct_AS", "Branch_ID", "Area"}.issubset(
+                                branch_df_all.columns
+                            )
                         )
                         if not _branch_viz_ok:
-                            if not branch_pairs or branch_df_all.empty:
+                            if branch_df_all.empty and not branch_pairs:
                                 st.caption(
-                                    f"No {_bv_art} branch spreadsheets under "
-                                    f"`results/block3_results/label/{patient_id}/branches/dataframes/` "
-                                    f"(expected `dataset_{_bv_art}_B##_{patient_id}.xlsx`)."
+                                    f"No {_bv_art} branches in total_df and no branch spreadsheets under "
+                                    f"`results/block3_results/label/{patient_id}/branches/dataframes/`."
                                 )
                             elif not _bv_mesh.is_file():
                                 st.caption(f"{_bv_art} surface mesh missing; branch path viewer skipped.")
@@ -1593,7 +1730,6 @@ def main() -> None:
                                     "(Px, Py, Pz, pct_AS, Branch_ID). Cannot build branch highlight plot."
                                 )
                         else:
-                            branch_ids = [b for b, _ in branch_pairs]
                             if (
                                 st.session_state.branch_viz_selected is None
                                 or st.session_state.branch_viz_selected not in branch_ids
@@ -1630,15 +1766,16 @@ def main() -> None:
 
                     with row2_r:
                         st.markdown(
-                            "<div class='branch-viz-legend branch-viz-legend-col-wrap' role='note'>"
-                            "<div class='branch-viz-legend-col-inner'>"
-                            "<span class='branch-viz-legend-swatch' style='background:#2e7d32;'></span>"
-                            "<div class='branch-viz-legend-col-text'>"
-                            "<strong>Green</strong>: reference cross-sections for <strong>A_ref</strong> at the peak "
-                            "(nearest samples ≈ −/+ window along the centerline). "
-                            "<strong>3D</strong>: green <strong>circles</strong>; "
-                            "<strong>Area</strong> bar row only (not %AS)."
-                            "</div></div></div>",
+                            "<div class='branch-viz-legend' role='note'>"
+                            + _profile_legend_item_html(
+                                "#2e7d32",
+                                "<strong>Green</strong>: proximal / distal <strong>Area</strong> at the peak "
+                                "(same sample as the bar chart when on this branch). "
+                                "<strong>3D</strong>: green <strong>circles</strong>; "
+                                "<strong>Area</strong> bar row only (not %AS).",
+                            )
+                            + _profile_quantified_blue_legend_html()
+                            + "</div>",
                             unsafe_allow_html=True,
                         )
                         st.markdown(
@@ -1651,17 +1788,18 @@ def main() -> None:
                         )
                         if _branch_viz_ok:
                             _sel_r = st.session_state.branch_viz_selected
-                            for bid, _p in branch_pairs:
+                            for bid, _mx_br in branch_rows:
+                                _br_lbl = f"{bid} ({_mx_br:.1f}%)"
                                 st.button(
-                                    bid,
+                                    _br_lbl,
                                     key=f"branch_pick_btn_{_bv_art}_{bid}",
                                     use_container_width=True,
                                     type="primary" if _sel_r == bid else "secondary",
                                     on_click=_set_branch_viz_selected_branch,
                                     args=(bid,),
                                 )
-                        elif not branch_pairs:
-                            st.caption("No branch files for this artery.")
+                        elif not branch_ids:
+                            st.caption("No branches for this artery in total_df.")
                         else:
                             st.caption("Load branch tables or mesh to enable selection.")
 
@@ -1672,6 +1810,60 @@ def main() -> None:
                         )
                         try:
                             _sel_prof = str(st.session_state.branch_viz_selected)
+                            _pk_br = branch_peak_reference_summary(branch_df_all, _sel_prof)
+                            if _pk_br.get("ok"):
+
+                                def _fmt_area_br(v: object) -> str:
+                                    if v is None:
+                                        return "—"
+                                    try:
+                                        x = float(v)
+                                    except (TypeError, ValueError):
+                                        return "—"
+                                    return f"{x:.4f} mm²" if math.isfinite(x) else "—"
+
+                                def _fmt_pct_br(v: object) -> str:
+                                    if v is None:
+                                        return "—"
+                                    try:
+                                        x = float(v)
+                                    except (TypeError, ValueError):
+                                        return "—"
+                                    if not math.isfinite(x):
+                                        return "—"
+                                    return f"{max(0.0, x):.2f} %"
+
+                                _br_prox_h = ""
+                                _br_dist_h = ""
+                                if not _pk_br.get("prox_ref_on_segment_bar", True) and _pk_br.get(
+                                    "area_prox_ref"
+                                ) is not None:
+                                    if _pk_br.get("prox_ref_highlight_index") is not None:
+                                        _br_prox_h = (
+                                            ' <span class="seg-ref-off-seg">(A_ref at peak; green bar = '
+                                            "±window sample on this branch.)</span>"
+                                        )
+                                if not _pk_br.get("dist_ref_on_segment_bar", True) and _pk_br.get(
+                                    "area_dist_ref"
+                                ) is not None:
+                                    if _pk_br.get("dist_ref_highlight_index") is not None:
+                                        _br_dist_h = (
+                                            ' <span class="seg-ref-off-seg">(A_ref at peak; green bar = '
+                                            "±window sample on this branch.)</span>"
+                                        )
+                                st.markdown(
+                                    "<div class='seg-ref-summary-panel'>"
+                                    "<ul class='seg-ref-metrics'>"
+                                    f"<li><strong>Max %AS</strong>: {html.escape(_fmt_pct_br(_pk_br.get('max_pct_as')), quote=True)}</li>"
+                                    f"<li><strong>Area at peak</strong>: {html.escape(_fmt_area_br(_pk_br.get('area_at_max')), quote=True)}</li>"
+                                    f"<li><strong>Proximal Reference Area</strong>: "
+                                    f"{html.escape(_fmt_area_br(_pk_br.get('area_prox_ref')), quote=True)}{_br_prox_h}</li>"
+                                    f"<li><strong>Distal Reference Area</strong>: "
+                                    f"{html.escape(_fmt_area_br(_pk_br.get('area_dist_ref')), quote=True)}{_br_dist_h}</li>"
+                                    "</ul></div>",
+                                    unsafe_allow_html=True,
+                                )
+
                             fig_prof = create_branch_centerline_metric_bars(
                                 branch_df_all,
                                 selected_branch_id=_sel_prof,

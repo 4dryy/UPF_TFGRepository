@@ -3,17 +3,16 @@
 from __future__ import annotations
 
 import html
-import re
 from pathlib import Path
-from typing import Any
 
 import pandas as pd
-import plotly.graph_objects as go
 import streamlit as st
 
 from src.viewer.plots import (
+    reference_window_mm,
     create_3d_artery_plot,
-    create_branch_centerline_metric_bars,
+    create_synthetic_tube_geodesic_profile,
+    discover_synthetic_branch_xlsx,
     load_concat_branch_centerlines,
 )
 
@@ -38,86 +37,6 @@ def _sort_centerline_subset(df: pd.DataFrame) -> pd.DataFrame:
     return df.sort_values(["Px", "Py", "Pz"]).reset_index(drop=True)
 
 
-def _branch_sort_key(branch_id: Any) -> tuple[Any, ...]:
-    s = str(branch_id).strip() if branch_id is not None else ""
-    m = re.search(r"_B(\d+)$", s, flags=re.IGNORECASE)
-    if m:
-        prefix = s[: m.start()]
-        return (prefix.upper(), int(m.group(1)))
-    return (s.upper(), 0)
-
-
-def _parse_branch_id_from_dataset_xlsx_name(filename: str, patient_id: str) -> str | None:
-    if not filename.lower().endswith(".xlsx"):
-        return None
-    stem = filename[:-5]
-    suf = f"_{patient_id}"
-    if not stem.endswith(suf):
-        return None
-    head = stem[: -len(suf)]
-    if not head.startswith("dataset_"):
-        return None
-    return head[len("dataset_") :]
-
-
-def _sort_branch_rows(g: pd.DataFrame) -> pd.DataFrame:
-    if g.empty:
-        return g
-    g2 = g.copy()
-    if "gd" in g2.columns:
-        return g2.sort_values("gd", ascending=True).reset_index(drop=True)
-    if "Path_Point_Index" in g2.columns:
-        return g2.sort_values("Path_Point_Index", ascending=True).reset_index(drop=True)
-    return g2.sort_values(["Px", "Py", "Pz"]).reset_index(drop=True)
-
-
-def discover_synthetic_branch_xlsx(project_root: Path, patient_id: str) -> list[tuple[str, Path]]:
-    """Branch spreadsheets for a synthetic single-tube case (``Artery_Type == Synthetic``)."""
-    base = (
-        project_root
-        / "results"
-        / "block3_results"
-        / "label"
-        / patient_id
-        / "branches"
-        / "dataframes"
-    )
-    if not base.is_dir():
-        return []
-    out: list[tuple[str, Path]] = []
-    for p in sorted(base.glob("dataset_*.xlsx")):
-        bid = _parse_branch_id_from_dataset_xlsx_name(p.name, patient_id)
-        if not bid:
-            continue
-        try:
-            df = pd.read_excel(p, nrows=1)
-        except (OSError, ValueError):
-            continue
-        if df.empty or "Artery_Type" not in df.columns:
-            continue
-        if str(df["Artery_Type"].iloc[0]).strip() != "Synthetic":
-            continue
-        branch_key = str(df["Branch_ID"].iloc[0]).strip() if "Branch_ID" in df.columns else bid
-        out.append((branch_key, p.resolve()))
-    out.sort(key=lambda t: _branch_sort_key(str(t[0])))
-    return out
-
-
-def create_synthetic_tube_geodesic_profile(centerline_df: pd.DataFrame) -> go.Figure:
-    """Single continuous Area + %AS profile along the synthetic vessel."""
-    if centerline_df.empty:
-        raise ValueError("Synthetic centerline dataframe is empty.")
-    d = _sort_branch_rows(centerline_df.copy())
-    if "Branch_ID" not in d.columns:
-        d["Branch_ID"] = 0
-    branch_key = str(d["Branch_ID"].iloc[0]).strip()
-    return create_branch_centerline_metric_bars(
-        d,
-        selected_branch_id=branch_key,
-        artery="Synthetic",
-    )
-
-
 def render_synthetic_dashboard(
     *,
     project_root: Path,
@@ -133,8 +52,19 @@ def render_synthetic_dashboard(
 
     _pad_l, _col_syn, _pad_r = st.columns([1, 4, 1], gap="small")
     with _col_syn:
+        _w_mm = reference_window_mm()
+        _win_esc = html.escape(
+            str(int(_w_mm)) if _w_mm == int(_w_mm) else f"{_w_mm:g}",
+            quote=True,
+        )
         st.markdown(
-            "<h3 class='artery-plot-title'>Synthetic validation vessel</h3>",
+            "<div class='branch-viz-section-intro-fullwidth'>"
+            "<h3 class='artery-plot-title branch-viz-section-title'>Synthetic validation vessel</h3>"
+            "<p class='branch-viz-window-line'>"
+            "<strong>REFERENCE WINDOW SIZE:</strong> "
+            f"±{_win_esc} mm geodesic distance along the vessel "
+            "(set <code>WINDOW_MM</code> in <code>src/blocks/_02_stenosis.py</code>)."
+            "</p></div>",
             unsafe_allow_html=True,
         )
         try:
@@ -188,6 +118,13 @@ def render_synthetic_dashboard(
         unsafe_allow_html=True,
     )
 
+    st.markdown(
+        "<p class='branch-viz-window-line'>"
+        f"<strong>REFERENCE WINDOW SIZE:</strong> ±{_win_esc} mm geodesic distance · "
+        "<strong>Grey</strong> on the Area profile: outside the reference window (no %AS)."
+        "</p>",
+        unsafe_allow_html=True,
+    )
     st.markdown(
         "<h3 class='artery-plot-title'>Along-vessel geodesic profile</h3>",
         unsafe_allow_html=True,

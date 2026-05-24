@@ -17,6 +17,7 @@ import sys
 import time
 import types
 from pathlib import Path
+from typing import NamedTuple
 
 import numpy as np
 import nibabel as nib
@@ -26,11 +27,14 @@ import scipy.ndimage as ndi
 from scipy.spatial import cKDTree
 from skimage.morphology import skeletonize
 from src.pipeline_log import configure_logging, footer_block, phase, short_path, sub
+from src.pipeline_metrics import Block1ExtractionMetrics
 from src.synthetic_profile import (
     SYNTHETIC_ARTERY,
     apply_synthetic_metadata,
     resolve_mask_nrrd_path,
     synthetic_branch_file_stem,
+    synthetic_body_axial_bounds_mm,
+    trim_synthetic_centerline_dict,
 )
 from vmtk import vmtkscripts
 from vtkmodules.util.numpy_support import numpy_to_vtk, vtk_to_numpy
@@ -42,6 +46,24 @@ sys.modules.setdefault(
 )
 
 logger = logging.getLogger(__name__)
+
+
+class Block1Result(NamedTuple):
+    """Block 1 dataframe plus extraction counts for pipeline metrics."""
+
+    df: pd.DataFrame
+    extraction_metrics: Block1ExtractionMetrics
+
+
+def _record_artery_extraction_metrics(
+    metrics: Block1ExtractionMetrics,
+    *,
+    n_targets: int,
+    n_branches: int,
+) -> None:
+    metrics.n_ostiums_identified += 1
+    metrics.n_centerline_paths_attempted += int(n_targets)
+    metrics.n_centerline_paths_success += int(n_branches)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DATA_ROOT = PROJECT_ROOT / "data"
@@ -798,10 +820,11 @@ def run_block1(
     label_nii_path: Path | None = None,
     *,
     is_synthetic: bool = False,
-) -> pd.DataFrame:
+) -> Block1Result:
     t_start = time.perf_counter()
     sample_name = patient_id
     sample_id = _sample_numeric_id(patient_id)
+    extraction_metrics = Block1ExtractionMetrics()
     phase(logger, "1", "Centerlines · branching · export")
 
     if nrrd_path is None:
@@ -816,6 +839,7 @@ def run_block1(
             sample_name=sample_name,
             sample_id=sample_id,
             t_start=t_start,
+            extraction_metrics=extraction_metrics,
         )
 
     artery_arrays, spacing, origin = _load_and_separate_mask(nrrd_path)
@@ -823,7 +847,9 @@ def run_block1(
     label_arr_asoca: np.ndarray | None = None
     use_label_ostium = label_nii_path is not None and Path(label_nii_path).exists()
     if label_nii_path is not None and not Path(label_nii_path).exists():
-        logger.warning("ASOCA label volume not found: %s — using scout ostium.", label_nii_path)
+        logger.warning(
+            "Segment label volume not found: %s — using scout ostium.", label_nii_path
+        )
     elif use_label_ostium:
         label_img = nib.load(str(label_nii_path))
         label_arr_asoca = np.asarray(label_img.dataobj)
@@ -832,6 +858,7 @@ def run_block1(
     for artery_name, artery_mask in artery_arrays.items():
         skeleton = skeletonize(artery_mask)
         endpoints_zyx = _find_skeleton_endpoints(skeleton)
+        extraction_metrics.n_endpoints_detected += int(len(endpoints_zyx))
         if len(endpoints_zyx) < 2:
             logger.warning("[%s] Fewer than 2 endpoints — skipping.", artery_name)
             continue
@@ -943,6 +970,11 @@ def run_block1(
         )
         if out is None:
             continue
+        _record_artery_extraction_metrics(
+            extraction_metrics,
+            n_targets=len(targets_zyx),
+            n_branches=len(out["branches"]),
+        )
         artery_outputs[artery_name] = out
         all_centerlines_data.append(out["df_artery"])
 
@@ -995,6 +1027,15 @@ def run_block1(
     n_branches = sum(len(v["branches"]) for v in artery_outputs.values())
     rca_n = int((df_centerlines["Artery_Type"] == "RCA").sum()) if "Artery_Type" in df_centerlines.columns else 0
     lca_n = int((df_centerlines["Artery_Type"] == "LCA").sum()) if "Artery_Type" in df_centerlines.columns else 0
+    extraction_metrics.finalize_centerline_failures()
+    sub(
+        logger,
+        "Extraction metrics: endpoints=%d ostia=%d paths ok=%d failed=%d",
+        extraction_metrics.n_endpoints_detected,
+        extraction_metrics.n_ostiums_identified,
+        extraction_metrics.n_centerline_paths_success,
+        extraction_metrics.n_centerline_paths_failed,
+    )
     footer_block(
         logger,
         block_id="1",
@@ -1007,7 +1048,7 @@ def run_block1(
             f"out {short_path(sample_dir)}",
         ],
     )
-    return df_centerlines
+    return Block1Result(df_centerlines, extraction_metrics)
 
 
 def _run_block1_synthetic(
@@ -1017,13 +1058,15 @@ def _run_block1_synthetic(
     sample_name: str,
     sample_id: int,
     t_start: float,
-) -> pd.DataFrame:
+    extraction_metrics: Block1ExtractionMetrics,
+) -> Block1Result:
     """Single-tube synthetic mask: one centerline, no RCA/LCA split or AHA segments."""
     sub(logger, "Synthetic mode: %s", short_path(nrrd_path))
     artery_mask, spacing, origin = _load_single_mask(nrrd_path)
 
     skeleton = skeletonize(artery_mask)
     endpoints_zyx = _find_skeleton_endpoints(skeleton)
+    extraction_metrics.n_endpoints_detected += int(len(endpoints_zyx))
     if len(endpoints_zyx) < 2:
         raise RuntimeError(
             f"Synthetic mask {patient_id} has fewer than 2 skeleton endpoints "
@@ -1068,6 +1111,19 @@ def _run_block1_synthetic(
         raise RuntimeError(f"No centerline extracted for synthetic case {patient_id}")
 
     out = _collapse_to_synthetic_single_branch(out, sample_id)
+    out = trim_synthetic_centerline_dict(out)
+    z_lo, z_hi = synthetic_body_axial_bounds_mm()
+    sub(
+        logger,
+        "Synthetic centerline trimmed to cylindrical body (Z %.0f–%.0f mm, caps excluded)",
+        z_lo,
+        z_hi,
+    )
+    _record_artery_extraction_metrics(
+        extraction_metrics,
+        n_targets=len(targets_zyx),
+        n_branches=len(out["branches"]),
+    )
     df_centerlines = out["df_artery"]
     artery_outputs = {SYNTHETIC_ARTERY: out}
 
@@ -1110,6 +1166,15 @@ def _run_block1_synthetic(
 
     elapsed = time.perf_counter() - t_start
     n_branches = len(info["branches"])
+    extraction_metrics.finalize_centerline_failures()
+    sub(
+        logger,
+        "Extraction metrics: endpoints=%d ostia=%d paths ok=%d failed=%d",
+        extraction_metrics.n_endpoints_detected,
+        extraction_metrics.n_ostiums_identified,
+        extraction_metrics.n_centerline_paths_success,
+        extraction_metrics.n_centerline_paths_failed,
+    )
     footer_block(
         logger,
         block_id="1",
@@ -1122,13 +1187,14 @@ def _run_block1_synthetic(
             f"out {short_path(sample_dir)}",
         ],
     )
-    return df_centerlines
+    return Block1Result(df_centerlines, extraction_metrics)
 
 
 if __name__ == "__main__":
     configure_logging()
     pid = sys.argv[1] if len(sys.argv) > 1 else "Normal_1"
-    out_df = run_block1(patient_id=pid)
+    block1_out = run_block1(patient_id=pid)
+    out_df = block1_out.df
     print(f"\nTotal centerline points: {len(out_df)}")
     if "Artery_Type" in out_df.columns:
         print(f"  RCA: {(out_df['Artery_Type'] == 'RCA').sum()} points")

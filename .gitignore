@@ -10,11 +10,8 @@ ENV/
 /maren_work/*
 maren work/
 
-# Data 
-# Ignore all files in data except the folder structure
-# data/raw/*
-# data/processed/*
-# data/synthetic/*
+# Local imaging data (ASOCA, MACS-18, synthetic phantoms) — not versioned
+data/
 
 # Python bytecode
 __pycache__/
