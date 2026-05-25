@@ -67,8 +67,8 @@ BLOCK2_AREA_STENOSIS_PLOTS_ROOT = PROJECT_ROOT / "results" / "block2_results" / 
 
 # Stenosis reference / merge / %AS figures (``_05_sq_reference_values`` notebook parity)
 # ``WINDOW_MM`` is imported by ``src.viewer.plots`` for branch-path reference markers — single source here.
-# WINDOW_MM = 10.0
-WINDOW_MM = 5.0
+WINDOW_MM = 10.0
+# WINDOW_MM = 5.0
 # WINDOW_MM = 2.5
 
 

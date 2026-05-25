@@ -36,7 +36,9 @@ from src.synthetic_profile import (
     SYNTHETIC_SEGMENT_ID,
     SYNTHETIC_SEGMENT_NAME,
     apply_synthetic_metadata,
+    is_stenosis_synthetic_patient,
     is_synthetic_patient,
+    synthetic_validation_metrics,
 )
 
 logger = logging.getLogger(__name__)
@@ -896,6 +898,11 @@ def run_cad_rads_export_phase(patient_id: str, segment_summary: pd.DataFrame) ->
     return report_path, card_path, str(cad["final_cad_rads_code"])
 
 
+def _fmt_opt_pct(value: float | None) -> str:
+    """Format optional float as ``'12.34'`` or ``'n/a'`` for log output."""
+    return "n/a" if value is None else f"{float(value):.2f}"
+
+
 def run_block3_synthetic(patient_id: str) -> Block3Outputs:
     """Label mirror + placeholder segment summary and CAD-RADS for synthetic validation cases."""
     t0 = time.perf_counter()
@@ -961,18 +968,48 @@ def run_block3_synthetic(patient_id: str) -> Block3Outputs:
     with pd.ExcelWriter(report_path, engine="openpyxl") as writer:
         patient_report.to_excel(writer, sheet_name="patient_report", index=False)
 
+    validation = synthetic_validation_metrics(df_tree, sample_name)
     summary_json = {
         "patient_id": sample_name,
         "is_synthetic": True,
+        "is_stenosis_synthetic": bool(is_stenosis_synthetic_patient(sample_name)),
         "cad_rads_category": na_label,
         "final_cad_rads_code": na_label,
         "highest_stenosis_location": SYNTHETIC_SEGMENT_NAME,
         "highest_stenosis_pct_as": None if not np.isfinite(max_pct) else float(max_pct),
         "sis_score": None,
         "clinical_scores_note": "Placeholder — synthetic validation only.",
+        "validation_metrics": validation,
     }
     json_path = cad_dir / f"summary_metrics_{sample_name}.json"
     json_path.write_text(json.dumps(summary_json, indent=2), encoding="utf-8")
+
+    if validation.get("ok"):
+        if validation["is_stenosis"]:
+            sub(
+                logger,
+                "Validation (Synthetic_2): max %%AS theo=%.2f pred=%s err=%s · "
+                "Area max theo=%.2f pred=%.2f · min theo=%.2f pred=%.2f mm^2",
+                validation["theoretical_max_pct_as"],
+                _fmt_opt_pct(validation["predicted_max_pct_as"]),
+                _fmt_opt_pct(validation["abs_error_max_pct_as"]),
+                validation["theoretical_max_area_mm2"],
+                validation["predicted_max_area_mm2"],
+                validation["theoretical_min_area_mm2"],
+                validation["predicted_min_area_mm2"],
+            )
+        else:
+            sub(
+                logger,
+                "Validation (Synthetic_1): %%AS theo=0.00 pred=%s err=%s · "
+                "mean |dA|=%.2f mm^2 · max |dA|=%.2f mm^2",
+                _fmt_opt_pct(validation["predicted_max_pct_as"]),
+                _fmt_opt_pct(validation["abs_error_max_pct_as"]),
+                validation["mean_area_abs_error_mm2"],
+                validation["max_area_abs_deviation_mm2"],
+            )
+    else:
+        sub(logger, "Validation metrics unavailable (%s)", validation.get("reason", "unknown"))
 
     card_path = cad_dir / f"patient_id_card_{sample_name}.png"
     if not card_path.exists():

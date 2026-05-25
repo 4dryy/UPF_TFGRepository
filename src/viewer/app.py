@@ -1196,7 +1196,7 @@ def main() -> None:
             st.session_state.color_column = "Area"
     color_column = st.session_state.color_column
 
-    if patient_id != "Unknown Patient":
+    if patient_id != "Unknown Patient" and not is_synthetic:
         st.markdown(
             "<div class='branch-viz-section-intro-fullwidth'>"
             "<h3 class='artery-plot-title branch-viz-section-title'>Coronary artery trees</h3>"

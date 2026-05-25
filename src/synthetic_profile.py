@@ -175,6 +175,108 @@ def synthetic_analytical_area_mm2(
     return np.pi * np.square(r_mm)
 
 
+def _theoretical_max_pct_as(patient_id: str) -> float:
+    """Analytical peak %AS for the phantom (0 for healthy, 75% for cosine stenosis)."""
+    if not is_stenosis_synthetic_patient(patient_id):
+        return 0.0
+    return float((1.0 - (SYNTHETIC_R_MIN_MM / SYNTHETIC_R_BASE_MM) ** 2) * 100.0)
+
+
+def _theoretical_area_bounds_mm2(patient_id: str) -> tuple[float, float]:
+    """(A_max, A_min) ground-truth areas along the body (healthy → both = πR_base²)."""
+    a_max = float(np.pi * SYNTHETIC_R_BASE_MM**2)
+    if is_stenosis_synthetic_patient(patient_id):
+        a_min = float(np.pi * SYNTHETIC_R_MIN_MM**2)
+    else:
+        a_min = a_max
+    return a_max, a_min
+
+
+def synthetic_validation_metrics(
+    centerline_df: pd.DataFrame,
+    patient_id: str,
+) -> dict:
+    """
+    Compare predicted ``Area`` / ``pct_AS`` against the analytical phantom ground truth.
+
+    Used by the Streamlit synthetic dashboard to display validation values that match
+    the geodesic profile plotted from the same centerline dataframe. The %AS reduction
+    convention mirrors the viewer (`np.maximum(pct, 0)`), so ``predicted_max_pct_as``
+    equals the peak rendered in the along-vessel chart.
+
+    Returns a JSON-serializable dict. Missing values are ``None``.
+    """
+    out: dict = {
+        "patient_id": str(patient_id),
+        "is_stenosis": bool(is_stenosis_synthetic_patient(patient_id)),
+        "ok": False,
+    }
+    if centerline_df is None or len(centerline_df) == 0:
+        out["reason"] = "empty centerline"
+        return out
+    required = {"Px", "Py", "Pz", "Area"}
+    if not required.issubset(centerline_df.columns):
+        out["reason"] = f"missing columns: {sorted(required - set(centerline_df.columns))}"
+        return out
+
+    pts = centerline_df[["Px", "Py", "Pz"]].to_numpy(dtype=float)
+    area_pred = pd.to_numeric(centerline_df["Area"], errors="coerce").to_numpy(dtype=float)
+    area_theo = synthetic_analytical_area_mm2(pts, patient_id)
+
+    finite = np.isfinite(area_pred) & np.isfinite(area_theo) & (area_theo > 0.0)
+    if not np.any(finite):
+        out["reason"] = "no finite predicted areas"
+        return out
+
+    a_pred = area_pred[finite]
+    a_theo = area_theo[finite]
+    diff = np.abs(a_pred - a_theo)
+    mean_a_pred = float(np.mean(a_pred))
+    mean_a_theo = float(np.mean(a_theo))
+
+    # Predicted %AS — mirror viewer convention (clamp negatives, ignore NaN).
+    pct_max_pred: float | None = None
+    if "pct_AS" in centerline_df.columns:
+        pct_raw = pd.to_numeric(centerline_df["pct_AS"], errors="coerce").to_numpy(dtype=float)
+        pct_clamped = np.where(np.isfinite(pct_raw), np.maximum(pct_raw, 0.0), np.nan)
+        if np.any(np.isfinite(pct_clamped)):
+            pct_max_pred = float(np.nanmax(pct_clamped))
+
+    theo_max_pct = _theoretical_max_pct_as(patient_id)
+    theo_a_max, theo_a_min = _theoretical_area_bounds_mm2(patient_id)
+    pred_a_max = float(np.max(a_pred))
+    pred_a_min = float(np.min(a_pred))
+
+    abs_err_max_pct = None if pct_max_pred is None else float(abs(theo_max_pct - pct_max_pred))
+
+    out.update(
+        {
+            "ok": True,
+            "n_points": int(len(centerline_df)),
+            "n_valid_points": int(finite.sum()),
+            "theoretical_max_pct_as": float(theo_max_pct),
+            "predicted_max_pct_as": pct_max_pred,
+            "abs_error_max_pct_as": abs_err_max_pct,
+            "theoretical_max_area_mm2": float(theo_a_max),
+            "theoretical_min_area_mm2": float(theo_a_min),
+            "theoretical_mean_area_mm2": mean_a_theo,
+            "predicted_max_area_mm2": pred_a_max,
+            "predicted_min_area_mm2": pred_a_min,
+            "predicted_mean_area_mm2": mean_a_pred,
+            "abs_error_max_area_mm2": float(abs(theo_a_max - pred_a_max)),
+            "abs_error_min_area_mm2": float(abs(theo_a_min - pred_a_min)),
+            "abs_error_mean_area_mm2": float(abs(mean_a_theo - mean_a_pred)),
+            "mean_area_abs_error_mm2": float(np.mean(diff)),
+            "max_area_abs_deviation_mm2": float(np.max(diff)),
+            "axial_extent_mm": [
+                float(np.min(pts[:, 2])),
+                float(np.max(pts[:, 2])),
+            ],
+        }
+    )
+    return out
+
+
 def synthetic_body_axial_bounds_mm() -> tuple[float, float]:
     """Axial range (mm) used to trim VMTK centerlines to the cylindrical body (no caps)."""
     margin = float(SYNTHETIC_BODY_TRIM_MM)

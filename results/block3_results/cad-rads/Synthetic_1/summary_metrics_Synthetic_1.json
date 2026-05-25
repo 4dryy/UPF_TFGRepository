@@ -1,0 +1,36 @@
+{
+  "patient_id": "Synthetic_1",
+  "is_synthetic": true,
+  "is_stenosis_synthetic": false,
+  "cad_rads_category": "N/A (Synthetic Case)",
+  "final_cad_rads_code": "N/A (Synthetic Case)",
+  "highest_stenosis_location": "Synthetic Vessel",
+  "highest_stenosis_pct_as": 0.0,
+  "sis_score": null,
+  "clinical_scores_note": "Placeholder \u2014 synthetic validation only.",
+  "validation_metrics": {
+    "patient_id": "Synthetic_1",
+    "is_stenosis": false,
+    "ok": true,
+    "n_points": 279,
+    "n_valid_points": 279,
+    "theoretical_max_pct_as": 0.0,
+    "predicted_max_pct_as": 0.0,
+    "abs_error_max_pct_as": 0.0,
+    "theoretical_max_area_mm2": 314.1592653589793,
+    "theoretical_min_area_mm2": 314.1592653589793,
+    "theoretical_mean_area_mm2": 314.1592653589793,
+    "predicted_max_area_mm2": 314.1592653589793,
+    "predicted_min_area_mm2": 314.1592653589793,
+    "predicted_mean_area_mm2": 314.1592653589793,
+    "abs_error_max_area_mm2": 0.0,
+    "abs_error_min_area_mm2": 0.0,
+    "abs_error_mean_area_mm2": 0.0,
+    "mean_area_abs_error_mm2": 0.0,
+    "max_area_abs_deviation_mm2": 0.0,
+    "axial_extent_mm": [
+      27.03054428100586,
+      72.96127319335938
+    ]
+  }
+}
