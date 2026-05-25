@@ -4,8 +4,10 @@ Synthetic validation cases (single-tube NRRD masks under ``data/Synthetic Sample
 Detected when ``patient_id.startswith("Synthetic_")``.
 
 Phantom geometry matches ``notebooks/experiments/synthetic quantification/synthetic_data_gen.ipynb``.
-Block 2 uses **analytical** cross-sectional areas (πR²) from this model instead of VMTK sections,
-which are unreliable on voxel meshes and cap–cylinder junctions.
+Block 2 measures cross-sectional areas with the **same VMTK section pipeline** as ASOCA
+cases (mesh + centerline → ``vmtkCenterlineSections``); the analytical πR² formula encoded
+here is only used as a **ground-truth reference** in ``synthetic_validation_metrics`` to
+quantify how well the geometry extraction recovers the known phantom.
 """
 
 from __future__ import annotations

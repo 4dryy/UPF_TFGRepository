@@ -43,7 +43,6 @@ from src.synthetic_profile import (
     apply_synthetic_metadata,
     is_synthetic_patient,
     resolve_mask_nrrd_path,
-    synthetic_analytical_area_mm2,
 )
 
 logger = logging.getLogger(__name__)
@@ -1077,27 +1076,16 @@ def run_block2(
         cl_path = block1_dir / f"centerline_{artery}.vtp"
         if not cl_path.exists():
             raise FileNotFoundError(f"Missing Block 1 centerline: {cl_path}")
-        if is_synthetic:
-            cl_poly = pv.read(str(cl_path))
-            ref_points[artery] = np.asarray(cl_poly.points, dtype=float)
-            ref_area[artery] = synthetic_analytical_area_mm2(ref_points[artery], sample_name)
-            log_detail(
-                logger,
-                "%s area: analytical phantom πR(z)² (n=%d, no VMTK sections)",
-                artery,
-                len(ref_area[artery]),
-            )
-        else:
-            cl_vtk = _read_vtp_as_vtk(cl_path)
-            cl_vtk_prep = _prepare_centerline_for_sections(
-                cl_vtk,
-                resample_step=SECTION_RESAMPLE_STEP_MM,
-                smoothing_factor=0.15,
-                iterations=20,
-            )
-            ref_points[artery] = np.asarray(pv.wrap(cl_vtk_prep).points, dtype=float)
-            surface_clean_vtk = _clean_triangulate_surface(artery_surfaces_vtk[artery])
-            ref_area[artery] = _compute_centerline_area(cl_vtk_prep, surface_clean_vtk)
+        cl_vtk = _read_vtp_as_vtk(cl_path)
+        cl_vtk_prep = _prepare_centerline_for_sections(
+            cl_vtk,
+            resample_step=SECTION_RESAMPLE_STEP_MM,
+            smoothing_factor=0.15,
+            iterations=20,
+        )
+        ref_points[artery] = np.asarray(pv.wrap(cl_vtk_prep).points, dtype=float)
+        surface_clean_vtk = _clean_triangulate_surface(artery_surfaces_vtk[artery])
+        ref_area[artery] = _compute_centerline_area(cl_vtk_prep, surface_clean_vtk)
 
         a = ref_area[artery]
         valid = np.isfinite(a)

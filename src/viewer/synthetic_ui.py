@@ -9,17 +9,29 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
+import numpy as np
+
 from src.synthetic_profile import (
     is_stenosis_synthetic_patient,
+    synthetic_analytical_area_mm2,
     synthetic_validation_metrics,
 )
 from src.viewer.plots import (
+    _sort_branch_rows,
     reference_window_mm,
     create_3d_artery_plot,
     create_synthetic_tube_geodesic_profile,
     discover_synthetic_branch_xlsx,
     load_concat_branch_centerlines,
 )
+
+# Orange used to mark the centerline point with the largest |A_pred − A_theo|
+# (matches the "Maximum Area Deviation" metric tile in the validation panel).
+_MAX_AREA_DEV_ORANGE = "#ff6f00"
+# Purple matches ``_BRANCH_EXTREMA_PURPLE`` in plots.py — same hue as the max-%AS bar.
+_MAX_PCT_AS_PURPLE = "#a855f7"
+# Blue matches ``_BRANCH_PROFILE_BLUE`` in plots.py — same hue as the Area bars.
+_AREA_PROFILE_BLUE = "#0092c7"
 
 
 def _load_validation_metrics(
@@ -57,6 +69,180 @@ def _fmt_area(value: float | None) -> str:
     return "—" if value is None else f"{float(value):.2f} mm²"
 
 
+def _max_area_deviation_index(branch_df: pd.DataFrame, patient_id: str) -> int | None:
+    """Index (after ``_sort_branch_rows``) of the centerline point maximising |A_pred − A_theo|."""
+    if branch_df is None or branch_df.empty:
+        return None
+    required = {"Px", "Py", "Pz", "Area"}
+    if not required.issubset(branch_df.columns):
+        return None
+    sub = _sort_branch_rows(branch_df.copy())
+    if sub.empty:
+        return None
+    pts = sub[["Px", "Py", "Pz"]].to_numpy(dtype=float)
+    a_pred = pd.to_numeric(sub["Area"], errors="coerce").to_numpy(dtype=float)
+    a_theo = synthetic_analytical_area_mm2(pts, patient_id)
+    finite = np.isfinite(a_pred) & np.isfinite(a_theo) & (a_theo > 0.0)
+    if not np.any(finite):
+        return None
+    diff = np.full(len(sub), -np.inf, dtype=float)
+    diff[finite] = np.abs(a_pred[finite] - a_theo[finite])
+    idx = int(np.argmax(diff))
+    if not np.isfinite(diff[idx]):
+        return None
+    return idx
+
+
+def _highlight_max_area_deviation(fig, branch_df: pd.DataFrame, patient_id: str) -> int | None:
+    """Recolor the Area bar at the max |A_pred − A_theo| point orange (no annotation).
+
+    Returns the highlighted index so the caller can render the metric tile orange in sync.
+    """
+    idx = _max_area_deviation_index(branch_df, patient_id)
+    if idx is None or not fig.data:
+        return None
+    bar = fig.data[0]
+    raw_color = getattr(bar.marker, "color", None)
+    try:
+        x_values = list(bar.x) if bar.x is not None else []
+    except TypeError:
+        x_values = []
+    n_bars = len(x_values)
+    if isinstance(raw_color, (list, tuple)):
+        colors = list(raw_color)
+    elif isinstance(raw_color, str) and n_bars:
+        colors = [raw_color] * n_bars
+    else:
+        return None
+    if not (0 <= idx < len(colors)):
+        return None
+    colors[idx] = _MAX_AREA_DEV_ORANGE
+    bar.marker.color = colors
+    return idx
+
+
+_ARROW_OVER_GREEN = "#22c55e"
+_ARROW_UNDER_RED = "#ef4444"
+
+
+def _render_colored_metric_tile(
+    label: str,
+    value_text: str,
+    color: str,
+    *,
+    help_text: str | None = None,
+    delta_text: str | None = None,
+    signed_delta: float | None = None,
+) -> None:
+    """`st.metric` replacement whose label is rendered in the given color.
+
+    When ``signed_delta`` is provided, a small arrow is shown next to the value:
+    ↑ green if predicted > theoretical, ↓ red if predicted < theoretical.
+    """
+    title_attr = f" title=\"{html.escape(help_text, quote=True)}\"" if help_text else ""
+    delta_html = (
+        "<div style='font-size: 0.82rem; color: rgba(255,255,255,0.55); "
+        f"margin-top: 0.25rem;'>{html.escape(delta_text)}</div>"
+        if delta_text
+        else ""
+    )
+
+    arrow_html = ""
+    if signed_delta is not None:
+        try:
+            sd = float(signed_delta)
+        except (TypeError, ValueError):
+            sd = float("nan")
+        if np.isfinite(sd) and sd != 0.0:
+            if sd > 0:
+                arrow_char = "▲"
+                arrow_color = _ARROW_OVER_GREEN
+                arrow_title = "Predicted higher than theoretical"
+            else:
+                arrow_char = "▼"
+                arrow_color = _ARROW_UNDER_RED
+                arrow_title = "Predicted lower than theoretical"
+            arrow_html = (
+                f"<span style='font-size: 1.15rem; color: {arrow_color}; "
+                f"margin-left: 0.45rem; vertical-align: middle;' "
+                f"title='{html.escape(arrow_title, quote=True)}'>{arrow_char}</span>"
+            )
+
+    st.markdown(
+        "<div style='padding: 0.25rem 0;'>"
+        f"<div style='font-size: 0.875rem; color: {color}; font-weight: 600;'{title_attr}>"
+        f"{html.escape(label)}</div>"
+        "<div style='font-size: 2.0rem; color: #e8e8e8; font-weight: 600; "
+        "line-height: 1.1; margin-top: 0.15rem;'>"
+        f"{html.escape(value_text)}{arrow_html}</div>"
+        f"{delta_html}"
+        "</div>",
+        unsafe_allow_html=True,
+    )
+
+
+def _render_max_area_deviation_tile(value: float | None) -> None:
+    """Maximum Area Deviation tile — orange label matches the highlighted bar in the Area profile."""
+    _render_colored_metric_tile(
+        "Maximum Area Deviation",
+        _fmt_area(value),
+        _MAX_AREA_DEV_ORANGE,
+        help_text=(
+            "Maximum of |A_predicted(z) − A_theoretical(z)| along the vessel tube. "
+            "The orange bar in the Area profile below marks the centerline point where it occurs."
+        ),
+    )
+
+
+def _safe_signed_delta(predicted: float | None, theoretical: float | None) -> float | None:
+    """``predicted - theoretical`` if both finite, else ``None`` (no arrow rendered)."""
+    if predicted is None or theoretical is None:
+        return None
+    try:
+        d = float(predicted) - float(theoretical)
+    except (TypeError, ValueError):
+        return None
+    return d if np.isfinite(d) else None
+
+
+def _render_pct_as_tile(
+    label: str,
+    value: float | None,
+    *,
+    signed_delta: float | None = None,
+    help_text: str | None = None,
+) -> None:
+    """%AS validation tile — purple label matches the max-%AS bar in the geodesic profile."""
+    delta_text = None if signed_delta is None else f"|Δ| {abs(float(signed_delta)):.2f} %"
+    _render_colored_metric_tile(
+        label,
+        _fmt_pct(value),
+        _MAX_PCT_AS_PURPLE,
+        help_text=help_text,
+        delta_text=delta_text,
+        signed_delta=signed_delta,
+    )
+
+
+def _render_area_tile(
+    label: str,
+    value: float | None,
+    *,
+    signed_delta: float | None = None,
+    help_text: str | None = None,
+) -> None:
+    """Area validation tile — blue label matches the Area bars in the geodesic profile."""
+    delta_text = None if signed_delta is None else f"|Δ| {abs(float(signed_delta)):.2f} mm²"
+    _render_colored_metric_tile(
+        label,
+        _fmt_area(value),
+        _AREA_PROFILE_BLUE,
+        help_text=help_text,
+        delta_text=delta_text,
+        signed_delta=signed_delta,
+    )
+
+
 def _render_validation_metrics(metrics: dict, patient_id: str) -> None:
     """Three-column ground-truth vs predicted panel; layout depends on healthy/stenosis."""
     title = "Validation metrics — ground truth vs prediction"
@@ -78,48 +264,69 @@ def _render_validation_metrics(metrics: dict, patient_id: str) -> None:
             "measured area should track πR² along the whole tube."
         )
         c1, c2, c3 = st.columns(3)
-        c1.metric("Theoretical %AS", _fmt_pct(metrics["theoretical_max_pct_as"]))
-        c2.metric(
-            "Predicted %AS",
-            _fmt_pct(metrics["predicted_max_pct_as"]),
-            delta=None if metrics["abs_error_max_pct_as"] is None else f"|Δ| {metrics['abs_error_max_pct_as']:.2f} %",
-            delta_color="off",
-        )
-        c3.metric("|Abs. Error %AS|", _fmt_pct(metrics["abs_error_max_pct_as"]))
+        with c1:
+            _render_pct_as_tile(
+                "Theoretical %AS",
+                metrics["theoretical_max_pct_as"],
+                help_text="Analytical peak %AS for the healthy phantom (constant R → 0%).",
+            )
+        with c2:
+            _render_pct_as_tile(
+                "Predicted %AS",
+                metrics["predicted_max_pct_as"],
+                signed_delta=_safe_signed_delta(
+                    metrics["predicted_max_pct_as"],
+                    metrics["theoretical_max_pct_as"],
+                ),
+                help_text=(
+                    "Maximum %AS measured by the pipeline along the vessel "
+                    "(purple bar in the %AS profile below). "
+                    "Arrow: ▲ predicted > theoretical, ▼ predicted < theoretical."
+                ),
+            )
+        with c3:
+            _render_pct_as_tile(
+                "|Abs. Error %AS|",
+                metrics["abs_error_max_pct_as"],
+                help_text="|Theoretical %AS − Predicted %AS|.",
+            )
 
         c4, c5, c6 = st.columns(3)
-        c4.metric(
-            "Theoretical Area",
-            _fmt_area(metrics.get("theoretical_mean_area_mm2")),
-            help="Analytical πR² along the healthy phantom (constant R = 10 mm → 314.16 mm²).",
-        )
-        c5.metric(
-            "Predicted Mean Area",
-            _fmt_area(metrics.get("predicted_mean_area_mm2")),
-            delta=(
-                None
-                if metrics.get("abs_error_mean_area_mm2") is None
-                else f"|Δ| {metrics['abs_error_mean_area_mm2']:.2f} mm²"
-            ),
-            delta_color="off",
-            help="Mean of predicted lumen Area across all centerline samples on the vessel body.",
-        )
-        c6.metric(
-            "|Abs. Error Mean Area|",
-            _fmt_area(metrics.get("abs_error_mean_area_mm2")),
-        )
+        with c4:
+            _render_area_tile(
+                "Theoretical Area",
+                metrics.get("theoretical_mean_area_mm2"),
+                help_text="Analytical πR² along the healthy phantom (constant R = 10 mm → 314.16 mm²).",
+            )
+        with c5:
+            _render_area_tile(
+                "Predicted Mean Area",
+                metrics.get("predicted_mean_area_mm2"),
+                signed_delta=_safe_signed_delta(
+                    metrics.get("predicted_mean_area_mm2"),
+                    metrics.get("theoretical_mean_area_mm2"),
+                ),
+                help_text=(
+                    "Mean of predicted lumen Area across all centerline samples on the vessel body. "
+                    "Arrow: ▲ predicted > theoretical, ▼ predicted < theoretical."
+                ),
+            )
+        with c6:
+            _render_area_tile(
+                "|Abs. Error Mean Area|",
+                metrics.get("abs_error_mean_area_mm2"),
+                help_text="|Theoretical Area − Predicted Mean Area|.",
+            )
 
         c7, c8 = st.columns(2)
-        c7.metric(
-            "Mean Area Absolute Error",
-            _fmt_area(metrics["mean_area_abs_error_mm2"]),
-            help="Mean of |A_predicted(z) − A_theoretical(z)| along the vessel tube.",
-        )
-        c8.metric(
-            "Maximum Area Deviation",
-            _fmt_area(metrics["max_area_abs_deviation_mm2"]),
-            help="Maximum of |A_predicted(z) − A_theoretical(z)| along the vessel tube.",
-        )
+        with c7:
+            _render_area_tile(
+                "Mean Area Absolute Error",
+                metrics["mean_area_abs_error_mm2"],
+                help_text="Mean of |A_predicted(z) − A_theoretical(z)| along the vessel tube.",
+            )
+        with c8:
+            _render_max_area_deviation_tile(metrics["max_area_abs_deviation_mm2"])
     else:
         st.caption(
             "Stenosis phantom (cosine narrowing, R_min = 5 mm at Z = 50 mm) — peak %AS ≈ 75% "
@@ -127,36 +334,99 @@ def _render_validation_metrics(metrics: dict, patient_id: str) -> None:
         )
         st.markdown("**Maximum %AS**")
         c1, c2, c3 = st.columns(3)
-        c1.metric("Theoretical Max %AS", _fmt_pct(metrics["theoretical_max_pct_as"]))
-        c2.metric(
-            "Predicted Max %AS",
-            _fmt_pct(metrics["predicted_max_pct_as"]),
-            delta=None if metrics["abs_error_max_pct_as"] is None else f"|Δ| {metrics['abs_error_max_pct_as']:.2f} %",
-            delta_color="off",
-        )
-        c3.metric("|Abs. Error Max %AS|", _fmt_pct(metrics["abs_error_max_pct_as"]))
+        with c1:
+            _render_pct_as_tile(
+                "Theoretical Max %AS",
+                metrics["theoretical_max_pct_as"],
+                help_text="Analytical peak %AS for the stenosis phantom (cosine narrowing → 75%).",
+            )
+        with c2:
+            _render_pct_as_tile(
+                "Predicted Max %AS",
+                metrics["predicted_max_pct_as"],
+                signed_delta=_safe_signed_delta(
+                    metrics["predicted_max_pct_as"],
+                    metrics["theoretical_max_pct_as"],
+                ),
+                help_text=(
+                    "Maximum %AS measured by the pipeline along the vessel "
+                    "(purple bar in the %AS profile below). "
+                    "Arrow: ▲ predicted > theoretical, ▼ predicted < theoretical."
+                ),
+            )
+        with c3:
+            _render_pct_as_tile(
+                "|Abs. Error Max %AS|",
+                metrics["abs_error_max_pct_as"],
+                help_text="|Theoretical Max %AS − Predicted Max %AS|.",
+            )
 
         st.markdown("**Maximum Area**")
         d1, d2, d3 = st.columns(3)
-        d1.metric("Theoretical Max Area", _fmt_area(metrics["theoretical_max_area_mm2"]))
-        d2.metric(
-            "Predicted Max Area",
-            _fmt_area(metrics["predicted_max_area_mm2"]),
-            delta=f"|Δ| {metrics['abs_error_max_area_mm2']:.2f} mm²",
-            delta_color="off",
-        )
-        d3.metric("|Abs. Error Max Area|", _fmt_area(metrics["abs_error_max_area_mm2"]))
+        with d1:
+            _render_area_tile(
+                "Theoretical Max Area",
+                metrics["theoretical_max_area_mm2"],
+                help_text="Analytical maximum cross-sectional area of the phantom body (πR_base²).",
+            )
+        with d2:
+            _render_area_tile(
+                "Predicted Max Area",
+                metrics["predicted_max_area_mm2"],
+                signed_delta=_safe_signed_delta(
+                    metrics["predicted_max_area_mm2"],
+                    metrics["theoretical_max_area_mm2"],
+                ),
+                help_text=(
+                    "Maximum lumen Area measured along the vessel. "
+                    "Arrow: ▲ predicted > theoretical, ▼ predicted < theoretical."
+                ),
+            )
+        with d3:
+            _render_area_tile(
+                "|Abs. Error Max Area|",
+                metrics["abs_error_max_area_mm2"],
+                help_text="|Theoretical Max Area − Predicted Max Area|.",
+            )
 
         st.markdown("**Minimum Area**")
         e1, e2, e3 = st.columns(3)
-        e1.metric("Theoretical Min Area", _fmt_area(metrics["theoretical_min_area_mm2"]))
-        e2.metric(
-            "Predicted Min Area",
-            _fmt_area(metrics["predicted_min_area_mm2"]),
-            delta=f"|Δ| {metrics['abs_error_min_area_mm2']:.2f} mm²",
-            delta_color="off",
-        )
-        e3.metric("|Abs. Error Min Area|", _fmt_area(metrics["abs_error_min_area_mm2"]))
+        with e1:
+            _render_area_tile(
+                "Theoretical Min Area",
+                metrics["theoretical_min_area_mm2"],
+                help_text="Analytical minimum cross-sectional area at the stenosis neck (πR_min²).",
+            )
+        with e2:
+            _render_area_tile(
+                "Predicted Min Area",
+                metrics["predicted_min_area_mm2"],
+                signed_delta=_safe_signed_delta(
+                    metrics["predicted_min_area_mm2"],
+                    metrics["theoretical_min_area_mm2"],
+                ),
+                help_text=(
+                    "Minimum lumen Area measured along the vessel. "
+                    "Arrow: ▲ predicted > theoretical, ▼ predicted < theoretical."
+                ),
+            )
+        with e3:
+            _render_area_tile(
+                "|Abs. Error Min Area|",
+                metrics["abs_error_min_area_mm2"],
+                help_text="|Theoretical Min Area − Predicted Min Area|.",
+            )
+
+        st.markdown("**Along-vessel area accuracy**")
+        f1, f2 = st.columns(2)
+        with f1:
+            _render_area_tile(
+                "Mean Area Absolute Error",
+                metrics.get("mean_area_abs_error_mm2"),
+                help_text="Mean of |A_predicted(z) − A_theoretical(z)| along the vessel tube.",
+            )
+        with f2:
+            _render_max_area_deviation_tile(metrics.get("max_area_abs_deviation_mm2"))
 
 
 def _filter_synthetic_vessel(df: pd.DataFrame) -> pd.DataFrame:
@@ -289,6 +559,10 @@ def render_synthetic_dashboard(
 
     try:
         fig_prof = create_synthetic_tube_geodesic_profile(branch_df)
+        try:
+            _highlight_max_area_deviation(fig_prof, branch_df, patient_id)
+        except Exception:
+            pass
         _prof_kw = dict(
             use_container_width=True,
             config=plotly_config,
