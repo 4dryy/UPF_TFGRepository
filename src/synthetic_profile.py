@@ -236,6 +236,13 @@ def synthetic_validation_metrics(
     mean_a_pred = float(np.mean(a_pred))
     mean_a_theo = float(np.mean(a_theo))
 
+    # Sample-level peak |A_pred − A_theo| (kept inside the finite subset to stay self-consistent).
+    finite_idx = np.where(finite)[0]
+    rel_idx = int(np.argmax(diff))
+    deviation_global_idx = int(finite_idx[rel_idx])
+    a_pred_at_dev = float(a_pred[rel_idx])
+    a_theo_at_dev = float(a_theo[rel_idx])
+
     # Predicted %AS — mirror viewer convention (clamp negatives, ignore NaN).
     pct_max_pred: float | None = None
     if "pct_AS" in centerline_df.columns:
@@ -270,6 +277,9 @@ def synthetic_validation_metrics(
             "abs_error_mean_area_mm2": float(abs(mean_a_theo - mean_a_pred)),
             "mean_area_abs_error_mm2": float(np.mean(diff)),
             "max_area_abs_deviation_mm2": float(np.max(diff)),
+            "max_area_deviation_predicted_mm2": a_pred_at_dev,
+            "max_area_deviation_theoretical_mm2": a_theo_at_dev,
+            "max_area_deviation_index": deviation_global_idx,
             "axial_extent_mm": [
                 float(np.min(pts[:, 2])),
                 float(np.max(pts[:, 2])),

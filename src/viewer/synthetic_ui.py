@@ -32,6 +32,8 @@ _MAX_AREA_DEV_ORANGE = "#ff6f00"
 _MAX_PCT_AS_PURPLE = "#a855f7"
 # Blue matches ``_BRANCH_PROFILE_BLUE`` in plots.py — same hue as the Area bars.
 _AREA_PROFILE_BLUE = "#0092c7"
+# Red used for the maximum predicted area (label + corresponding Area bar).
+_MAX_PRED_AREA_RED = "#ef4444"
 
 
 def _load_validation_metrics(
@@ -93,14 +95,27 @@ def _max_area_deviation_index(branch_df: pd.DataFrame, patient_id: str) -> int |
     return idx
 
 
-def _highlight_max_area_deviation(fig, branch_df: pd.DataFrame, patient_id: str) -> int | None:
-    """Recolor the Area bar at the max |A_pred − A_theo| point orange (no annotation).
-
-    Returns the highlighted index so the caller can render the metric tile orange in sync.
-    """
-    idx = _max_area_deviation_index(branch_df, patient_id)
-    if idx is None or not fig.data:
+def _max_predicted_area_index(branch_df: pd.DataFrame) -> int | None:
+    """Index (after ``_sort_branch_rows``) of the centerline point with the largest predicted Area."""
+    if branch_df is None or branch_df.empty or "Area" not in branch_df.columns:
         return None
+    sub = _sort_branch_rows(branch_df.copy())
+    if sub.empty:
+        return None
+    a_pred = pd.to_numeric(sub["Area"], errors="coerce").to_numpy(dtype=float)
+    if not np.any(np.isfinite(a_pred)):
+        return None
+    masked = np.where(np.isfinite(a_pred), a_pred, -np.inf)
+    idx = int(np.argmax(masked))
+    if not np.isfinite(a_pred[idx]):
+        return None
+    return idx
+
+
+def _recolor_area_bar(fig, idx: int, color: str) -> bool:
+    """Paint the Area-row bar at ``idx`` with ``color``. Returns True if successful."""
+    if idx is None or not fig.data:
+        return False
     bar = fig.data[0]
     raw_color = getattr(bar.marker, "color", None)
     try:
@@ -113,12 +128,28 @@ def _highlight_max_area_deviation(fig, branch_df: pd.DataFrame, patient_id: str)
     elif isinstance(raw_color, str) and n_bars:
         colors = [raw_color] * n_bars
     else:
-        return None
+        return False
     if not (0 <= idx < len(colors)):
-        return None
-    colors[idx] = _MAX_AREA_DEV_ORANGE
+        return False
+    colors[idx] = color
     bar.marker.color = colors
-    return idx
+    return True
+
+
+def _highlight_max_predicted_area(fig, branch_df: pd.DataFrame) -> int | None:
+    """Recolor the Area bar at the max predicted-Area point red."""
+    idx = _max_predicted_area_index(branch_df)
+    if idx is None:
+        return None
+    return idx if _recolor_area_bar(fig, idx, _MAX_PRED_AREA_RED) else None
+
+
+def _highlight_max_area_deviation(fig, branch_df: pd.DataFrame, patient_id: str) -> int | None:
+    """Recolor the Area bar at the max |A_pred − A_theo| point orange (no annotation)."""
+    idx = _max_area_deviation_index(branch_df, patient_id)
+    if idx is None:
+        return None
+    return idx if _recolor_area_bar(fig, idx, _MAX_AREA_DEV_ORANGE) else None
 
 
 _ARROW_OVER_GREEN = "#22c55e"
@@ -181,8 +212,27 @@ def _render_colored_metric_tile(
     )
 
 
-def _render_max_area_deviation_tile(value: float | None) -> None:
-    """Maximum Area Deviation tile — orange label matches the highlighted bar in the Area profile."""
+def _render_max_area_deviation_tile(
+    value: float | None,
+    *,
+    predicted: float | None = None,
+    theoretical: float | None = None,
+) -> None:
+    """Maximum Area Deviation tile — orange label matches the highlighted bar in the Area profile.
+
+    When the predicted / theoretical pair at the deviation point is provided, the muted line below
+    shows the subtraction that produced the value (``|A_pred − A_theo|``).
+    """
+    delta_text: str | None = None
+    if (
+        predicted is not None
+        and theoretical is not None
+        and np.isfinite(float(predicted))
+        and np.isfinite(float(theoretical))
+    ):
+        delta_text = (
+            f"|A_pred − A_theo| = |{float(predicted):.2f} − {float(theoretical):.2f}| mm²"
+        )
     _render_colored_metric_tile(
         "Maximum Area Deviation",
         _fmt_area(value),
@@ -191,6 +241,7 @@ def _render_max_area_deviation_tile(value: float | None) -> None:
             "Maximum of |A_predicted(z) − A_theoretical(z)| along the vessel tube. "
             "The orange bar in the Area profile below marks the centerline point where it occurs."
         ),
+        delta_text=delta_text,
     )
 
 
@@ -230,13 +281,14 @@ def _render_area_tile(
     *,
     signed_delta: float | None = None,
     help_text: str | None = None,
+    color: str = _AREA_PROFILE_BLUE,
 ) -> None:
-    """Area validation tile — blue label matches the Area bars in the geodesic profile."""
+    """Area validation tile — blue label by default (override ``color`` for highlighted tiles)."""
     delta_text = None if signed_delta is None else f"|Δ| {abs(float(signed_delta)):.2f} mm²"
     _render_colored_metric_tile(
         label,
         _fmt_area(value),
-        _AREA_PROFILE_BLUE,
+        color,
         help_text=help_text,
         delta_text=delta_text,
         signed_delta=signed_delta,
@@ -326,7 +378,11 @@ def _render_validation_metrics(metrics: dict, patient_id: str) -> None:
                 help_text="Mean of |A_predicted(z) − A_theoretical(z)| along the vessel tube.",
             )
         with c8:
-            _render_max_area_deviation_tile(metrics["max_area_abs_deviation_mm2"])
+            _render_max_area_deviation_tile(
+                metrics["max_area_abs_deviation_mm2"],
+                predicted=metrics.get("max_area_deviation_predicted_mm2"),
+                theoretical=metrics.get("max_area_deviation_theoretical_mm2"),
+            )
     else:
         st.caption(
             "Stenosis phantom (cosine narrowing, R_min = 5 mm at Z = 50 mm) — peak %AS ≈ 75% "
@@ -378,9 +434,11 @@ def _render_validation_metrics(metrics: dict, patient_id: str) -> None:
                     metrics["theoretical_max_area_mm2"],
                 ),
                 help_text=(
-                    "Maximum lumen Area measured along the vessel. "
+                    "Maximum lumen Area measured along the vessel "
+                    "(red bar in the Area profile below). "
                     "Arrow: ▲ predicted > theoretical, ▼ predicted < theoretical."
                 ),
+                color=_MAX_PRED_AREA_RED,
             )
         with d3:
             _render_area_tile(
@@ -426,7 +484,11 @@ def _render_validation_metrics(metrics: dict, patient_id: str) -> None:
                 help_text="Mean of |A_predicted(z) − A_theoretical(z)| along the vessel tube.",
             )
         with f2:
-            _render_max_area_deviation_tile(metrics.get("max_area_abs_deviation_mm2"))
+            _render_max_area_deviation_tile(
+                metrics.get("max_area_abs_deviation_mm2"),
+                predicted=metrics.get("max_area_deviation_predicted_mm2"),
+                theoretical=metrics.get("max_area_deviation_theoretical_mm2"),
+            )
 
 
 def _filter_synthetic_vessel(df: pd.DataFrame) -> pd.DataFrame:
@@ -563,6 +625,11 @@ def render_synthetic_dashboard(
             _highlight_max_area_deviation(fig_prof, branch_df, patient_id)
         except Exception:
             pass
+        if is_stenosis_synthetic_patient(patient_id):
+            try:
+                _highlight_max_predicted_area(fig_prof, branch_df)
+            except Exception:
+                pass
         _prof_kw = dict(
             use_container_width=True,
             config=plotly_config,
