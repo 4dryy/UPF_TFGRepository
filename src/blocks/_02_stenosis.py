@@ -57,6 +57,9 @@ class Block2Outputs(NamedTuple):
     total_df_merged: pd.DataFrame
     """Merged branch points: max ``pct_AS`` per rounded coordinate **within each branch file**; empty if no branches."""
 
+    cutter_fallback_arteries: tuple[str, ...] = ()
+    """Arteries for which ``vmtkCenterlineSections`` crashed natively and the VTK plane-cut fallback was used."""
+
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DATA_ROOT = PROJECT_ROOT / "data"
 BLOCK1_PATIENT_DIR_ROOT = PROJECT_ROOT / "results" / "block1_results"
@@ -553,8 +556,14 @@ def _compute_centerline_area_vmtk_subprocess(
                 log_detail(logger, "VMTK worker failed (%s): %s", tag, proc.stderr.strip()[:240])
             return None
         log_detail(logger, "VMTK worker done (%s)", tag)
-        data = np.load(out_path)
-        return np.asarray(data["points"], dtype=float), np.asarray(data["area"], dtype=float)
+        # np.load(.npz) returns a lazy NpzFile that keeps the underlying file open.
+        # On Windows the TemporaryDirectory cleanup would then fail with WinError 32
+        # because the file is still in use — load inside a context manager so the
+        # handle is released before the `with tempfile.TemporaryDirectory(...)` exits.
+        with np.load(out_path) as data:
+            pts = np.asarray(data["points"], dtype=float)
+            area = np.asarray(data["area"], dtype=float)
+        return pts, area
 
 
 def _sections_from_prepared_centerline(
@@ -562,12 +571,19 @@ def _sections_from_prepared_centerline(
     surface_vtk: object,
     *,
     tag: str,
-) -> tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray, bool]:
+    """Run VMTK sections in a child process; on native crash, fall back to VTK plane-cut.
+
+    Returns ``(points, area, used_cutter_fallback)``. ``used_cutter_fallback`` is ``True``
+    when the VMTK subprocess could not produce a result (native crash, timeout, or
+    invalid output) and the deterministic plane-cut estimator was used instead.
+    """
     n_pts = int(pv.wrap(cl_vtk_prep).n_points)
     log_detail(logger, "%s: %d resampled points → VMTK subprocess", tag, n_pts)
     isolated = _compute_centerline_area_vmtk_subprocess(cl_vtk_prep, surface_vtk, tag=tag)
     if isolated is not None:
-        return isolated
+        pts, area = isolated
+        return pts, area, False
     pts = np.asarray(pv.wrap(cl_vtk_prep).points, dtype=float)
     log_detail(
         logger,
@@ -576,7 +592,7 @@ def _sections_from_prepared_centerline(
         len(pts),
     )
     area = _compute_centerline_area_cutter(surface_vtk, pts)
-    return pts, area
+    return pts, area, True
 
 
 def _prep_centerline_from_path(cl_path: Path) -> tuple[object, float]:
@@ -643,11 +659,12 @@ def _compute_artery_reference_areas(
         cl_path = block1_dir / f"centerline_{artery}.vtp"
         log_detail(logger, "%s sections: full-tree fallback (no branch VTPs)", artery)
         cl_prep, _ = _prep_centerline_from_path(cl_path)
-        return _sections_from_prepared_centerline(
+        pts, area, _used_cutter = _sections_from_prepared_centerline(
             cl_prep,
             surface_vtk,
             tag=f"{artery}_tree",
         )
+        return pts, area
 
     log_detail(
         logger,
@@ -661,7 +678,7 @@ def _compute_artery_reference_areas(
         bid = branch_path.stem
         log_detail(logger, "%s [%d/%d] %s", artery, bi, len(branch_paths), bid)
         cl_prep, _ = _prep_centerline_from_path(branch_path)
-        pts, area = _sections_from_prepared_centerline(
+        pts, area, _used_cutter = _sections_from_prepared_centerline(
             cl_prep,
             surface_vtk,
             tag=f"{artery}_{bid}",
@@ -1070,28 +1087,41 @@ def run_block2(
         else:
             log_detail(logger, "Surfaces: reuse Block1 (%s)", "+".join(arteries))
 
+    # Sections are computed via:
+    #   1. Adaptive resampling step (caps section count below SECTION_MAX_POINTS).
+    #   2. vmtkCenterlineSections in a child process — known to native-crash on
+    #      pathological (surface, centerline) pairs (Windows STATUS_ACCESS_VIOLATION,
+    #      no Python traceback). Isolation keeps the pipeline alive.
+    #   3. Deterministic VTK plane-cut fallback when the subprocess fails, so even
+    #      pathological samples produce a complete (approximate) Area column.
     ref_points: dict[str, np.ndarray] = {}
     ref_area: dict[str, np.ndarray] = {}
+    cutter_fallback_arteries: list[str] = []
     for artery in arteries:
         cl_path = block1_dir / f"centerline_{artery}.vtp"
         if not cl_path.exists():
             raise FileNotFoundError(f"Missing Block 1 centerline: {cl_path}")
-        cl_vtk = _read_vtp_as_vtk(cl_path)
-        cl_vtk_prep = _prepare_centerline_for_sections(
-            cl_vtk,
-            resample_step=SECTION_RESAMPLE_STEP_MM,
-            smoothing_factor=0.15,
-            iterations=20,
+        cl_prep, step_mm = _prep_centerline_from_path(cl_path)
+        pts, area, used_cutter = _sections_from_prepared_centerline(
+            cl_prep,
+            artery_surfaces_vtk[artery],
+            tag=f"{sample_name}_{artery}",
         )
-        ref_points[artery] = np.asarray(pv.wrap(cl_vtk_prep).points, dtype=float)
-        surface_clean_vtk = _clean_triangulate_surface(artery_surfaces_vtk[artery])
-        ref_area[artery] = _compute_centerline_area(cl_vtk_prep, surface_clean_vtk)
+        ref_points[artery] = pts
+        ref_area[artery] = area
+        if used_cutter:
+            cutter_fallback_arteries.append(artery)
+            log_detail(
+                logger,
+                "%s sections: cutter fallback used (vmtkCenterlineSections crashed) — Area values are approximate",
+                artery,
+            )
 
         a = ref_area[artery]
         valid = np.isfinite(a)
         log_detail(
             logger,
-            "%s sections: n=%d valid=%d nan=%d  A[%.3f–%.3f] mm² med=%.3f",
+            "%s sections: n=%d valid=%d nan=%d  A[%.3f–%.3f] mm² med=%.3f  step=%.3f mm  source=%s",
             artery,
             len(a),
             int(np.count_nonzero(valid)),
@@ -1099,6 +1129,8 @@ def run_block2(
             float(np.nanmin(a)) if valid.any() else float("nan"),
             float(np.nanmax(a)) if valid.any() else float("nan"),
             float(np.nanmedian(a)) if valid.any() else float("nan"),
+            step_mm,
+            "cutter" if used_cutter else "vmtk",
         )
 
     # Global dataframe
@@ -1345,6 +1377,10 @@ def run_block2(
         parts2.append(
             f"stenosis → {short_path(out_stenosis_dir)}",
         )
+    if cutter_fallback_arteries:
+        parts2.append(
+            f"cutter fallback: {','.join(cutter_fallback_arteries)}",
+        )
     footer_block(
         logger,
         block_id="2",
@@ -1352,4 +1388,15 @@ def run_block2(
         seconds=time.perf_counter() - t_start,
         parts=parts2,
     )
-    return Block2Outputs(df_global_area=df_global, total_df_merged=total_df_merged)
+    # Completion sentinel — absence on a future run indicates a silent native crash
+    # (Python exceptions are caught by the pipeline and never reach this line).
+    sentinel = out_area_dir / ".block2_complete"
+    sentinel.write_text(
+        f"{sample_name}\ncutter_fallback={','.join(cutter_fallback_arteries) or '-'}\n",
+        encoding="utf-8",
+    )
+    return Block2Outputs(
+        df_global_area=df_global,
+        total_df_merged=total_df_merged,
+        cutter_fallback_arteries=tuple(cutter_fallback_arteries),
+    )

@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import importlib.util
 import logging
+import sys
 import time
 from pathlib import Path
 
@@ -94,8 +95,17 @@ def main(patient_id: str) -> None:
         sample_metrics.extraction = block1_out.extraction_metrics
 
         t2 = time.perf_counter()
-        run_block2(patient_id=patient_id, is_synthetic=is_synthetic)
+        block2_out = run_block2(patient_id=patient_id, is_synthetic=is_synthetic)
         sample_metrics.runtime_block2_s = time.perf_counter() - t2
+        sample_metrics.block2_cutter_fallback_arteries = tuple(
+            block2_out.cutter_fallback_arteries
+        )
+        if block2_out.cutter_fallback_arteries:
+            sub(
+                log,
+                "Block 2 used cutter fallback on: %s (Area values are approximate)",
+                ", ".join(block2_out.cutter_fallback_arteries),
+            )
 
         block3_mod = _load_block3()
         t3 = time.perf_counter()
@@ -124,6 +134,11 @@ def main(patient_id: str) -> None:
             sample_metrics.execution_success,
         )
 
+    # VMTK's C++ filters print progress notes to stdout without trailing
+    # newlines. Python's line-buffered stdout would otherwise hold the last
+    # fragment until interpreter shutdown, making it appear AFTER the DONE
+    # banner. Flushing here keeps the closing banner as the very last line.
+    sys.stdout.flush()
     banner_pipeline_done(log, patient_id, sample_metrics.runtime_total_s or 0.0)
 
 

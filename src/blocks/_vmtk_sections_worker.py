@@ -38,17 +38,23 @@ def main(argv: list[str] | None = None) -> int:
 
     cl_path, surf_path, out_path = (Path(a) for a in args)
 
-    reader = vtkXMLPolyDataReader()
-    reader.SetFileName(str(cl_path))
-    reader.Update()
-    centerline = reader.GetOutput()
+    # Use TWO distinct readers. `vtkXMLPolyDataReader.GetOutput()` returns a pointer
+    # into the reader's output port; calling SetFileName + Update on the same reader
+    # would overwrite the centerline data with the surface data in place. Both readers
+    # must stay alive until `vmtkCenterlineSections.Execute()` finishes so VTK's
+    # reference counting keeps `centerline` and `surface` valid.
+    cl_reader = vtkXMLPolyDataReader()
+    cl_reader.SetFileName(str(cl_path))
+    cl_reader.Update()
+    centerline = cl_reader.GetOutput()
     if centerline is None or centerline.GetNumberOfPoints() < 2:
         print("invalid centerline", file=sys.stderr)
         return 3
 
-    reader.SetFileName(str(surf_path))
-    reader.Update()
-    surface = reader.GetOutput()
+    surf_reader = vtkXMLPolyDataReader()
+    surf_reader.SetFileName(str(surf_path))
+    surf_reader.Update()
+    surface = surf_reader.GetOutput()
     if surface is None or surface.GetNumberOfPoints() < 3:
         print("invalid surface", file=sys.stderr)
         return 4
