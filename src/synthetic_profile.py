@@ -81,14 +81,20 @@ def _asoca_mask_candidates(patient_id: str) -> list[Path]:
 
 
 def resolve_mask_nrrd_path(patient_id: str) -> Path:
-    """Return the segmentation mask ``.nrrd`` for ASOCA or synthetic cases."""
+    """Return the segmentation mask ``.nrrd`` for the given patient (any cohort).
+
+    Synthetic IDs are resolved locally because they live under ``data/Synthetic Samples``
+    and the synthetic phantom code in this module is the only place that knows about them.
+    All other IDs (ASOCA + MACS-18) are dispatched to :mod:`src.cohort_paths`, which has
+    the proper per-cohort folder map and the ``MACS_PIPELINE_ENABLED`` gate.
+    """
     pid = str(patient_id).strip()
     if is_synthetic_patient(pid):
         return (SYNTHETIC_DATA_ROOT / f"{pid}.nrrd").resolve()
-    found = _first_existing(_asoca_mask_candidates(pid))
-    if found is not None:
-        return found
-    return _asoca_mask_candidates(pid)[0].resolve()
+    # Imported lazily to avoid a hard dependency for callers that only use the synthetic helpers.
+    from src.cohort_paths import resolve_mask_nrrd_path as _resolve_cohort_mask
+
+    return _resolve_cohort_mask(pid)
 
 
 def apply_synthetic_metadata(df: pd.DataFrame) -> pd.DataFrame:

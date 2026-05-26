@@ -1,14 +1,15 @@
 """
 Resolve input paths for ASOCA, MACS-18, and synthetic cohorts.
 
-**Note:** MACS-18 execution is disabled in the main pipeline (insufficient compute).
-Helpers remain for future experiments. Active runs use ASOCA + synthetic only via
-``src/synthetic_profile.py`` and ``src/_pipeline.py``.
-
-Patient IDs encode the dataset (no extra metadata tag in results):
+Patient IDs encode the dataset (no extra metadata tag is needed in results):
 - ``Normal_1``, ``Diseased_1`` — ASOCA
-- ``MACS_Normal_1``, ``MACS_Diseased_1`` — MACS-18 (reserved, not run by default)
+- ``MACS_Normal_1``, ``MACS_Diseased_1`` — MACS-18 (re-annotated higher-precision version of ASOCA)
 - ``Synthetic_1``, ``Synthetic_2`` — synthetic phantoms
+
+All three cohorts share input formats (segmentation mask ``.nrrd`` with two RCA/LCA labels +
+AHA-segment volume ``.nii.gz``), so Blocks 1-4 run with the *same* methodology on all of them.
+The only thing that changes per cohort is where on disk the files live; that is what this
+module encapsulates.
 """
 
 from __future__ import annotations
@@ -16,8 +17,11 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Literal
 
-# When False, ``resolve_mask_nrrd_path`` / ``resolve_segment_label_path`` reject MACS IDs.
-MACS_PIPELINE_ENABLED = False
+# Master switch for the MACS-18 cohort. Kept as a module-level flag (rather than removed)
+# so a user can quickly disable MACS-18 lookups again if their disk copy is ever incomplete:
+# when False, ``resolve_mask_nrrd_path`` / ``resolve_segment_label_path`` reject MACS IDs
+# with a clear RuntimeError instead of silently failing later inside Block 1.
+MACS_PIPELINE_ENABLED = True
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DATA_ROOT = PROJECT_ROOT / "data"

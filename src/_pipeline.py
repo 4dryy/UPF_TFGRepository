@@ -20,34 +20,31 @@ from pathlib import Path
 from src.blocks._01_extraction import run_block1
 from src.blocks._02_stenosis import run_block2
 from src.blocks._04_visualization import run_block4
+from src.cohort_paths import (
+    cohort_label,
+    resolve_mask_nrrd_path,
+    resolve_segment_label_path,
+)
 from src.pipeline_log import banner_pipeline, banner_pipeline_done, configure_logging, sub
 from src.pipeline_metrics import SamplePipelineMetrics, upsert_sample_metrics
-from src.synthetic_profile import is_synthetic_patient, resolve_mask_nrrd_path
+from src.synthetic_profile import is_synthetic_patient
 
 
 def _prompt_patient_id() -> str:
-    """Ask the user for a patient ID until a non-empty value is provided."""
+    """Ask the user for a patient ID until a non-empty value is provided.
+
+    Accepted prefixes: ``Normal_<n>`` / ``Diseased_<n>`` (ASOCA),
+    ``MACS_Normal_<n>`` / ``MACS_Diseased_<n>`` (MACS-18 re-annotation), and
+    ``Synthetic_<n>`` (validation phantoms). The prefix selects the cohort;
+    the rest of the pipeline (Blocks 1-4) runs the same code path on all three.
+    """
     while True:
-        pid = input("Enter Patient ID (e.g. Normal_1, Synthetic_1): ").strip()
+        pid = input(
+            "Enter Patient ID (e.g. Normal_1, MACS_Normal_1, Synthetic_1): "
+        ).strip()
         if pid:
             return pid
         print("Patient ID cannot be empty. Please try again.")
-
-
-def _resolve_segment_label_path(patient_id: str) -> Path | None:
-    """Locate ``.nii.gz`` segment labels under ``data/ASOCA Labels`` (legacy + split cohort folders)."""
-    root = Path(__file__).resolve().parents[1]
-    candidates = [
-        root / "data" / "ASOCA Labels" / f"{patient_id}.nii.gz",
-        root / "data" / "ASOCA Normal Labels" / f"{patient_id}.nii.gz",
-        root / "data" / "ASOCA Diseased Labels" / f"{patient_id}.nii.gz",
-        root / "data" / "ASOCA" / "ASOCA Normal Labels" / f"{patient_id}.nii.gz",
-        root / "data" / "ASOCA" / "ASOCA Diseased Labels" / f"{patient_id}.nii.gz",
-    ]
-    for c in candidates:
-        if c.is_file():
-            return c.resolve()
-    return None
 
 
 def _load_block3():
@@ -77,17 +74,29 @@ def main(patient_id: str) -> None:
         if is_synthetic:
             sub(log, "Synthetic validation case — single-tube mode (no RCA/LCA split).")
             sub(log, "Synthetic mask: %s", resolve_mask_nrrd_path(patient_id))
+            label_path = None
         else:
-            label_path = _resolve_segment_label_path(patient_id)
+            label_path = resolve_segment_label_path(patient_id)
+            dataset_name = cohort_label(patient_id)
             if label_path is None:
-                sub(log, "ASOCA label .nii.gz not found — Block 1 uses scout RCA/LCA pairing.")
+                sub(
+                    log,
+                    "%s label .nii.gz not found — Block 1 uses scout RCA/LCA pairing.",
+                    dataset_name,
+                )
             else:
-                sub(log, "ASOCA labels: %s", label_path)
+                sub(log, "%s labels: %s", dataset_name, label_path)
+            sub(log, "%s mask:   %s", dataset_name, resolve_mask_nrrd_path(patient_id))
 
+        # ``run_block1`` falls back to ``synthetic_profile.resolve_mask_nrrd_path`` when
+        # ``nrrd_path`` is ``None``; that resolver now delegates to ``cohort_paths`` for
+        # any non-synthetic ID, so ASOCA and MACS-18 are both resolved correctly with a
+        # single ``nrrd_path=None`` call. We only resolve eagerly for synthetic to keep
+        # the log line ("Synthetic mask: ...") readable above.
         t1 = time.perf_counter()
         block1_out = run_block1(
             patient_id=patient_id,
-            label_nii_path=None if is_synthetic else _resolve_segment_label_path(patient_id),
+            label_nii_path=label_path,
             nrrd_path=resolve_mask_nrrd_path(patient_id) if is_synthetic else None,
             is_synthetic=is_synthetic,
         )

@@ -91,7 +91,13 @@ SECTION_MAX_POINTS = 12_000
 VMTK_SUBPROCESS_TIMEOUT_S = 900
 CUTTER_FALLBACK_MAX_POINTS = 400
 
-# Per-branch VMTK subprocess isolation (added for MACS-18 experiments). Off for ASOCA production runs.
+# Optional per-branch processing experiment: when True, ``_compute_artery_reference_areas``
+# runs the VMTK section pipeline once per branch centerline instead of once on the full
+# artery tree. Currently OFF for ALL cohorts (ASOCA, MACS-18, synthetic) — the production
+# path runs the full-tree centerline through the same three-layer defence (adaptive
+# resample → ``vmtkCenterlineSections`` in subprocess → VTK plane-cut fallback) regardless
+# of which cohort the patient ID belongs to. Kept as a toggle for future granularity
+# experiments only; flipping it does not change the cohort-equality property.
 MACS_PER_BRANCH_SECTIONS_ENABLED = False
 
 GREEN_YELLOW_RED_STENOSIS = LinearSegmentedColormap.from_list(
@@ -613,8 +619,16 @@ def _prep_centerline_from_path(cl_path: Path) -> tuple[object, float]:
     return cl_prep, resample_step
 
 
-def _compute_centerline_area(centerline_vtk: object, surface_vtk: object) -> np.ndarray:
-    """Standard ASOCA path: in-process ``vmtkCenterlineSections`` on the full artery centerline."""
+def _compute_centerline_area_inprocess_DEPRECATED(centerline_vtk: object, surface_vtk: object) -> np.ndarray:
+    """Legacy in-process ``vmtkCenterlineSections`` — NOT used by the production pipeline.
+
+    Kept only as a reference implementation for documentation/reproduction. The production
+    Block 2 path (``_sections_from_prepared_centerline`` → ``_compute_centerline_area_vmtk_subprocess``)
+    runs the same VMTK filter inside a child process so a native crash on a pathological
+    geometry cannot kill the parent pipeline; on subprocess failure it falls back to
+    ``_compute_centerline_area_cutter``. That three-layer chain is identical for ASOCA,
+    MACS-18 and synthetic patients.
+    """
     sections = vmtkscripts.vmtkCenterlineSections()
     sections.Surface = surface_vtk
     sections.Centerlines = centerline_vtk
@@ -642,17 +656,27 @@ def _compute_artery_reference_areas(
     surface_vtk: object,
 ) -> tuple[np.ndarray, np.ndarray]:
     """
-    Cross-sectional areas for one artery.
+    Cross-sectional areas for one artery — *experimental helper, not used in production*.
 
-    Default (ASOCA): full-tree ``centerline_<Artery>.vtp`` + in-process VMTK sections.
-    Optional (MACS-18): per-branch VMTK subprocess + VTK cutter fallback when enabled.
+    The production Block 2 path lives in ``run_block2`` and calls
+    :func:`_sections_from_prepared_centerline` directly on the full-tree centerline; that
+    function runs the three-layer defence (adaptive resample → VMTK in subprocess → VTK
+    plane-cut fallback) and is identical for ASOCA, MACS-18 and synthetic.
+
+    This helper is kept only for the optional ``MACS_PER_BRANCH_SECTIONS_ENABLED``
+    experiment, which would dispatch one VMTK call per branch centerline (with the same
+    subprocess + cutter fallback chain) instead of one call per artery tree. It is *off*
+    by default for all cohorts, so methodology stays cohort-agnostic.
     """
     if not MACS_PER_BRANCH_SECTIONS_ENABLED:
         cl_path = block1_dir / f"centerline_{artery}.vtp"
         cl_prep, _ = _prep_centerline_from_path(cl_path)
-        pts = np.asarray(pv.wrap(cl_prep).points, dtype=float)
-        surface_clean = _clean_triangulate_surface(surface_vtk)
-        return pts, _compute_centerline_area(cl_prep, surface_clean)
+        pts, area, _used_cutter = _sections_from_prepared_centerline(
+            cl_prep,
+            surface_vtk,
+            tag=f"{sample_name}_{artery}",
+        )
+        return pts, area
 
     branch_paths = _branch_centerline_paths(block1_dir, artery, sample_name)
     if not branch_paths:
@@ -1087,13 +1111,20 @@ def run_block2(
         else:
             log_detail(logger, "Surfaces: reuse Block1 (%s)", "+".join(arteries))
 
-    # Sections are computed via:
+    # Cohort-agnostic three-layer area computation. The SAME chain runs for every
+    # patient (ASOCA, MACS-18 and synthetic), regardless of patient_id prefix:
     #   1. Adaptive resampling step (caps section count below SECTION_MAX_POINTS).
-    #   2. vmtkCenterlineSections in a child process — known to native-crash on
-    #      pathological (surface, centerline) pairs (Windows STATUS_ACCESS_VIOLATION,
-    #      no Python traceback). Isolation keeps the pipeline alive.
-    #   3. Deterministic VTK plane-cut fallback when the subprocess fails, so even
-    #      pathological samples produce a complete (approximate) Area column.
+    #   2. vmtkCenterlineSections in a child process — VMTK is always TRIED FIRST.
+    #      It is the C/C++ filter that can native-crash on pathological (surface,
+    #      centerline) pairs (Windows STATUS_ACCESS_VIOLATION, no Python traceback),
+    #      so we isolate it in a subprocess to keep the pipeline alive.
+    #   3. Deterministic VTK plane-cut fallback — used ONLY when layer 2 fails
+    #      (subprocess crashes / times out), so pathological samples still produce
+    #      a complete (approximate) Area column instead of killing the run.
+    # Healthy / clean geometries (the common case, expected to dominate on MACS-18
+    # because of the higher-precision re-annotations) land on layer 2 with
+    # source="vmtk" and exact areas; only arteries that genuinely break VMTK fall
+    # through to the cutter fallback and are explicitly logged as approximate.
     ref_points: dict[str, np.ndarray] = {}
     ref_area: dict[str, np.ndarray] = {}
     cutter_fallback_arteries: list[str] = []
