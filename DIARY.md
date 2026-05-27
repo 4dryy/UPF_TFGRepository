@@ -448,6 +448,65 @@ Every work session must be recorded using the following structure:
 
 ---
 
+### 2026-05-27 — MACS-18 enablement, cohort batch runner, and robustness hardening
+
+* **🎯 Objectives:** Run MACS-18 end-to-end with the same methodology as ASOCA, automate cohort execution, and remove remaining single-sample crash points discovered during full-cohort runs.
+
+* **✅ Progress & Tasks Completed:**
+  * **Cohort support wiring (production path):**
+    * Enabled MACS-18 in `src/cohort_paths.py` (`MACS_PIPELINE_ENABLED=True`).
+    * Updated `src/_pipeline.py` to resolve masks/labels through `cohort_paths` for ASOCA + MACS-18 and keep synthetic handling intact.
+    * Kept patient-ID prefix convention explicit (`Normal_*`, `Diseased_*`, `MACS_Normal_*`, `MACS_Diseased_*`, `Synthetic_*`).
+  * **Block 2 methodology parity and documentation cleanup:**
+    * Verified and documented that **all cohorts** use the same area chain:
+      1. adaptive resampling,
+      2. `vmtkCenterlineSections` in subprocess (**always attempted first**),
+      3. VTK cutter fallback only on subprocess failure.
+    * Removed misleading legacy wording that suggested a cohort-specific area path.
+  * **Batch automation (`scripts/run_batch.py`):**
+    * Added sequential subprocess runner for cohort-scale execution.
+    * Supports `--cohort asoca|macs|synthetic|all`, `--include`, `--patients`, `--skip-existing`, `--no-skip-existing`.
+    * Added timestamped batch logs under `results/metrics/batch_<timestamp>.log`.
+    * Added skip logic guard: success is skipped only if metrics row is successful **and** Block 1 artifacts still exist (prevents false skipping after manual `results/` cleanup).
+  * **Pipeline CLI ergonomics:**
+    * Added `_pipeline.py` flags:
+      * `--patient` / `--patient-id` for non-interactive runs,
+      * `--no-streamlit` for headless/batch operation.
+    * Added optional `launch_dashboard` control in Block 4 so batches do not open dozens of browser tabs.
+  * **Runtime robustness fixes from MACS-18 full run:**
+    * **`MACS_Diseased_14` Block 1 failure mode:** VMTK produced invalid centerline state (`Seed id invalid...`) and no `MaximumInscribedSphereRadius`.
+      * Added guards in `_process_artery`:
+        * skip artery if `<2` centerline points or radius array missing,
+        * log warning instead of raising `KeyError`.
+      * Keep extraction metrics coherent by counting attempted targets with zero successful branches on skipped arteries.
+    * **Downstream continuity fix in Block 2:**
+      * Added active-artery selection from existing Block 1 centerline files.
+      * If one artery is missing, process available artery/branches and continue.
+      * Raise only when **no** centerlines are available.
+  * **Validation outcomes:**
+    * Full MACS-18 cohort batch executed with one initial outlier (`MACS_Diseased_14`), then fixed to complete in RCA-only mode.
+    * Spot-check revalidation succeeded on representative samples from **Synthetic**, **ASOCA**, and **MACS-18**, confirming no regression on standard cases.
+
+* **🐛 Bugs & Challenges:**
+  * *Issue:* `MACS_Diseased_14` failed in Block 1 (`vtkvmtkSteepestDescentLineTracer: Seed id invalid...`) followed by `KeyError: MaximumInscribedSphereRadius`.
+    * *Fix:* Defensive artery skip + metric-safe accounting in Block 1.
+  * *Issue:* After Block 1 skip, Block 2 raised `FileNotFoundError` for missing `centerline_LCA.vtp`.
+    * *Fix:* Block 2 now processes only arteries present in Block 1 outputs and logs skipped arteries.
+  * *Issue:* Batch resume could incorrectly skip patients after manual deletion of `results/`.
+    * *Fix:* Skip-existing now requires both successful metrics row and existing Block 1 artifact folder.
+
+* **💡 Key Decisions:**
+  * Preserve **methodological equality across cohorts**; differences are limited to input path resolution and data quality, not algorithmic flow.
+  * Prefer **graceful degradation** (single-artery continuation) over hard abort when one artery fails, to keep cohort-scale processing practical.
+  * Treat large result trees as local artefacts: keep repository code-centric and archive outputs externally by cohort.
+
+* **⏭️ Next Steps:**
+  * Run full ASOCA and synthetic cohort batches with the same runner and archive outputs by cohort.
+  * Optionally add explicit `cohort` column to `pipeline_per_sample.xlsx` for easier filtering/reporting.
+  * Revisit LCA seed fallback strategies in Block 1 (secondary seed choice / retry policy) to reduce RCA-only edge cases.
+
+---
+
 ## Acronym Legend
 
 | Acronym | Definition |

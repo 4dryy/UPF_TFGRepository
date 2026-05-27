@@ -176,7 +176,13 @@ Block 2 consumes the Block 1 sample package. Methodology aligns with the explora
 - **Centerline reuse:** reads `centerline_RCA.vtp` / `centerline_LCA.vtp` from Block 1.
 - **Surface reuse:** reads `surface_RCA.vtp` / `surface_LCA.vtp` when present; otherwise rebuilds lumen surfaces from the same `.nrrd` mask used in Block 1.
 - **Defensive preprocessing:** surface triangulation/cleaning; centerline smoothing + uniform resampling before sections (same intent as `_04_sq_sectional_area.ipynb`).
+- **Three-layer robustness path (production):**
+  1. adaptive resampling to keep section counts bounded,
+  2. `vmtkCenterlineSections` executed in a **child subprocess** (native crash isolation),
+  3. deterministic VTK plane-cut fallback when the subprocess fails.
 - **Area mapping:** per-point area is mapped onto global, artery, and branch tables (row-aligned when possible, KDTree nearest neighbour otherwise).
+
+For healthy geometries, area remains computed by VMTK (`source=vmtk`). The cutter fallback (`source=cutter`) is only used on pathological arteries that crash native VMTK and is explicitly logged + persisted in metrics.
 
 ### Phase B — Reference window and % area stenosis (notebook parity)
 
@@ -194,6 +200,16 @@ Branch tables are stacked with a **`source_branch`** label; duplicate locations 
 | **`results/block2_results/stenosis/<Patient_ID>/`** | Enriched branch tables (`gd`, `A_ref`, `pct_AS`, …), **`total_df_<Patient>.xlsx`**, and **%AS** PyVista figures (unified tree + per branch). |
 
 Re-running **`python -m src._pipeline`** for the same patient **removes and recreates** both `area/` and `stenosis/` trees for that patient (no duplicate samples).
+
+### Partial-artery tolerance (robustness)
+
+Rare cases can fail centerline extraction for one artery in Block 1 (e.g., invalid VMTK seed state) while the other artery is valid. Current production behavior:
+
+- Block 1 logs and skips only the failing artery (instead of aborting the whole patient).
+- Block 2 processes the subset of arteries that actually have Block 1 centerlines.
+- Blocks 3–4 continue from available data (e.g., RCA-only case).
+
+This is the behavior validated on `MACS_Diseased_14` (LCA failed in Block 1; full pipeline completed with RCA-only outputs).
 
 ### Pipeline API
 
@@ -293,6 +309,36 @@ python -m src._pipeline
 
 The pipeline prompts for a **Patient ID** (e.g., `Normal_1`) and runs **Block 1 → Block 2 → Block 3 → Block 4**.
 
+### Non-interactive mode (single patient)
+
+```bash
+python -m src._pipeline --patient MACS_Normal_1 --no-streamlit
+```
+
+- `--patient` skips the terminal prompt.
+- `--no-streamlit` keeps Block 4 session persistence but does not open browser tabs (useful for automation).
+
+### Batch execution (sequential, resilient)
+
+Use:
+
+```bash
+python scripts/run_batch.py --cohort asoca
+python scripts/run_batch.py --cohort macs
+python scripts/run_batch.py --cohort synthetic
+```
+
+Batch runs execute each sample in a fresh subprocess (`python -m src._pipeline --patient ... --no-streamlit`), so one failure cannot abort the entire cohort run. A timestamped log is written to `results/metrics/batch_<timestamp>.log`.
+
+Useful flags:
+
+```bash
+python scripts/run_batch.py --cohort asoca --include normal
+python scripts/run_batch.py --cohort macs --include diseased
+python scripts/run_batch.py --cohort asoca --no-skip-existing
+python scripts/run_batch.py --patients Normal_1 MACS_Diseased_3 Synthetic_2
+```
+
 Results are saved under per-patient packages:
 - **Block 1:** `results/block1_results/<Patient_ID>/`
 - **Block 2 — area phase:** `results/block2_results/area/<Patient_ID>/`
@@ -323,9 +369,9 @@ The research notebooks used during the experimental phase are preserved under `n
 ```
 UPF_TFGRepository/
 ├── data/
-│   └── ASOCA Normal/
-│       ├── Annotations/              # Input .nrrd binary masks (Normal_1.nrrd, ...)
-│       └── Centerlines/              # ASOCA ground-truth centerlines (.vtp)
+│   ├── ASOCA/                        # ASOCA cohort masks + labels
+│   ├── MACS-18/                      # MACS-18 re-annotated cohort masks + labels
+│   └── Synthetic Samples/            # Synthetic_*.nrrd validation phantoms
 ├── notebooks/
 │   └── block1_extraction/
 │       ├── 00_data_exploration.ipynb
@@ -334,7 +380,9 @@ UPF_TFGRepository/
 │       └── 03_centerline_extraction_hybrid.ipynb  # Hybrid approach (research prototype)
 ├── src/
 │   ├── _pipeline.py                  # Main entrypoint — chains all blocks + shared log style
+│   ├── cohort_paths.py               # Cohort-aware input resolution (ASOCA/MACS-18/Synthetic)
 │   ├── pipeline_log.py               # Concise banners / phase lines / footers for terminal logs
+│   ├── pipeline_metrics.py           # Per-sample metrics workbook + resilient write retries
 │   ├── viewer/
 │   │   ├── app.py                    # Streamlit UI — session, controls, dual 3D, branch-path section, bar charts
 │   │   └── plots.py                  # Plotly 3D + branch bar figures (mesh, centerline, branch highlight, metrics)
@@ -355,6 +403,9 @@ UPF_TFGRepository/
 │   │   ├── segment stenosis/<Patient_ID>/  # Segment-level summaries
 │   │   └── cad-rads/<Patient_ID>/          # CAD-RADS report + patient ID card
 │   └── current_session.json          # Last pipeline execution patient context for viewer
+├── scripts/
+│   ├── run_batch.py                  # Sequential cohort runner (asoca/macs/synthetic)
+│   └── regenerate_synthetic_phantoms.py
 ├── maren work/                       # Reference notebooks from Maren Clapers
 ├── CONTEXT.md                        # Clinical context and workflow documentation
 ├── DIARY.md                          # Chronological development logbook
@@ -364,11 +415,38 @@ UPF_TFGRepository/
 
 ---
 
-## Dataset: ASOCA
+## Datasets and Cohorts
 
-The project uses the **ASOCA** (Automated Segmentation of Coronary Arteries) dataset from the MICCAI 2020 Challenge:
-- **40 cases:** 20 healthy ("Normal") + 20 with CAD ("Diseased").
-- **Input files:** Binary masks in `.nrrd` format (e.g., `Normal_1.nrrd`) where coronary artery voxels are labeled `1` and background is `0`.
+The pipeline supports three cohorts with the same end-to-end workflow:
+
+- **ASOCA** (MICCAI 2020): `Normal_1..20`, `Diseased_1..20`
+- **MACS-18** (re-annotated ASOCA): `MACS_Normal_1..20`, `MACS_Diseased_1..20`
+- **Synthetic validation**: `Synthetic_1`, `Synthetic_2`
+
+Input format is consistent across clinical cohorts (`.nrrd` lumen mask + optional `.nii.gz` segment labels), so methodology is identical; only path resolution changes by patient ID prefix.
+
+### Cohort prefixes
+
+- ASOCA: `Normal_*`, `Diseased_*`
+- MACS-18: `MACS_Normal_*`, `MACS_Diseased_*`
+- Synthetic: `Synthetic_*`
+
+---
+
+## Storage and Git policy
+
+Raw cohort data and pipeline outputs are local-only:
+
+- `data/` is git-ignored (large medical inputs).
+- `results/` is git-ignored (large per-sample artefacts).
+
+Recommended workflow:
+
+1. Run a full cohort batch.
+2. Archive/copy the full `results/` folder to local external storage by cohort.
+3. Clean `results/` in the repository workspace before running the next cohort.
+
+This keeps the repository lightweight while preserving reproducible outputs and logs locally.
 
 ---
 
