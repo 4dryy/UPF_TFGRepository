@@ -652,6 +652,19 @@ def _process_artery(
     cl.Execute()
 
     centerlines = pv.wrap(cl.Centerlines)
+    if centerlines.n_points < 2:
+        logger.warning(
+            "[%s] Centerline extraction returned <2 points; skipping artery.",
+            artery_name,
+        )
+        return None
+    if "MaximumInscribedSphereRadius" not in centerlines.point_data:
+        logger.warning(
+            "[%s] Missing 'MaximumInscribedSphereRadius' after centerline extraction "
+            "(likely invalid seed/path state from VMTK). Skipping artery.",
+            artery_name,
+        )
+        return None
     cl_points = centerlines.points
     cl_radii = centerlines.point_data["MaximumInscribedSphereRadius"]
 
@@ -969,6 +982,13 @@ def run_block1(
             label_arr_asoca=label_arr_asoca,
         )
         if out is None:
+            # Ostium was identified, but artery centerline extraction failed.
+            # Keep attempted-path accounting coherent with successful arteries.
+            _record_artery_extraction_metrics(
+                extraction_metrics,
+                n_targets=len(targets_zyx),
+                n_branches=0,
+            )
             continue
         _record_artery_extraction_metrics(
             extraction_metrics,

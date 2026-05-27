@@ -6,11 +6,16 @@ Run all blocks sequentially for a given patient. Each block receives
 the output of the previous one.
 
 Usage:
+    # Interactive (prompts for patient ID, opens Streamlit dashboard at the end):
     python -m src._pipeline
+
+    # Non-interactive (used by ``scripts/run_batch.py`` for batch processing):
+    python -m src._pipeline --patient MACS_Normal_1 --no-streamlit
 """
 
 from __future__ import annotations
 
+import argparse
 import importlib.util
 import logging
 import sys
@@ -58,7 +63,16 @@ def _load_block3():
     return mod
 
 
-def main(patient_id: str) -> None:
+def main(patient_id: str, *, launch_dashboard: bool = True) -> None:
+    """Run all four blocks for a single patient.
+
+    Args:
+        patient_id: Patient identifier (``Normal_1`` / ``MACS_Normal_1`` / ``Synthetic_1``).
+        launch_dashboard: When ``True`` (default), Block 4 starts the Streamlit dashboard
+            and opens it in the browser. Set to ``False`` for batch / headless runs (e.g.
+            ``scripts/run_batch.py``); the session JSON is still written so the dashboard
+            can be opened manually later on the last patient processed.
+    """
     configure_logging()
     log = logging.getLogger("pipeline")
     t0_total = time.perf_counter()
@@ -122,7 +136,11 @@ def main(patient_id: str) -> None:
         sample_metrics.runtime_block3_s = time.perf_counter() - t3
 
         t4 = time.perf_counter()
-        run_block4(patient_id=patient_id, is_synthetic=is_synthetic)
+        run_block4(
+            patient_id=patient_id,
+            is_synthetic=is_synthetic,
+            launch_dashboard=launch_dashboard,
+        )
         sample_metrics.runtime_block4_s = time.perf_counter() - t4
 
         sample_metrics.execution_success = True
@@ -151,5 +169,38 @@ def main(patient_id: str) -> None:
     banner_pipeline_done(log, patient_id, sample_metrics.runtime_total_s or 0.0)
 
 
+def _parse_cli_args() -> argparse.Namespace:
+    """Parse command-line flags for the pipeline entrypoint.
+
+    Both flags are optional so existing users can keep typing ``python -m src._pipeline``
+    and be prompted interactively. When ``--patient`` is supplied the prompt is skipped,
+    making the entrypoint usable from batch scripts or shell loops.
+    """
+    parser = argparse.ArgumentParser(
+        prog="python -m src._pipeline",
+        description="Run Blocks 1-4 of the coronary CAD-RADS pipeline for one patient.",
+    )
+    parser.add_argument(
+        "--patient",
+        "--patient-id",
+        dest="patient_id",
+        type=str,
+        default=None,
+        help="Patient ID to process (e.g. Normal_1, MACS_Normal_1, Synthetic_1). "
+        "If omitted, the user is prompted interactively.",
+    )
+    parser.add_argument(
+        "--no-streamlit",
+        dest="launch_dashboard",
+        action="store_false",
+        default=True,
+        help="Skip Block 4's Streamlit dashboard launch and browser tab. The session "
+        "JSON is still written. Use this for batch / headless runs.",
+    )
+    return parser.parse_args()
+
+
 if __name__ == "__main__":
-    main(patient_id=_prompt_patient_id())
+    args = _parse_cli_args()
+    pid = args.patient_id.strip() if args.patient_id else _prompt_patient_id()
+    main(patient_id=pid, launch_dashboard=args.launch_dashboard)

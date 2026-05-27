@@ -1111,6 +1111,34 @@ def run_block2(
         else:
             log_detail(logger, "Surfaces: reuse Block1 (%s)", "+".join(arteries))
 
+    # Determine which arteries are actually available from Block 1.
+    #
+    # Normally both RCA and LCA are present. For rare pathological samples a single
+    # artery can fail during Block 1 centerline extraction (e.g. invalid VMTK seed
+    # state). In that case Block 1 now skips the broken artery instead of crashing.
+    # Block 2 must mirror that behavior: process available arteries and warn about
+    # missing ones, rather than hard-failing before the usable artery can continue.
+    active_arteries: list[str] = []
+    missing_centerline: list[str] = []
+    for artery in arteries:
+        cl_path = block1_dir / f"centerline_{artery}.vtp"
+        if cl_path.exists():
+            active_arteries.append(artery)
+        else:
+            missing_centerline.append(artery)
+    if missing_centerline:
+        log_detail(
+            logger,
+            "Block 2 skipping arteries missing Block 1 centerline: %s",
+            ", ".join(missing_centerline),
+        )
+    if not active_arteries:
+        expected = ", ".join(arteries)
+        raise FileNotFoundError(
+            f"No Block 1 centerlines available for {sample_name} "
+            f"(expected: {expected}) under {block1_dir}"
+        )
+
     # Cohort-agnostic three-layer area computation. The SAME chain runs for every
     # patient (ASOCA, MACS-18 and synthetic), regardless of patient_id prefix:
     #   1. Adaptive resampling step (caps section count below SECTION_MAX_POINTS).
@@ -1128,10 +1156,8 @@ def run_block2(
     ref_points: dict[str, np.ndarray] = {}
     ref_area: dict[str, np.ndarray] = {}
     cutter_fallback_arteries: list[str] = []
-    for artery in arteries:
+    for artery in active_arteries:
         cl_path = block1_dir / f"centerline_{artery}.vtp"
-        if not cl_path.exists():
-            raise FileNotFoundError(f"Missing Block 1 centerline: {cl_path}")
         cl_prep, step_mm = _prep_centerline_from_path(cl_path)
         pts, area, used_cutter = _sections_from_prepared_centerline(
             cl_prep,
@@ -1171,7 +1197,7 @@ def run_block2(
     df_global = pd.read_excel(global_in)
     df_global["Area"] = np.nan
     global_bits: list[str] = []
-    for artery in arteries:
+    for artery in active_arteries:
         mask = df_global["Artery_Type"].astype(str).values == artery
         if not np.any(mask):
             continue
@@ -1185,7 +1211,7 @@ def run_block2(
     # Artery dataframes
     artery_dfs: dict[str, pd.DataFrame] = {}
     art_bits: list[str] = []
-    for artery in arteries:
+    for artery in active_arteries:
         artery_in = block1_dir / f"dataset_{artery}_{sample_name}.xlsx"
         if not artery_in.exists():
             raise FileNotFoundError(f"Missing artery dataframe: {artery_in}")
@@ -1356,7 +1382,7 @@ def run_block2(
         log_detail(logger, "%%AS figures: 1 tree + %d branch → %s", n_br_st, short_path(out_stenosis_dir))
 
     # Figures: full tree + artery-level (area colormap)
-    tree_hulls = tuple(h for k in arteries if (h := artery_surfaces_pv.get(k)) is not None)
+    tree_hulls = tuple(h for k in active_arteries if (h := artery_surfaces_pv.get(k)) is not None)
     _save_area_plot(
         points_xyz=df_global[["Px", "Py", "Pz"]].to_numpy(dtype=float),
         area=df_global["Area"].to_numpy(dtype=float),
@@ -1365,7 +1391,7 @@ def run_block2(
         mesh=None,
         extra_hulls=tree_hulls if tree_hulls else None,
     )
-    for artery in arteries:
+    for artery in active_arteries:
         df_art = artery_dfs[artery]
         _save_area_plot(
             points_xyz=df_art[["Px", "Py", "Pz"]].to_numpy(dtype=float),
@@ -1378,7 +1404,7 @@ def run_block2(
     if is_synthetic:
         df_global = apply_synthetic_metadata(df_global)
         df_global.to_excel(out_area_dir / f"dataset_global_{sample_name}.xlsx", index=False)
-        for artery in arteries:
+        for artery in active_arteries:
             artery_dfs[artery] = apply_synthetic_metadata(artery_dfs[artery])
             artery_dfs[artery].to_excel(
                 out_area_dir / f"dataset_{artery}_{sample_name}.xlsx", index=False

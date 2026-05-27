@@ -37,14 +37,38 @@ def _is_port_open(host: str, port: int, timeout_s: float = 0.25) -> bool:
         return sock.connect_ex((host, port)) == 0
 
 
-def run_block4(patient_id: str, *, is_synthetic: bool = False) -> None:
-    """Persist current patient context and launch Streamlit in background."""
+def run_block4(
+    patient_id: str,
+    *,
+    is_synthetic: bool = False,
+    launch_dashboard: bool = True,
+) -> None:
+    """Persist current patient context and (optionally) launch Streamlit in background.
+
+    Args:
+        patient_id: Patient identifier processed by Blocks 1-3.
+        is_synthetic: Whether the case is a synthetic phantom (single-tube mode).
+        launch_dashboard: When ``True`` (default), Streamlit is started if not already
+            running and the dashboard URL is opened in the user's browser. When
+            ``False``, only the ``current_session.json`` file is updated; no port is
+            opened and no browser tab is launched. This is the mode used by the batch
+            runner so 40 sequential runs do not produce 40 browser tabs.
+    """
     phase(logger, "4", "Visualization dashboard")
 
     RESULTS_ROOT.mkdir(parents=True, exist_ok=True)
     session_payload = {"patient_id": patient_id, "is_synthetic": bool(is_synthetic)}
     SESSION_PATH.write_text(json.dumps(session_payload, indent=2), encoding="utf-8")
     sub(logger, "Session file updated: %s", SESSION_PATH)
+
+    if not launch_dashboard:
+        sub(
+            logger,
+            "Skipping Streamlit launch (batch / headless mode). Open %s manually after "
+            "the batch finishes to view the last processed sample.",
+            STREAMLIT_URL,
+        )
+        return
 
     if importlib.util.find_spec("streamlit") is None:
         sub(

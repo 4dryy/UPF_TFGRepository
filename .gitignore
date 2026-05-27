@@ -13,6 +13,9 @@ maren work/
 # Local imaging data (ASOCA, MACS-18, synthetic phantoms) — not versioned
 data/
 
+# Pipeline outputs (large per-sample artefacts) — keep locally, not in git
+results/
+
 # Python bytecode
 __pycache__/
 *.py[cod]
