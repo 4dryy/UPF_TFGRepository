@@ -1,0 +1,14 @@
+\babel@toc {catalan}{}\relax 
+\babel@toc {english}{}\relax 
+\babel@toc {english}{}\relax 
+\babel@toc {catalan}{}\relax 
+\babel@toc {spanish}{}\relax 
+\babel@toc {catalan}{}\relax 
+\contentsline {chapter}{Índex de figures}{xiii}{}%
+\contentsline {chapter}{Índex de taules}{xv}{}%
+\contentsline {chapter}{\numberline {1}{\MakeUppercase []{ El primer capítol}}}{3}{}%
+\contentsline {section}{\numberline {1.1}Una secció}{3}{}%
+\contentsline {subsection}{\numberline {1.1.1}Una subsecció}{3}{}%
+\contentsline {section}{\numberline {1.2}Una altra secció}{3}{}%
+\contentsline {chapter}{\numberline {2}{\MakeUppercase []{ El segon capítol}}}{5}{}%
+\contentsline {chapter}{\numberline {A}{\MakeUppercase []{ Material de Suport}}}{9}{}%

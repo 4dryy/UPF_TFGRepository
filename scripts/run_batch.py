@@ -362,6 +362,13 @@ def _parse_args() -> argparse.Namespace:
         help=f"Path to the metrics workbook used for skip-existing checks "
         f"(default: {DEFAULT_METRICS_XLSX}).",
     )
+    parser.add_argument(
+        "--no-streamlit",
+        action="store_true",
+        default=False,
+        help="Compatibility flag accepted for convenience. Batch mode already forces "
+        "`python -m src._pipeline --no-streamlit` for every sample.",
+    )
     return parser.parse_args()
 
 
