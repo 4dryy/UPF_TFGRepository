@@ -1,0 +1,45 @@
+\babel@toc {catalan}{}\relax 
+\babel@toc {spanish}{}\relax 
+\babel@toc {english}{}\relax 
+\babel@toc {catalan}{}\relax 
+\babel@toc {spanish}{}\relax 
+\babel@toc {english}{}\relax 
+\contentsline {chapter}{Índex de figures}{\es@scroman {xiii}}{chapter*.5}%
+\contentsline {chapter}{Índex de taules}{\es@scroman {xv}}{chapter*.6}%
+\babel@toc {english}{}\relax 
+\contentsline {chapter}{\numberline {1}{\MakeUppercase []{ Introduction}}}{1}{chapter.1}%
+\contentsline {section}{\numberline {1.1}Clinical Context and Motivation}{1}{section.1.1}%
+\contentsline {subsection}{\numberline {1.1.1}Anatomy of Coronary Arteries}{1}{subsection.1.1.1}%
+\contentsline {subsection}{\numberline {1.1.2}Coronary Artery Disease}{2}{subsection.1.1.2}%
+\contentsline {subsection}{\numberline {1.1.3}Stenosis Quantification: A Key Indicator of CAD Severity}{3}{subsection.1.1.3}%
+\contentsline {subsection}{\numberline {1.1.4}CAD-RADS 2.0 and the Need for Decision Support}{3}{subsection.1.1.4}%
+\contentsline {section}{\numberline {1.2}Clinical Automation Challenges at Hospital de la Santa Creu i Sant Pau}{4}{section.1.2}%
+\contentsline {subsection}{\numberline {1.2.1}Current CAD Diagnostic Workflow and Associated Limitations}{4}{subsection.1.2.1}%
+\contentsline {subsection}{\numberline {1.2.2}The Bottleneck: Manual Image Analysis and Reporting}{4}{subsection.1.2.2}%
+\contentsline {section}{\numberline {1.3}State of the Art: Automation of CAD Diagnosis and Visualization}{5}{section.1.3}%
+\contentsline {section}{\numberline {1.4}Project Scope and Contributions}{6}{section.1.4}%
+\contentsline {section}{\numberline {1.5}Objectives}{7}{section.1.5}%
+\contentsline {chapter}{\numberline {2}{\MakeUppercase []{ Methodology}}}{9}{chapter.2}%
+\contentsline {section}{\numberline {2.1}System Overview and Core Automated Workflow}{9}{section.2.1}%
+\contentsline {section}{\numberline {2.2}Dataset: ASOCA and MACS-18 Annotations}{9}{section.2.2}%
+\contentsline {section}{\numberline {2.3}Block 1: 3D Artery Anatomy Extraction}{9}{section.2.3}%
+\contentsline {section}{\numberline {2.4}Block 2: Geometric Stenosis Quantification}{9}{section.2.4}%
+\contentsline {section}{\numberline {2.5}Block 3: Artery Labeling and CAD-RADS 2.0 Scoring}{9}{section.2.5}%
+\contentsline {section}{\numberline {2.6}Block 4: Patient Visualization Dashboard}{9}{section.2.6}%
+\contentsline {section}{\numberline {2.7}Experimental Design and Validation Framework}{9}{section.2.7}%
+\contentsline {subsection}{\numberline {2.7.1}Workflow Validation on Real Datasets: ASOCA}{9}{subsection.2.7.1}%
+\contentsline {subsection}{\numberline {2.7.2}Workflow Validation on Real Datasets: MACS-18}{9}{subsection.2.7.2}%
+\contentsline {subsection}{\numberline {2.7.3}Geometry and Quantification Verification: Synthetic Data}{9}{subsection.2.7.3}%
+\contentsline {subsection}{\numberline {2.7.4}User Experience and Interface Usability Evaluation}{9}{subsection.2.7.4}%
+\contentsline {chapter}{\numberline {3}{\MakeUppercase []{ Results}}}{11}{chapter.3}%
+\contentsline {section}{\numberline {3.1}Pipeline Execution on ASOCA}{11}{section.3.1}%
+\contentsline {section}{\numberline {3.2}Pipeline Execution on MACS-18}{11}{section.3.2}%
+\contentsline {section}{\numberline {3.3}Geometric and Algorithmic Accuracy via Synthetic Data}{11}{section.3.3}%
+\contentsline {section}{\numberline {3.4}Coronary Artery Dashboard Visualization Output}{11}{section.3.4}%
+\contentsline {section}{\numberline {3.5}User Experience and Interface Usability Evaluation}{11}{section.3.5}%
+\contentsline {chapter}{\numberline {4}{\MakeUppercase []{ Discussion}}}{13}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Analysis of the Results}{13}{section.4.1}%
+\contentsline {section}{\numberline {4.2}Technical and Anatomical Limitations}{13}{section.4.2}%
+\contentsline {section}{\numberline {4.3}Future Work}{13}{section.4.3}%
+\contentsline {chapter}{\numberline {5}{\MakeUppercase []{ Conclusions}}}{15}{chapter.5}%
+\contentsline {chapter}{\numberline {A}{\MakeUppercase []{ Supporting Material}}}{19}{appendix.Alph1}%

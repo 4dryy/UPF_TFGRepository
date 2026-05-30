@@ -1,0 +1,108 @@
+\documentclass[11pt, a4paper,twoside]{tfg_dtic_upf}
+
+% Languages
+\usepackage[catalan,english,spanish]{babel}
+
+% Page layout (UPF template: ~2.5 cm margins, 11 pt)
+\usepackage{geometry}
+\geometry{
+  a4paper,
+  top=2.5cm,
+  bottom=2.5cm,
+  inner=2.5cm,
+  outer=2.5cm
+}
+
+% Graphics and cover PDF
+\usepackage{graphicx}
+\usepackage{grffile}
+\usepackage{pdfpages}
+\graphicspath{{figures/}}
+
+% Font
+\usepackage{times}
+
+% Plain page style (no headings)
+\pagestyle{plain}
+
+% Bibliography
+\bibliographystyle{apalike}
+
+% Appendix support
+\usepackage{appendix}
+
+% Hyperlinks (optional but useful during drafting)
+\usepackage[hidelinks]{hyperref}
+
+% Document language for front matter
+\selectlanguage{catalan}
+
+% Table of contents title
+\addto\captionscatalan{%
+  \renewcommand{\contentsname}{\Large\sffamily Sumari}%
+}
+
+% --- Thesis metadata (also used if \maketitle is needed) ---
+\title{Automated 3D Stenosis Quantification and Visualization Workflow for Coronary Artery Disease Clinical Decision Support}
+\author{Adri\`{a} Cort\'{e}s Cugat}
+\thyear{Curs 2025--2026}
+\supervisor{Pr.~Oscar Camara Rey (director)\\ C\'{e}sar Acebes Pinilla (supervisor t\`{e}cnic)}
+\grau{Grau en Enginyeria Matem\`{a}tica en Ci\`{e}ncia de Dades}
+
+\begin{document}
+
+\frontmatter
+
+% Custom cover page (author-designed PDF)
+\includepdf[pages=-]{planning files/TFG Cover.pdf}
+
+\cleardoublepage
+
+% Dedicatory
+\input{frontmatter/dedication}
+\cleardoublepage
+
+% Acknowledgements
+\input{frontmatter/acknowledgements}
+\cleardoublepage
+
+% Abstracts (English, Catalan, Spanish)
+\input{frontmatter/abstracts}
+\cleardoublepage
+
+% Preface (includes AI usage declaration per UPF policy)
+\input{frontmatter/preface}
+\cleardoublepage
+
+% Table of contents
+\tableofcontents
+\cleardoublepage
+
+% List of figures
+\listoffigures
+\addcontentsline{toc}{chapter}{Índex de figures}
+\cleardoublepage
+
+% List of tables (kept for when tables are added)
+\listoftables
+\addcontentsline{toc}{chapter}{Índex de taules}
+\cleardoublepage
+
+% Main body — introduction and subsequent chapters are in English
+\mainmatter
+\selectlanguage{english}
+
+\input{chapters/01_introduction}
+\input{chapters/02_methodology}
+\input{chapters/03_results}
+\input{chapters/04_discussion}
+\input{chapters/05_conclusions}
+
+% Bibliography (not counted in the 30-page body limit)
+\bibliography{bib/references}
+
+\cleardoublepage
+\appendix
+\input{chapters/06_appendix}
+
+\end{document}

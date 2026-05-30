@@ -1,0 +1,178 @@
+\begin{thebibliography}{}
+
+\bibitem[Acebes~Pinilla, 2024]{acebes2024}
+Acebes~Pinilla, C. (2024).
+\newblock An artificial intelligence framework for the prioritization and
+  reporting of coronary artery disease patients in a cardiac imaging unit.
+\newblock Presentation, Hospital de la Santa Creu i Sant Pau, Dimension Lab.
+
+\bibitem[Antiga et~al., 2008]{antiga2008}
+Antiga, L., Piccinelli, M., Botti, L., Ene-Iordache, B., Remuzzi, A., and
+  Steinman, D.~A. (2008).
+\newblock An image-based modeling framework for patient-specific computational
+  hemodynamics.
+\newblock {\em Medical \& Biological Engineering \& Computing},
+  46(11):1097--1112.
+
+\bibitem[{Artrya Ltd.}, 2024]{artrya2024}
+{Artrya Ltd.} (2024).
+\newblock Artrya salix coronary anatomy ({SCA}) -- {AI}-driven detection of
+  vulnerable plaque.
+\newblock \url{https://www.artrya.com/}.
+
+\bibitem[Borkin et~al., 2011]{borkin2011}
+Borkin, M., Gajos, K., Peters, A., Mitsouras, D., Melchionna, S., Rybicki, F.,
+  et~al. (2011).
+\newblock Evaluation of artery visualizations for heart disease diagnosis.
+\newblock {\em IEEE Transactions on Visualization and Computer Graphics},
+  17(12):2479--2488.
+
+\bibitem[Burrull, 2023]{burrull2023}
+Burrull, E. (2023).
+\newblock Stenosis quantification pipeline.
+\newblock Internal research, Hospital de la Santa Creu i Sant Pau.
+
+\bibitem[\c{C}i{\c{c}}ek et~al., 2016]{cicek2016}
+\c{C}i{\c{c}}ek, {\"O}., Abdulkadir, A., Lienkamp, S.~S., Brox, T., and
+  Ronneberger, O. (2016).
+\newblock {3D U-Net}: learning dense volumetric segmentation from sparse
+  annotation.
+\newblock In {\em Medical Image Computing and Computer-Assisted Intervention
+  ({MICCAI})}, pages 424--432.
+
+\bibitem[Clapers~Colet, 2025]{clapers2025}
+Clapers~Colet, M. (2025).
+\newblock Automatic labeling of coronary artery segments: Multi-strategy
+  development and evaluation.
+\newblock Bachelor's thesis, Universitat Pompeu Fabra.
+
+\bibitem[{Cleerly, Inc.}, 2024]{cleerly2024}
+{Cleerly, Inc.} (2024).
+\newblock Cleerly -- {AI}-driven heart disease care.
+\newblock \url{https://cleerlyhealth.com/}.
+
+\bibitem[{Cleveland Clinic}, 2024]{clevelandclinic_coronary}
+{Cleveland Clinic} (2024).
+\newblock Coronary arteries: Anatomy and function.
+\newblock
+  \url{https://my.clevelandclinic.org/health/body/22973-coronary-arteries}.
+\newblock Accessed: 2026-05-30.
+
+\bibitem[Cury et~al., 2022]{cury2022}
+Cury, R.~C., Abbara, S., Achenbach, S., Agatston, A., Berman, D.~S., Budoff,
+  M.~J., et~al. (2022).
+\newblock {CAD-RADS} 2.0--2022 coronary artery disease-reporting and data
+  system.
+\newblock {\em Journal of Cardiovascular Computed Tomography}, 16(6):536--557.
+
+\bibitem[Ferrer~Beltran, 2024]{ferrer2024}
+Ferrer~Beltran, E. (2024).
+\newblock Enhanced prioritization and reporting for coronary artery disease
+  diagnosis.
+\newblock Bachelor's thesis, Universitat Pompeu Fabra.
+
+\bibitem[Garcia-Garcia et~al., 2014]{garcia2014}
+Garcia-Garcia, H.~M., Costa, M.~A., and Serruys, P.~W. (2014).
+\newblock Assessment of coronary artery disease by intravascular imaging.
+\newblock {\em European Heart Journal}, 35(35):2321--2330.
+
+\bibitem[Hideo-Kajita et~al., 2019]{hideo_kajita2019}
+Hideo-Kajita, A., Wopperer, S., Beyene, S.~S., Meirovich, Y.~F., Melaku, G.~D.,
+  Kuku, K.~O., et~al. (2019).
+\newblock Impact of two formulas to calculate percentage diameter stenosis of
+  coronary lesions: from stenosis models (phantom lesion model) to actual
+  clinical lesions.
+\newblock {\em The International Journal of Cardiovascular Imaging},
+  35(12):2139--2146.
+
+\bibitem[Hong et~al., 2019]{hong2019}
+Hong, Y., Commandeur, F., Cadet, S., Goeller, M., Doris, M.~K., Chen, X.,
+  et~al. (2019).
+\newblock Deep learning-based stenosis quantification from coronary {CT}
+  angiography.
+\newblock In {\em Proceedings of {SPIE}}, volume 10949, page 109492I.
+
+\bibitem[{Kaiser Permanente}, 2024]{kaiser_atherosclerosis}
+{Kaiser Permanente} (2024).
+\newblock Cardiology -- artery with atherosclerosis -- {TPMG}.
+\newblock Medical illustration.
+
+\bibitem[Kalisz et~al., 2016]{kalisz2016}
+Kalisz, K., Buethe, J., Saboo, S.~S., Abbara, S., Halliburton, S., and Rajiah,
+  P. (2016).
+\newblock Artifacts at cardiac {CT}: Physics and solutions.
+\newblock {\em RadioGraphics}, 36(7):2064--2083.
+
+\bibitem[Kelly et~al., 2019]{kelly2019}
+Kelly, C.~J., Karthikesalingam, A., Suleyman, M., Corrado, G., and King, D.
+  (2019).
+\newblock Key challenges for delivering clinical impact with artificial
+  intelligence.
+\newblock {\em BMC Medicine}, 17(1):1--9.
+
+\bibitem[Knuuti et~al., 2020]{knuuti2020}
+Knuuti, J., Wijns, W., Saraste, A., Capodanno, D., Barbato, E., Funck-Brentano,
+  C., et~al. (2020).
+\newblock 2019 {ESC} guidelines for the diagnosis and management of chronic
+  coronary syndromes.
+\newblock {\em European Heart Journal}, 41(3):407--477.
+
+\bibitem[Litjens et~al., 2017]{litjens2017}
+Litjens, G., Kooi, T., Bejnordi, B.~E., Setio, A. A.~A., Ciompi, F.,
+  Ghafoorian, M., et~al. (2017).
+\newblock A survey on deep learning in medical image analysis.
+\newblock {\em Medical Image Analysis}, 42:60--88.
+
+\bibitem[Lynch et~al., 2010]{lynch2010_coronary}
+Lynch, P.~J., {Fred the Oyster}, and H{\"a}ggstr{\"o}m, M. (2010).
+\newblock Coronary circulation in anterior view.
+\newblock Medical illustration, Wikimedia Commons.
+
+\bibitem[McCullough, 2007]{mccullough2007}
+McCullough, P.~A. (2007).
+\newblock Coronary artery disease.
+\newblock {\em Clinical Journal of the American Society of Nephrology},
+  2(3):611--616.
+
+\bibitem[Sanchez~Gomez, 2022]{sanchez2022}
+Sanchez~Gomez, C. (2022).
+\newblock Coronary artery segmentation using transformer neural networks.
+\newblock Master's thesis, Universitat de Barcelona.
+
+\bibitem[Seiler, 2010]{seiler2010}
+Seiler, C. (2010).
+\newblock The human coronary collateral circulation.
+\newblock {\em European Journal of Clinical Investigation}, 40(5):465--476.
+
+\bibitem[Slomka et~al., 2017]{slomka2017}
+Slomka, P.~J., Dey, D., Sitek, A., Motwani, M., Berman, D.~S., and Germano, G.
+  (2017).
+\newblock Artificial intelligence in cardiovascular imaging.
+\newblock {\em JACC: Cardiovascular Imaging}, 10(6):615--626.
+
+\bibitem[{World Health Organization}, 2023]{who2023_cvd}
+{World Health Organization} (2023).
+\newblock Cardiovascular diseases ({CVDs}).
+\newblock \url{https://www.who.int/health-topics/cardiovascular-diseases}.
+
+\bibitem[Wu et~al., 2024]{wu2024}
+Wu, B., Kheiwa, A., Swamy, P., Mamas, M.~A., Tedford, R.~J., Alasnag, M.,
+  et~al. (2024).
+\newblock Clinical significance of coronary arterial dominance: a review of the
+  literature.
+\newblock {\em Journal of the American Heart Association}, 13(9):e032851.
+
+\bibitem[Yang et~al., 2020]{yang2020}
+Yang, H. et~al. (2020).
+\newblock {CPR-GCN}: Conditional partial-residual graph convolutional network
+  in automated anatomical labeling of coronary arteries.
+\newblock In {\em Proceedings of the {IEEE/CVF} Conference on Computer Vision
+  and Pattern Recognition ({CVPR})}, pages 3802--3810.
+
+\bibitem[Zhang et~al., 2024]{zhang2024}
+Zhang, X., Zhang, B., and Zhang, F. (2024).
+\newblock Stenosis detection and quantification of coronary artery using
+  machine learning and deep learning.
+\newblock {\em Angiology}, 75(5):405--416.
+
+\end{thebibliography}
