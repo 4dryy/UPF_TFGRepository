@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.5.29)  30 MAY 2026 17:59
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.5.29)  31 MAY 2026 18:25
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -108,9 +108,9 @@ Package babel Info: Making < an active character on input line 722.
 Package babel Info: Making > an active character on input line 722.
 ))
 LaTeX Encoding Info:    Redeclaring text command \guillemotleft (encoding OT1) 
-on input line 5.
+on input line 8.
 LaTeX Encoding Info:    Redeclaring text command \guillemotright (encoding OT1)
- on input line 5.
+ on input line 8.
 
 (C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/latex/geometry\geometry.sty
 Package: geometry 2026/03/07 v6.0 Page Geometry
@@ -224,14 +224,29 @@ File: pppdftex.def 2026/03/30 v0.6h Pdfpages driver for pdfTeX (AM)
 \AM@lof@heading=\toks22
 \c@AM@survey=\count296
 \AM@templatesizebox=\box54
-) (C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/latex/psnfss\times.sty
+) (C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/latex/float\float.sty
+Package: float 2001/11/08 v1.3d Float enhancements (AL)
+\c@float@type=\count297
+\float@exts=\toks23
+\float@box=\box55
+\@float@everytoks=\toks24
+\@floatcapt=\box56
+)
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/latex/psnfss\times.sty
 Package: times 2020/03/25 PSNFSS-v9.3 (SPQR) 
+)
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/latex/natbib\natbib.sty
+Package: natbib 2010/09/13 8.31b (PWD, AO)
+\bibhang=\skip54
+\bibsep=\skip55
+LaTeX Info: Redefining \cite on input line 694.
+\c@NAT@ctr=\count298
 )
 (C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/latex/appendix\appendix.sty
 Package: appendix 2020/02/08 v1.2c extra appendix facilities
-\c@@pps=\count297
-\c@@ppsavesec=\count298
-\c@@ppsaveapp=\count299
+\c@@pps=\count299
+\c@@ppsavesec=\count300
+\c@@ppsaveapp=\count301
 )
 (C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\hyperref.sty
 Package: hyperref 2025-07-12 v7.01o Hypertext links for LaTeX
@@ -279,7 +294,7 @@ Package: gettitlestring 2019/12/15 v1.6 Cleanup title references (HO)
 (C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/latex/kvoptions\kvoptions.sty
 Package: kvoptions 2022-06-15 v3.15 Key value format for package options (HO)
 ))
-\c@section@level=\count300
+\c@section@level=\count302
 )
 (C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/stringenc\stringenc.s
 ty
@@ -287,8 +302,8 @@ Package: stringenc 2019/11/29 v1.12 Convert strings between diff. encodings (HO
 )
 )
 \@linkdim=\dimen170
-\Hy@linkcounter=\count301
-\Hy@pagecounter=\count302
+\Hy@linkcounter=\count303
+\Hy@pagecounter=\count304
  (C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\pd1enc.def
 File: pd1enc.def 2025-07-12 v7.01o Hyperref: PDFDocEncoding definition (HO)
 Now handling font encoding PD1 ...
@@ -296,7 +311,7 @@ Now handling font encoding PD1 ...
 ) (C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/intcalc\intcalc.sty
 Package: intcalc 2019/12/15 v1.3 Expandable calculations with integers (HO)
 )
-\Hy@SavedSpaceFactor=\count303
+\Hy@SavedSpaceFactor=\count305
  (C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\puenc.def
 File: puenc.def 2025-07-12 v7.01o Hyperref: PDF Unicode definition (HO)
 Now handling font encoding PU ...
@@ -309,7 +324,7 @@ Package hyperref Info: Plain pages OFF on input line 4210.
 Package hyperref Info: Backreferencing OFF on input line 4215.
 Package hyperref Info: Implicit mode ON; LaTeX internals redefined.
 Package hyperref Info: Bookmarks ON on input line 4462.
-\c@Hy@tempcnt=\count304
+\c@Hy@tempcnt=\count306
 
 (C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/latex/url\url.sty
 \Urlmuskip=\muskip17
@@ -326,7 +341,7 @@ Package: bitset 2019/12/09 v1.3 Handle bit-vector datatype (HO)
 Package: bigintcalc 2019/12/15 v1.5 Expandable calculations on big integers (HO
 )
 ))
-\Fld@menulength=\count305
+\Fld@menulength=\count307
 \Field@Width=\dimen172
 \Fld@charsize=\dimen173
 Package hyperref Info: Hyper figures OFF on input line 6078.
@@ -336,16 +351,16 @@ Package hyperref Info: backreferencing OFF on input line 6093.
 Package hyperref Info: Link coloring OFF on input line 6098.
 Package hyperref Info: Link coloring with OCG OFF on input line 6103.
 Package hyperref Info: PDF/A mode OFF on input line 6108.
-\Hy@abspage=\count306
-\c@Item=\count307
-\c@Hfootnote=\count308
+\Hy@abspage=\count308
+\c@Item=\count309
+\c@Hfootnote=\count310
 )
 Package hyperref Info: Driver (autodetected): hpdftex.
 
 (C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\hpdftex.def
 File: hpdftex.def 2025-07-12 v7.01o Hyperref driver for pdfTeX
-\Fld@listcount=\count309
-\c@bookmark@seq@number=\count310
+\Fld@listcount=\count311
+\c@bookmark@seq@number=\count312
 
 (C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/latex/rerunfilecheck\rerunfil
 echeck.sty
@@ -358,52 +373,66 @@ Package: uniquecounter 2019/12/15 v1.4 Provide unlimited unique counter (HO)
 Package uniquecounter Info: New unique counter `rerunfilecheck' on input line 2
 84.
 )
-\Hy@SectionHShift=\skip54
+\Hy@SectionHShift=\skip56
 )
-Package babel Info: 'catalan' activates 'catalan' shorthands.
-(babel)             Reported on input line 38.
-LaTeX Font Info:    Trying to load font information for OT1+ptm on input line 5
-2.
-
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/latex/cleveref\cleveref.sty
+Package: cleveref 2018/03/27 v0.21.4 Intelligent cross-referencing
+Package cleveref Info: `hyperref' support loaded on input line 2370.
+LaTeX Info: Redefining \cref on input line 2370.
+LaTeX Info: Redefining \Cref on input line 2370.
+LaTeX Info: Redefining \crefrange on input line 2370.
+LaTeX Info: Redefining \Crefrange on input line 2370.
+LaTeX Info: Redefining \cpageref on input line 2370.
+LaTeX Info: Redefining \Cpageref on input line 2370.
+LaTeX Info: Redefining \cpagerefrange on input line 2370.
+LaTeX Info: Redefining \Cpagerefrange on input line 2370.
+LaTeX Info: Redefining \labelcref on input line 2370.
+LaTeX Info: Redefining \labelcpageref on input line 2370.
+)
+==> First Aid for cleveref.sty applied!
+LaTeX Font Info:    Trying to load font information for OT1+ptm on input line 8
+3.
 (C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/latex/psnfss\ot1ptm.fd
 File: ot1ptm.fd 2001/06/04 font definitions for OT1/ptm.
 )
 (C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/latex/l3backend\l3backend-pdf
 tex.def
 File: l3backend-pdftex.def 2025-10-09 L3 backend support: PDF output (pdfTeX)
-\l__color_backend_stack_int=\count311
+\l__color_backend_stack_int=\count313
 ) (main.aux
 LaTeX Info: Redefining \. on input line 13.
 LaTeX Info: Redefining \% on input line 13.
 Package babel Info: 'spanish' activates 'spanish' shorthands.
 (babel)             Reported on input line 13.
+Package babel Info: 'catalan' activates 'catalan' shorthands.
+(babel)             Reported on input line 15.
 LaTeX Info: Redefining \. on input line 16.
 LaTeX Info: Redefining \% on input line 16.
 )
 \openout1 = `main.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 52.
-LaTeX Font Info:    ... okay on input line 52.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 52.
-LaTeX Font Info:    ... okay on input line 52.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 52.
-LaTeX Font Info:    ... okay on input line 52.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 52.
-LaTeX Font Info:    ... okay on input line 52.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 52.
-LaTeX Font Info:    ... okay on input line 52.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 52.
-LaTeX Font Info:    ... okay on input line 52.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 52.
-LaTeX Font Info:    ... okay on input line 52.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 52.
-LaTeX Font Info:    ... okay on input line 52.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 52.
-LaTeX Font Info:    ... okay on input line 52.
-LaTeX Info: Redefining \. on input line 52.
-LaTeX Info: Redefining \% on input line 52.
-LaTeX Info: Redefining \l on input line 52.
-LaTeX Info: Redefining \L on input line 52.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 83.
+LaTeX Font Info:    ... okay on input line 83.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 83.
+LaTeX Font Info:    ... okay on input line 83.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 83.
+LaTeX Font Info:    ... okay on input line 83.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 83.
+LaTeX Font Info:    ... okay on input line 83.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 83.
+LaTeX Font Info:    ... okay on input line 83.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 83.
+LaTeX Font Info:    ... okay on input line 83.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 83.
+LaTeX Font Info:    ... okay on input line 83.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 83.
+LaTeX Font Info:    ... okay on input line 83.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 83.
+LaTeX Font Info:    ... okay on input line 83.
+LaTeX Info: Redefining \. on input line 83.
+LaTeX Info: Redefining \% on input line 83.
+LaTeX Info: Redefining \l on input line 83.
+LaTeX Info: Redefining \L on input line 83.
 
 *geometry* driver: auto-detecting
 *geometry* detected driver: pdftex
@@ -412,7 +441,7 @@ LaTeX Info: Redefining \L on input line 52.
 * paper: a4paper
 * layout: <same size as paper>
 * layoutoffset:(h,v)=(0.0pt,0.0pt)
-* modes: twoside 
+* modes: 
 * h-part:(L,W,R)=(71.13188pt, 455.24411pt, 71.13188pt)
 * v-part:(T,H,B)=(71.13188pt, 702.78308pt, 71.13188pt)
 * \paperwidth=597.50787pt
@@ -426,7 +455,7 @@ LaTeX Info: Redefining \L on input line 52.
 * \headsep=19.8738pt
 * \topskip=11.0pt
 * \footskip=27.46295pt
-* \marginparwidth=106.0pt
+* \marginparwidth=53.0pt
 * \marginparsep=7.0pt
 * \columnsep=10.0pt
 * \skip\footins=10.0pt plus 4.0pt minus 2.0pt
@@ -434,8 +463,8 @@ LaTeX Info: Redefining \L on input line 52.
 * \voffset=0.0pt
 * \mag=1000
 * \@twocolumnfalse
-* \@twosidetrue
-* \@mparswitchtrue
+* \@twosidefalse
+* \@mparswitchfalse
 * \@reversemarginfalse
 * (1in=72.27pt=25.4mm, 1cm=28.453pt)
 
@@ -443,17 +472,17 @@ LaTeX Info: Redefining \L on input line 52.
 (C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/context/base/mkii\supp-pdf.mk
 ii
 [Loading MPS to PDF converter (version 2006.09.02).]
-\scratchcounter=\count312
+\scratchcounter=\count314
 \scratchdimen=\dimen174
-\scratchbox=\box55
-\nofMPsegments=\count313
-\nofMParguments=\count314
-\everyMPshowfont=\toks23
-\MPscratchCnt=\count315
+\scratchbox=\box57
+\nofMPsegments=\count315
+\nofMParguments=\count316
+\everyMPshowfont=\toks25
+\MPscratchCnt=\count317
 \MPscratchDim=\dimen175
-\MPnumerator=\count316
-\makeMPintoPDFobject=\count317
-\everyMPtoPDFconversion=\toks24
+\MPnumerator=\count318
+\makeMPintoPDFobject=\count319
+\everyMPtoPDFconversion=\toks26
 )
 (C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/latex/epstopdf-pkg\epstopdf-b
 ase.sty
@@ -478,7 +507,7 @@ Package: lscape 2020/05/28 v3.02 Landscape Pages (DPC)
 )
 Package pdflscape Info: Auto-detected driver: pdftex on input line 81.
 ))
-Package hyperref Info: Link coloring OFF on input line 52.
+Package hyperref Info: Link coloring OFF on input line 83.
 
 (main.out) (main.out)
 \@outlinefile=\write3
@@ -487,69 +516,56 @@ Package hyperref Info: Link coloring OFF on input line 52.
 <planning files/TFG Cover.pdf, id=155, 597.6729pt x 845.07718pt>
 File: planning files/TFG Cover.pdf Graphic file (type pdf)
 <use planning files/TFG Cover.pdf>
-Package pdftex.def Info: planning files/TFG Cover.pdf  used on input line 57.
+Package pdftex.def Info: planning files/TFG Cover.pdf  used on input line 88.
 (pdftex.def)             Requested size: 597.67143pt x 845.07512pt.
 <planning files/TFG Cover.pdf, id=157, page=1, 597.6729pt x 845.07718pt>
 File: planning files/TFG Cover.pdf Graphic file (type pdf)
 <use planning files/TFG Cover.pdf, page 1>
 Package pdftex.def Info: planning files/TFG Cover.pdf , page1 used on input lin
-e 57.
+e 88.
 (pdftex.def)             Requested size: 597.67143pt x 845.07512pt.
 File: planning files/TFG Cover.pdf Graphic file (type pdf)
 <use planning files/TFG Cover.pdf, page 1>
 Package pdftex.def Info: planning files/TFG Cover.pdf , page1 used on input lin
-e 57.
+e 88.
 (pdftex.def)             Requested size: 597.69879pt x 845.1138pt.
 File: planning files/TFG Cover.pdf Graphic file (type pdf)
 <use planning files/TFG Cover.pdf, page 1>
 Package pdftex.def Info: planning files/TFG Cover.pdf , page1 used on input lin
-e 57.
+e 88.
 (pdftex.def)             Requested size: 597.69879pt x 845.1138pt.
 File: planning files/TFG Cover.pdf Graphic file (type pdf)
 <use planning files/TFG Cover.pdf, page 1>
 Package pdftex.def Info: planning files/TFG Cover.pdf , page1 used on input lin
-e 57.
+e 88.
 (pdftex.def)             Requested size: 597.69879pt x 845.1138pt.
 File: planning files/TFG Cover.pdf Graphic file (type pdf)
 <use planning files/TFG Cover.pdf, page 1>
 Package pdftex.def Info: planning files/TFG Cover.pdf , page1 used on input lin
-e 57.
+e 88.
 (pdftex.def)             Requested size: 597.69879pt x 845.1138pt.
  [1
 
 
 
+ <./planning files/TFG Cover.pdf>]
+(frontmatter/dedication.tex) [2
 
- <./planning files/TFG Cover.pdf>] [2
-
-
-]
-(frontmatter/dedication.tex) [3{C:/Users/adria/AppData/Local/MiKTeX/fonts/map/p
-dftex/pdftex.map}{C:/Users/adria/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/
-base/8r.enc}] [4
-
-
-] (frontmatter/acknowledgements.tex
+{C:/Users/adria/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map}{C:/Users/adri
+a/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/base/8r.enc}] (frontmatter/ackn
+owledgements.tex
 LaTeX Font Info:    Trying to load font information for OT1+phv on input line 1
 .
 
 (C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/latex/psnfss\ot1phv.fd
 File: ot1phv.fd 2020/03/25 scalable font definitions for OT1/phv.
-)
-LaTeX Font Info:    Trying to load font information for TS1+ptm on input line 9
-.
-
-(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/latex/psnfss\ts1ptm.fd
-File: ts1ptm.fd 2001/06/04 font definitions for TS1/ptm.
 ))
-[5] [6
-
+[3
 
 ] (frontmatter/abstracts.tex
-LaTeX Info: Redefining \. on input line 12.
-LaTeX Info: Redefining \% on input line 12.
-) [7] [8
-
+LaTeX Info: Redefining \. on input line 14.
+LaTeX Info: Redefining \% on input line 14.
+) [4
 
 ] (frontmatter/preface.tex
 LaTeX Font Info:    External font `cmex10' loaded for size
@@ -558,23 +574,22 @@ LaTeX Font Info:    External font `cmex10' loaded for size
 (Font)              <8> on input line 14.
 LaTeX Font Info:    External font `cmex10' loaded for size
 (Font)              <6> on input line 14.
-) [9]
-[10
-
+) [5
 
 ] (main.toc
 LaTeX Info: Redefining \. on input line 2.
 LaTeX Info: Redefining \% on input line 2.
 LaTeX Info: Redefining \. on input line 5.
 LaTeX Info: Redefining \% on input line 5.
- [11
+
+[6
 
 
 ])
 \tf@toc=\write4
 \openout4 = `main.toc'.
 
- [12] (main.lof
+ [7] (main.lof
 LaTeX Info: Redefining \. on input line 2.
 LaTeX Info: Redefining \% on input line 2.
 LaTeX Info: Redefining \. on input line 5.
@@ -583,12 +598,7 @@ LaTeX Info: Redefining \% on input line 5.
 \tf@lof=\write5
 \openout5 = `main.lof'.
 
- [13
-
-
-
-
-] [14
+ [8
 
 
 ] (main.lot
@@ -600,84 +610,60 @@ LaTeX Info: Redefining \% on input line 5.
 \tf@lot=\write6
 \openout6 = `main.lot'.
 
- [15
+ [9
 
-
-] [16
-
-
-]
-(chapters/01_introduction.tex
+] (chapters/01_introduction.tex
 Chapter 1.
-<figures/Figure 1. Coronary Arteries.png, id=314, 2243.38126pt x 1442.38875pt>
+<figures/Figure 1. Coronary Arteries.png, id=282, 2243.38126pt x 1442.38875pt>
 File: figures/Figure 1. Coronary Arteries.png Graphic file (type png)
 <use figures/Figure 1. Coronary Arteries.png>
 Package pdftex.def Info: figures/Figure 1. Coronary Arteries.png  used on input
- line 14.
-(pdftex.def)             Requested size: 373.3035pt x 240.00871pt.
-
-Overfull \hbox (60.14467pt too wide) in paragraph at lines 19--20
-\OT1/ptm/m/n/10.95 (LCx), which to-gether sup-ply the ma-jor-ity of the left ve
-n-tri-cle and the in-ter-ven-tric-u-lar sep-tum [[]].
- []
-
+ line 18.
+(pdftex.def)             Requested size: 282.24911pt x 181.46463pt.
 [1
 
 
 
-
  <./figures/Figure 1. Coronary Arteries.png>]
-Overfull \hbox (6.91737pt too wide) in paragraph at lines 28--29
-\OT1/ptm/m/n/10.95 wide [[]]. It is char-ac-ter-ized by the pro-gres-sive ac-cu
--mu-la-tion of atheroscle-
+Overfull \hbox (4.94643pt too wide) in paragraph at lines 32--33
+\OT1/ptm/m/n/10.95 wide ([]World Health Or-ga-ni-za-tion[], []2023[]). It is ch
+ar-ac-ter-ized by the pro-gres-sive ac-cu-mu-la-tion of atheroscle-
  []
 
-<figures/Figure 2. Coronary Artery Disease.png, id=331, 544.0325pt x 347.2975pt
+<figures/Figure 2. Coronary Artery Disease.png, id=305, 544.0325pt x 347.2975pt
 >
 File: figures/Figure 2. Coronary Artery Disease.png Graphic file (type png)
 <use figures/Figure 2. Coronary Artery Disease.png>
 Package pdftex.def Info: figures/Figure 2. Coronary Artery Disease.png  used on
- input line 32.
-(pdftex.def)             Requested size: 341.43307pt x 217.97188pt.
-
-Overfull \hbox (10.09908pt too wide) in paragraph at lines 39--40
-[]\OT1/ptm/m/n/10.95 However, de-spite the high res-o-lu-tion of CCTA, the di-a
-g-nos-tic work-flow re-mains highly time-consuming
- []
-
+ input line 36.
+(pdftex.def)             Requested size: 282.24911pt x 180.18768pt.
 [2 <./figures/Figure 2. Coronary Artery Disease.png (PNG copy)>] [3]
 
 pdfTeX warning: pdflatex (file ./figures/Figure 3. Current CAD Diagnostic Workf
 low HSP (2).pdf): PDF inclusion: found PDF version <1.7>, but at most version <
 1.5> allowed
-<figures/Figure 3. Current CAD Diagnostic Workflow HSP (2).pdf, id=369, 721.083
+<figures/Figure 3. Current CAD Diagnostic Workflow HSP (2).pdf, id=358, 721.083
 98pt x 326.68047pt>
 File: figures/Figure 3. Current CAD Diagnostic Workflow HSP (2).pdf Graphic fil
 e (type pdf)
 <use figures/Figure 3. Current CAD Diagnostic Workflow HSP (2).pdf>
 Package pdftex.def Info: figures/Figure 3. Current CAD Diagnostic Workflow HSP 
-(2).pdf  used on input line 71.
+(2).pdf  used on input line 75.
 (pdftex.def)             Requested size: 455.24411pt x 206.24843pt.
-
+[4 <./figures/Figure 3. Current CAD Diagnostic Workflow HSP (2).pdf>]
 
 pdfTeX warning: pdflatex (file ./figures/Figure 4. Current Image Analysis and R
 eporting Workflow HSP (2).pdf): PDF inclusion: found PDF version <1.7>, but at 
 most version <1.5> allowed
 <figures/Figure 4. Current Image Analysis and Reporting Workflow HSP (2).pdf, i
-d=375, 722.7pt x 312.88895pt>
+d=384, 722.7pt x 312.88895pt>
 File: figures/Figure 4. Current Image Analysis and Reporting Workflow HSP (2).p
 df Graphic file (type pdf)
 <use figures/Figure 4. Current Image Analysis and Reporting Workflow HSP (2).pd
 f>
 Package pdftex.def Info: figures/Figure 4. Current Image Analysis and Reporting
- Workflow HSP (2).pdf  used on input line 89.
+ Workflow HSP (2).pdf  used on input line 93.
 (pdftex.def)             Requested size: 455.24411pt x 197.0972pt.
-[4 <./figures/Figure 3. Current CAD Diagnostic Workflow HSP (2).pdf>]
-Overfull \hbox (49.83043pt too wide) in paragraph at lines 99--100
-\OT1/ptm/m/n/10.95 seen ex-po-nen-tial growth over the past decade, driven by t
-he need to op-ti-mize clin-i-cal work-flows [[]].
- []
-
 [5 <./figures/Figure 4. Current Image Analysis and Reporting Workflow HSP (2).p
 df>]
 
@@ -685,37 +671,30 @@ pdfTeX warning: pdflatex (file ./figures/Figure 5. Proposed Image Analysis and
 Reporting Workflow HSP (2).pdf): PDF inclusion: found PDF version <1.7>, but at
  most version <1.5> allowed
 <figures/Figure 5. Proposed Image Analysis and Reporting Workflow HSP (2).pdf, 
-id=445, 722.07768pt x 293.44632pt>
+id=459, 722.07768pt x 293.44632pt>
 File: figures/Figure 5. Proposed Image Analysis and Reporting Workflow HSP (2).
 pdf Graphic file (type pdf)
 <use figures/Figure 5. Proposed Image Analysis and Reporting Workflow HSP (2).p
 df>
 Package pdftex.def Info: figures/Figure 5. Proposed Image Analysis and Reportin
-g Workflow HSP (2).pdf  used on input line 122.
+g Workflow HSP (2).pdf  used on input line 126.
 (pdftex.def)             Requested size: 455.24411pt x 185.00647pt.
 [6]) (chapters/02_methodology.tex [7 <./figures/Figure 5. Proposed Image Analys
-is and Reporting Workflow HSP (2).pdf>] [8
-
-
-]
+is and Reporting Workflow HSP (2).pdf>]
 Chapter 2.
-) (chapters/03_results.tex [9] [10
-
+) (chapters/03_results.tex [8
 
 ]
 Chapter 3.
-) (chapters/04_discussion.tex [11] [12
-
+) (chapters/04_discussion.tex [9
 
 ]
 Chapter 4.
-) (chapters/05_conclusions.tex [13] [14
-
+) (chapters/05_conclusions.tex [10
 
 ]
 Chapter 5.
-) (main.bbl [15] [16
-
+) (main.bbl [11
 
 ]
 LaTeX Font Info:    Trying to load font information for OT1+pcr on input line 2
@@ -724,28 +703,16 @@ LaTeX Font Info:    Trying to load font information for OT1+pcr on input line 2
 (C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/latex/psnfss\ot1pcr.fd
 File: ot1pcr.fd 2001/06/04 font definitions for OT1/pcr.
 )
-Underfull \hbox (badness 1997) in paragraph at lines 55--60
+Underfull \hbox (badness 5331) in paragraph at lines 55--60
 []\OT1/ptm/m/n/10.95 Cleveland Clinic (2024).  Coro-nary ar-ter-ies: Anatomy an
-d func-tion.
+d func-tion.  []$\OT1/pcr/m/n/10.95 https : / / my .
  []
 
+[12
 
-Underfull \hbox (badness 10000) in paragraph at lines 55--60
-[]$\OT1/pcr/m/n/10.95 https : / / my . clevelandclinic . org / health / body / 
-22973-[]coronary-[]arteries$[]\OT1/ptm/m/n/10.95 .
- []
-
-[17]
-Underfull \hbox (badness 2512) in paragraph at lines 154--157
-[]\OT1/ptm/m/n/10.95 World Health Or-ga-ni-za-tion (2023).  Car-dio-vas-cu-lar 
-dis-eases
- []
-
-) [18] (chapters/06_appendix.tex
+]) [13] (chapters/06_appendix.tex
 Appendix A.
-) [19
-
-
+) [14
 
 
 ] (main.aux
@@ -759,26 +726,25 @@ LaTeX2e <2025-11-01>
 L3 programming layer <2025-12-24>
  ***********
 Package rerunfilecheck Info: File `main.out' has not changed.
-(rerunfilecheck)             Checksum: D7C0B618C97F8F3F0004A8703CABFB45;9203.
+(rerunfilecheck)             Checksum: C787B9973468FF7ED2F1E319EEEF350D;9187.
  ) 
 Here is how much of TeX's memory you used:
- 12636 strings out of 467871
- 207194 string characters out of 5418376
- 645846 words of memory out of 5000000
- 41172 multiletter control sequences out of 15000+600000
- 653495 words of font info for 81 fonts, out of 8000000 for 9000
+ 14777 strings out of 467871
+ 252678 string characters out of 5418376
+ 710737 words of memory out of 5000000
+ 43322 multiletter control sequences out of 15000+600000
+ 651716 words of font info for 78 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 75i,17n,90p,1276b,825s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 75i,17n,90p,1276b,845s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <C:/Users/adria/AppData/Local/Programs/MiKTeX/fonts/type1/urw/courier/ucrr8a.
 pfb><C:/Users/adria/AppData/Local/Programs/MiKTeX/fonts/type1/urw/helvetic/uhvb
-8a.pfb><C:/Users/adria/AppData/Local/Programs/MiKTeX/fonts/type1/urw/helvetic/u
-hvr8a.pfb><C:/Users/adria/AppData/Local/Programs/MiKTeX/fonts/type1/urw/times/u
-tmb8a.pfb><C:/Users/adria/AppData/Local/Programs/MiKTeX/fonts/type1/urw/times/u
-tmr8a.pfb><C:/Users/adria/AppData/Local/Programs/MiKTeX/fonts/type1/urw/times/u
-tmri8a.pfb>
-Output written on main.pdf (35 pages, 1632060 bytes).
+8a.pfb><C:/Users/adria/AppData/Local/Programs/MiKTeX/fonts/type1/urw/times/utmb
+8a.pfb><C:/Users/adria/AppData/Local/Programs/MiKTeX/fonts/type1/urw/times/utmr
+8a.pfb><C:/Users/adria/AppData/Local/Programs/MiKTeX/fonts/type1/urw/times/utmr
+i8a.pfb>
+Output written on main.pdf (23 pages, 1629812 bytes).
 PDF statistics:
- 582 PDF objects out of 1000 (max. 8388607)
- 112 named destinations out of 1000 (max. 500000)
+ 569 PDF objects out of 1000 (max. 8388607)
+ 97 named destinations out of 1000 (max. 500000)
  345 words of extra memory for PDF output out of 10000 (max. 10000000)
 

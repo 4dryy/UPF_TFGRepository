@@ -1,4 +1,7 @@
-\documentclass[11pt, a4paper,twoside]{tfg_dtic_upf}
+\documentclass[11pt, a4paper, oneside, openany]{tfg_dtic_upf}
+
+% Avoid blank verso pages (twoside + template \cleardoublepage inserts empty sheets)
+\let\cleardoublepage\clearpage
 
 % Languages
 \usepackage[catalan,english,spanish]{babel}
@@ -17,7 +20,22 @@
 \usepackage{graphicx}
 \usepackage{grffile}
 \usepackage{pdfpages}
+\usepackage{float}
 \graphicspath{{figures/}}
+
+% Captions: bold float label (e.g., "Figure 1.5:"), normal explanatory text
+\makeatletter
+\long\def\@makecaption#1#2{%
+  \vskip\abovecaptionskip
+  \sbox\@tempboxa{{\bfseries #1}: #2}%
+  \ifdim \wd\@tempboxa >\hsize
+    {\bfseries #1}: #2\par
+  \else
+    \global \@minipagefalse
+    \hb@xt@\hsize{\hfil\box\@tempboxa\hfil}%
+  \fi
+  \vskip\belowcaptionskip}
+\makeatother
 
 % Font
 \usepackage{times}
@@ -25,21 +43,34 @@
 % Plain page style (no headings)
 \pagestyle{plain}
 
-% Bibliography
+% Bibliography (author--year: Author, Year in text)
+\usepackage[round,authoryear]{natbib}
 \bibliographystyle{apalike}
 
 % Appendix support
 \usepackage{appendix}
 
-% Hyperlinks (optional but useful during drafting)
+% Cross-references (hyperref before cleveref)
 \usepackage[hidelinks]{hyperref}
+\usepackage{cleveref}
+\crefname{figure}{Figure}{Figures}
+\Crefname{figure}{Figure}{Figures}
+\crefname{section}{Section}{Sections}
+\Crefname{section}{Section}{Sections}
 
-% Document language for front matter
-\selectlanguage{catalan}
+% Document language (English throughout; abstracts switch languages internally)
+\selectlanguage{english}
 
-% Table of contents title
-\addto\captionscatalan{%
-  \renewcommand{\contentsname}{\Large\sffamily Sumari}%
+% Front-matter title style (Acknowledgements, Abstract, Preface, etc.)
+\newcommand{\frontmattertitle}[1]{%
+  \noindent{\Large\sffamily\bfseries #1}\par\vspace{0.5em}%
+}
+
+% Contents, List of Figures, and List of Tables share the same \chapter* heading style
+\addto\captionsenglish{%
+  \renewcommand{\contentsname}{Contents}%
+  \renewcommand{\listfigurename}{List of Figures}%
+  \renewcommand{\listtablename}{List of Tables}%
 }
 
 % --- Thesis metadata (also used if \maketitle is needed) ---
@@ -56,37 +87,36 @@
 % Custom cover page (author-designed PDF)
 \includepdf[pages=-]{planning files/TFG Cover.pdf}
 
-\cleardoublepage
+\clearpage
 
 % Dedicatory
 \input{frontmatter/dedication}
-\cleardoublepage
+\clearpage
 
 % Acknowledgements
 \input{frontmatter/acknowledgements}
-\cleardoublepage
+\clearpage
 
 % Abstracts (English, Catalan, Spanish)
 \input{frontmatter/abstracts}
-\cleardoublepage
+\clearpage
 
 % Preface (includes AI usage declaration per UPF policy)
 \input{frontmatter/preface}
-\cleardoublepage
+\clearpage
 
 % Table of contents
 \tableofcontents
-\cleardoublepage
+\clearpage
 
 % List of figures
 \listoffigures
-\addcontentsline{toc}{chapter}{Índex de figures}
-\cleardoublepage
+\addcontentsline{toc}{chapter}{List of Figures}
 
 % List of tables (kept for when tables are added)
 \listoftables
-\addcontentsline{toc}{chapter}{Índex de taules}
-\cleardoublepage
+\addcontentsline{toc}{chapter}{List of Tables}
+\clearpage
 
 % Main body — introduction and subsequent chapters are in English
 \mainmatter
@@ -101,7 +131,7 @@
 % Bibliography (not counted in the 30-page body limit)
 \bibliography{bib/references}
 
-\cleardoublepage
+\clearpage
 \appendix
 \input{chapters/06_appendix}
 
