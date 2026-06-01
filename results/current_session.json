@@ -1,4 +1,4 @@
 {
-  "patient_id": "MACS_Normal_8",
-  "is_synthetic": false
+  "patient_id": "Synthetic_1",
+  "is_synthetic": true
 }

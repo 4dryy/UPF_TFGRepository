@@ -183,8 +183,8 @@ def _segment_pick_button_style_block(
 ) -> str:
     """Per-segment Streamlit button colors (matches 3D discrete segment palette)."""
     art = str(artery).strip().upper()
-    sel_bg = "#101010"
-    sel_bg_hover = "#1c1c1c"
+    sel_bg = "#f5f5f5"
+    sel_bg_hover = "#ebebeb"
     chunks: list[str] = []
     for sid, _name, _mx in seg_rows:
         key_fragment = f"seg_pick_btn_{art}_{int(sid)}"
@@ -193,17 +193,17 @@ def _segment_pick_button_style_block(
         base = f'div[class*="st-key-"][class*="{key_fragment}"]'
         chunks.append(
             f"{base} button[kind=\"secondary\"]{{background-color:{bc}!important;"
-            f"background-image:none!important;border:1px solid rgba(255,255,255,0.28)!important;"
+            f"background-image:none!important;border:1px solid rgba(0,0,0,0.18)!important;"
             f"color:{tc}!important;box-shadow:none!important;}}"
             f"{base} button[kind=\"secondary\"] p,{base} button[kind=\"secondary\"] span,"
             f"{base} button[kind=\"secondary\"] div{{color:{tc}!important;}}"
             f"{base} button[kind=\"secondary\"]:hover{{filter:brightness(1.12)!important;"
-            f"border-color:rgba(255,255,255,0.45)!important;}}"
+            f"border-color:rgba(0,0,0,0.35)!important;}}"
             f"{base} button[kind=\"primary\"]{{background-color:{sel_bg}!important;"
             f"background-image:none!important;border:2px solid {bc}!important;"
-            f"box-shadow:inset 0 0 0 1px rgba(0,0,0,0.55)!important;color:#ececec!important;}}"
+            f"box-shadow:inset 0 0 0 1px rgba(0,0,0,0.12)!important;color:#1a1a1a!important;}}"
             f"{base} button[kind=\"primary\"] p,{base} button[kind=\"primary\"] span,"
-            f"{base} button[kind=\"primary\"] div{{color:#ececec!important;}}"
+            f"{base} button[kind=\"primary\"] div{{color:#1a1a1a!important;}}"
             f"{base} button[kind=\"primary\"]:hover{{background-color:{sel_bg_hover}!important;"
             f"filter:none!important;border-color:{bc}!important;}}"
         )
@@ -243,7 +243,7 @@ def _logo_data_uri(path: Path) -> str:
 AUTHOR_NAME = "Adrià Cortés Cugat"
 DEGREE_NAME = "Mathematical Engineering in Data Science"
 
-# Typography: Inter via Google Fonts; global CSS also sets a neutral dark app background.
+# Typography: Inter via Google Fonts; global CSS sets a white app shell.
 _APP_STYLE = """
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -251,24 +251,35 @@ _APP_STYLE = """
 <style>
     html, body {
         font-family: 'Inter', 'Segoe UI', system-ui, sans-serif !important;
-        background-color: #121212 !important;
+        background-color: #ffffff !important;
+        color: #1a1a1a !important;
     }
     [class*="css"] {
         font-family: 'Inter', 'Segoe UI', system-ui, sans-serif !important;
     }
-    /* Neutral dark shell (Streamlit default dark theme reads blue-gray) */
+    /* White shell (overrides Streamlit theme tint on main blocks) */
     .stApp,
     [data-testid="stAppViewContainer"],
     [data-testid="stAppViewContainer"] > div,
+    [data-testid="stAppViewContainer"] > div > div,
     section[data-testid="stMain"],
-    section[data-testid="stMain"] > div {
-        background-color: #121212 !important;
+    section[data-testid="stMain"] > div,
+    .block-container,
+    [data-testid="stVerticalBlock"],
+    [data-testid="stHorizontalBlock"] {
+        background-color: #ffffff !important;
+        color: #1a1a1a !important;
     }
     header[data-testid="stHeader"] {
-        background-color: #121212 !important;
+        background-color: #ffffff !important;
     }
-    [data-testid="stSidebar"] {
-        background-color: #161616 !important;
+    [data-testid="stSidebar"],
+    [data-testid="stSidebar"] > div {
+        background-color: #ffffff !important;
+    }
+    [data-testid="stToolbar"],
+    [data-testid="stDecoration"] {
+        background-color: #ffffff !important;
     }
     /* Header logos: raw HTML row (not st.columns) so UPF truly hugs the right edge */
     .header-logo-row {
@@ -303,7 +314,7 @@ _APP_STYLE = """
     hr.title-above-rule,
     hr.title-below-rule {
         border: none !important;
-        border-top: 1px solid #3d3d3d !important;
+        border-top: 1px solid #e0e0e0 !important;
         height: 0 !important;
         background: transparent !important;
     }
@@ -326,7 +337,7 @@ _APP_STYLE = """
     }
     hr.section-divider-branch-viz {
         border: none !important;
-        border-top: 1px solid #3d3d3d !important;
+        border-top: 1px solid #e0e0e0 !important;
         height: 0 !important;
         background: transparent !important;
         margin: 1.35rem 0 1.85rem 0 !important;
@@ -345,7 +356,7 @@ _APP_STYLE = """
         font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
         font-size: 0.875rem;
         line-height: 1.45;
-        color: #bdbdbd !important;
+        color: #525252 !important;
         margin: 0;
         max-width: none;
         width: 100%;
@@ -370,12 +381,12 @@ _APP_STYLE = """
         letter-spacing: 0.04em;
         margin: 0 0 0.5rem 0 !important;
         font-size: clamp(1.35rem, 1rem + 1.1vw, 1.65rem);
-        color: #e8e8e8 !important;
+        color: #1a1a1a !important;
     }
     p.branch-viz-window-line {
         font-family: 'Inter', 'Segoe UI', system-ui, sans-serif !important;
         font-size: clamp(0.8rem, 0.72rem + 0.3vw, 0.9rem) !important;
-        color: #a3a3a3 !important;
+        color: #6b6b6b !important;
         line-height: 1.5 !important;
         margin: 0 !important;
         padding: 0 !important;
@@ -386,8 +397,8 @@ _APP_STYLE = """
     }
     p.branch-viz-window-line code {
         font-size: inherit !important;
-        color: #d0d0d0 !important;
-        background: rgba(255,255,255,0.06);
+        color: #333333 !important;
+        background: rgba(0,0,0,0.06);
         padding: 0.08rem 0.3rem;
         border-radius: 0.25rem;
     }
@@ -424,11 +435,11 @@ _APP_STYLE = """
         line-height: 1.5;
         overflow-wrap: anywhere;
         word-wrap: break-word;
-        color: #bdbdbd !important;
+        color: #525252 !important;
     }
     .branch-viz-legend-col-wrap .branch-viz-legend-col-text strong,
     .branch-viz-legend-col-wrap .branch-viz-legend-col-text em {
-        color: #bdbdbd !important;
+        color: #525252 !important;
     }
     /* Streamlit column markdown wrappers often cap width; stretch only our legend blocks */
     div[data-testid="column"] [data-testid="stMarkdownContainer"]:has(.branch-viz-legend-col-wrap),
@@ -443,8 +454,8 @@ _APP_STYLE = """
     }
     .branch-viz-legend code {
         font-size: 0.82em;
-        color: #d0d0d0 !important;
-        background: rgba(255,255,255,0.06);
+        color: #333333 !important;
+        background: rgba(0,0,0,0.06);
         padding: 0.1rem 0.35rem;
         border-radius: 0.25rem;
     }
@@ -477,7 +488,7 @@ _APP_STYLE = """
         margin-top: 0.35rem;
         margin-bottom: 0 !important;
         padding-bottom: 0.45rem !important;
-        color: #f2f2f2 !important;
+        color: #111111 !important;
         /* Large, responsive headline */
         font-size: clamp(2.5rem, 5.5vw, 4.25rem) !important;
     }
@@ -505,7 +516,7 @@ _APP_STYLE = """
         max-width: none !important;
         box-sizing: border-box !important;
         text-align: center;
-        color: #bdbdbd !important;
+        color: #525252 !important;
         font-size: clamp(0.95rem, 0.82rem + 0.45vw, 1.08rem) !important;
     }
     /* Gap below lower title rule before colormap buttons */
@@ -527,7 +538,7 @@ _APP_STYLE = """
         letter-spacing: 0.04em;
         margin: 0 0 0.75rem 0;
         font-size: clamp(1.35rem, 1rem + 1.1vw, 1.65rem);
-        color: #e8e8e8 !important;
+        color: #1a1a1a !important;
     }
     /* Same size as section plot titles; left-aligned for branch picker column */
     h3.artery-plot-title.branch-panel-heading {
@@ -582,10 +593,10 @@ _APP_STYLE = """
         font-size: 0.95rem !important;
         min-height: 3.75rem !important;
         padding: 1rem 1.25rem !important;
-        color: #bdbdbd !important;
-        border: 1px solid #5a5a5a !important;
+        color: #525252 !important;
+        border: 1px solid #cccccc !important;
         border-radius: 0.5rem !important;
-        background-color: #353535 !important;
+        background-color: #eeeeee !important;
         background-image: none !important;
         box-shadow: none !important;
         outline: none !important;
@@ -641,7 +652,7 @@ _APP_STYLE = """
         text-transform: uppercase !important;
         line-height: 1.12 !important;
         font-size: clamp(0.95rem, 0.52rem + 1.35vw, 1.15rem) !important;
-        color: #bdbdbd !important;
+        color: #525252 !important;
     }
     [class*="st-key-"][class*="color_btn_pct_as"] button[kind="primary"]:hover,
     [class*="st-key-"][class*="color_btn_area"] button[kind="primary"]:hover,
@@ -663,9 +674,9 @@ _APP_STYLE = """
     [class*="st-key-"][class*="seg_viz_btn_lca"] button[kind="secondary"]:hover,
     [class*="st-key-"][class*="seg_viz_btn_rca"] button[kind="secondary"]:hover {
         filter: none !important;
-        background-color: #424242 !important;
-        border-color: #757575 !important;
-        color: #e0e0e0 !important;
+        background-color: #e0e0e0 !important;
+        border-color: #9e9e9e !important;
+        color: #1a1a1a !important;
         box-shadow: none !important;
         outline: none !important;
     }
@@ -687,7 +698,7 @@ _APP_STYLE = """
     [class*="st-key-"][class*="seg_viz_btn_lca"] button[kind="secondary"]:focus-visible,
     [class*="st-key-"][class*="seg_viz_btn_rca"] button[kind="secondary"]:focus-visible {
         filter: none !important;
-        background-color: #424242 !important;
+        background-color: #e0e0e0 !important;
         outline: none !important;
         box-shadow: none !important;
     }
@@ -710,7 +721,7 @@ _APP_STYLE = """
     [class*="st-key-"][class*="seg_viz_btn_lca"] button[kind="secondary"]:active,
     [class*="st-key-"][class*="seg_viz_btn_rca"] button[kind="secondary"]:active {
         filter: none !important;
-        background-color: #2d2d2d !important;
+        background-color: #d5d5d5 !important;
         color: #ffffff !important;
         box-shadow: none !important;
         outline: none !important;
@@ -758,17 +769,17 @@ _APP_STYLE = """
         box-shadow: 0 0 0 2px rgba(255, 183, 77, 0.45) !important;
     }
     [class*="st-key-"][class*="seg_pick_btn_"] button[kind="primary"] {
-        color: #f0f0f0 !important;
-        border: 1px solid rgba(255, 255, 255, 0.32) !important;
-        background-color: #121212 !important;
+        color: #1a1a1a !important;
+        border: 1px solid rgba(0, 0, 0, 0.22) !important;
+        background-color: #ffffff !important;
         background-image: none !important;
-        box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.55) !important;
+        box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12) !important;
     }
     [class*="st-key-"][class*="branch_pick_btn_"] button[kind="secondary"],
     [class*="st-key-"][class*="seg_pick_btn_"] button[kind="secondary"] {
-        color: #bdbdbd !important;
-        border: 1px solid #5a5a5a !important;
-        background-color: #353535 !important;
+        color: #525252 !important;
+        border: 1px solid #cccccc !important;
+        background-color: #eeeeee !important;
         background-image: none !important;
         box-shadow: none !important;
     }
@@ -781,18 +792,18 @@ _APP_STYLE = """
     [class*="st-key-"][class*="seg_pick_btn_"] button[kind="primary"] p,
     [class*="st-key-"][class*="seg_pick_btn_"] button[kind="primary"] span,
     [class*="st-key-"][class*="seg_pick_btn_"] button[kind="primary"] div {
-        color: #ececec !important;
+        color: #1a1a1a !important;
     }
     [class*="st-key-"][class*="branch_pick_btn_"] button[kind="secondary"] p,
     [class*="st-key-"][class*="branch_pick_btn_"] button[kind="secondary"] span,
     [class*="st-key-"][class*="branch_pick_btn_"] button[kind="secondary"] div {
-        color: #bdbdbd !important;
+        color: #525252 !important;
         font-weight: 700 !important;
     }
     [class*="st-key-"][class*="seg_pick_btn_"] button[kind="secondary"] p,
     [class*="st-key-"][class*="seg_pick_btn_"] button[kind="secondary"] span,
     [class*="st-key-"][class*="seg_pick_btn_"] button[kind="secondary"] div {
-        color: #bdbdbd !important;
+        color: #525252 !important;
     }
     [class*="st-key-"][class*="seg_pick_btn_"] button[kind="primary"] p,
     [class*="st-key-"][class*="seg_pick_btn_"] button[kind="primary"] span,
@@ -809,15 +820,15 @@ _APP_STYLE = """
         box-shadow: 0 0 0 2px rgba(255, 224, 178, 0.55) !important;
     }
     [class*="st-key-"][class*="seg_pick_btn_"] button[kind="primary"]:hover {
-        background-color: #1e1e1e !important;
-        border-color: rgba(255, 255, 255, 0.45) !important;
-        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06) !important;
+        background-color: #f5f5f5 !important;
+        border-color: rgba(0, 0, 0, 0.35) !important;
+        box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08) !important;
     }
     [class*="st-key-"][class*="branch_pick_btn_"] button[kind="secondary"]:hover,
     [class*="st-key-"][class*="seg_pick_btn_"] button[kind="secondary"]:hover {
-        background-color: #424242 !important;
-        border-color: #757575 !important;
-        color: #e0e0e0 !important;
+        background-color: #e0e0e0 !important;
+        border-color: #9e9e9e !important;
+        color: #1a1a1a !important;
     }
     [class*="st-key-"][class*="branch_pick_btn_"] button[kind="primary"]:focus-visible,
     [class*="st-key-"][class*="branch_pick_btn_"] button[kind="secondary"]:focus-visible,
@@ -830,12 +841,12 @@ _APP_STYLE = """
         box-shadow: none !important;
     }
     [class*="st-key-"][class*="seg_pick_btn_"] button[kind="primary"]:active {
-        background-color: #0a0a0a !important;
-        box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.65) !important;
+        background-color: #ebebeb !important;
+        box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18) !important;
     }
     [class*="st-key-"][class*="branch_pick_btn_"] button[kind="secondary"]:active,
     [class*="st-key-"][class*="seg_pick_btn_"] button[kind="secondary"]:active {
-        background-color: #2d2d2d !important;
+        background-color: #d5d5d5 !important;
         color: #ffffff !important;
     }
     /* Reset view (LCA/RCA/branch / segment viz): Sant Pau–style cyan blue, bold label */
@@ -945,23 +956,23 @@ _APP_STYLE = """
         max-width: 100%;
         margin: 0.25rem 0 0.75rem 0;
         padding: 0.55rem 0.9rem 0.65rem 0.9rem;
-        border: 1px solid #4a4a4a;
+        border: 1px solid #e0e0e0;
         border-radius: 0.45rem;
-        background: rgba(255, 255, 255, 0.03);
+        background: #f7f7f7;
         box-sizing: border-box;
     }
     .seg-ref-summary-panel p {
         font-family: 'Inter', 'Segoe UI', system-ui, sans-serif !important;
         font-size: 0.88rem !important;
         line-height: 1.5 !important;
-        color: #c8c8c8 !important;
+        color: #424242 !important;
         margin: 0.28rem 0 !important;
     }
     p.seg-viz-section-intro {
         font-family: 'Inter', 'Segoe UI', system-ui, sans-serif !important;
         font-size: clamp(1.02rem, 0.92rem + 0.55vw, 1.2rem) !important;
         line-height: 1.52 !important;
-        color: #d6d6d6 !important;
+        color: #333333 !important;
         margin: 0.2rem 0 1rem 0 !important;
         max-width: none !important;
         width: 100% !important;
@@ -978,7 +989,7 @@ _APP_STYLE = """
     .seg-ref-summary-panel ul.seg-ref-metrics li {
         font-size: clamp(0.98rem, 0.88rem + 0.4vw, 1.08rem) !important;
         line-height: 1.52 !important;
-        color: #e4e4e4 !important;
+        color: #2a2a2a !important;
         margin: 0.4rem 0 !important;
         padding: 0 !important;
     }
@@ -1001,7 +1012,7 @@ _APP_STYLE = """
     .footer-app-meta p {
         margin: 0.2rem 0 !important;
         padding: 0 !important;
-        color: #a3a3a3 !important;
+        color: #6b6b6b !important;
         font-size: 0.875rem !important;
         line-height: 1.45 !important;
         font-family: 'Inter', 'Segoe UI', system-ui, sans-serif !important;

@@ -836,6 +836,7 @@ def create_3d_artery_plot(
     color_variable: str,
     *,
     trace_name: str = "Centerline",
+    is_synthetic: bool = False,
 ) -> go.Figure:
     """
     Build an interactive 3D figure: translucent outer mesh + **one** centerline trace
@@ -897,9 +898,9 @@ def create_3d_artery_plot(
     else:
         valid_mask = np.isfinite(raw_color)
 
-    # Colormap limits: %AS = full sample max; Area = robust percentiles (outlier-resistant).
+    # Colormap limits: %AS = full sample max; Area = percentiles (clinical) or min–max (synthetic).
     if valid_mask.any():
-        if color_variable == "Area":
+        if color_variable == "Area" and not is_synthetic:
             cmin, cmax, area_smin, area_smax = _area_3d_colormap_clim(plot_color[valid_mask])
         else:
             cmin, cmax = _sample_minmax_clim(plot_color[valid_mask], color_variable=color_variable)
@@ -916,13 +917,13 @@ def create_3d_artery_plot(
         colorscale = "Viridis"
     if color_variable == "pct_AS":
         cb_title = f"% area stenosis (range {cmin:.2g}–{cmax:.2g} %)"
-    elif area_smin is not None and area_smax is not None:
+    elif is_synthetic or area_smin is None or area_smax is None:
+        cb_title = f"Cross-sectional area (range {cmin:.2g}–{cmax:.2g} mm²)"
+    else:
         cb_title = (
             f"Cross-sectional area (color scale {cmin:.2g}–{cmax:.2g} mm², "
             f"5–95%; sample {area_smin:.2g}–{area_smax:.2g} mm²)"
         )
-    else:
-        cb_title = f"Cross-sectional area (range {cmin:.2g}–{cmax:.2g} mm²)"
 
     traces: list[go.BaseTraceType] = [mesh_trace]
 
@@ -1253,7 +1254,7 @@ def _create_centerline_profile_bars_figure(
         rows=2,
         cols=1,
         shared_xaxes=True,
-        vertical_spacing=0.11,
+        vertical_spacing=0.17,
         subplot_titles=(title_area, title_pct),
     )
     fig.add_trace(
@@ -1282,29 +1283,35 @@ def _create_centerline_profile_bars_figure(
         col=1,
     )
 
+    # Light Streamlit shell: dark axes/titles on transparent plot background.
+    _axis_title_font = dict(color="#1a1a1a", size=13)
+    _axis_tick_font = dict(color="#333333", size=11)
     grid_kw: dict[str, Any] = dict(
         showgrid=True,
-        gridcolor="rgba(255,255,255,0.14)",
+        gridcolor="rgba(0, 0, 0, 0.12)",
         zeroline=True,
-        zerolinecolor="rgba(255,255,255,0.28)",
+        zerolinecolor="rgba(0, 0, 0, 0.28)",
         zerolinewidth=1,
     )
     fig.update_xaxes(
         title_text=x_axis_title_row2,
+        title_font=_axis_title_font,
+        tickfont=_axis_tick_font,
         tickangle=-60 if n > 35 else -45,
         showline=True,
-        linecolor="rgba(255,255,255,0.35)",
+        linecolor="rgba(0, 0, 0, 0.35)",
         mirror=True,
         **grid_kw,
         row=2,
         col=1,
     )
-    fig.update_xaxes(**grid_kw, row=1, col=1)
+    fig.update_xaxes(tickfont=_axis_tick_font, **grid_kw, row=1, col=1)
     fig.update_yaxes(
         title_text="Area (mm²)",
-        title_font=dict(color="#f0f0f0", size=13),
+        title_font=_axis_title_font,
+        tickfont=_axis_tick_font,
         showline=True,
-        linecolor="rgba(255,255,255,0.35)",
+        linecolor="rgba(0, 0, 0, 0.35)",
         mirror=True,
         **grid_kw,
         row=1,
@@ -1312,27 +1319,33 @@ def _create_centerline_profile_bars_figure(
     )
     fig.update_yaxes(
         title_text="%AS",
-        title_font=dict(color="#f0f0f0", size=13),
+        title_font=_axis_title_font,
+        tickfont=_axis_tick_font,
         showline=True,
-        linecolor="rgba(255,255,255,0.35)",
+        linecolor="rgba(0, 0, 0, 0.35)",
         mirror=True,
         **grid_kw,
         row=2,
         col=1,
     )
     fig.update_layout(
-        template="plotly_dark",
+        template="plotly_white",
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
-        font=dict(color="#e8e8e8", family="Inter, Segoe UI, system-ui, sans-serif", size=12),
-        margin=dict(t=72, r=24, b=56, l=64),
+        font=dict(color="#1a1a1a", family="Inter, Segoe UI, system-ui, sans-serif", size=12),
+        margin=dict(t=88, r=24, b=56, l=64),
         hovermode="closest",
-        hoverlabel=dict(bgcolor="#2d2d2d", font_size=12),
+        hoverlabel=dict(bgcolor="#ffffff", font_color="#1a1a1a", font_size=12),
         showlegend=False,
-        height=780,
+        height=800,
         bargap=0.22,
     )
-    fig.update_annotations(font=dict(color="#e0e0e0", size=13))
+    fig.update_annotations(font=dict(color="#1a1a1a", size=13))
+    # Nudge the lower subplot title up so it does not sit on the %AS grid.
+    if len(fig.layout.annotations) >= 2:
+        ann_pct = fig.layout.annotations[1]
+        if ann_pct.y is not None:
+            ann_pct.update(y=float(ann_pct.y) + 0.025)
 
     _add_peak_ref_area_row_annotations(
         fig,

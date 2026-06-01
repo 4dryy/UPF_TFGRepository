@@ -1,0 +1,4 @@
+patient_id,case,reference_window_mm,metric,unit,theoretical,predicted,absolute_error
+Synthetic_2,Stenosis control (cosine waist),10.0,Maximum % area stenosis,%,75.0,73.69,1.31
+Synthetic_2,Stenosis control (cosine waist),10.0,Maximum cross-sectional area,mm²,314.16,318.66,4.5
+Synthetic_2,Stenosis control (cosine waist),10.0,Minimum cross-sectional area,mm²,78.54,82.55,4.01

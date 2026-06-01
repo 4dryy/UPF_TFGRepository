@@ -1,0 +1,5 @@
+patient_id,case,reference_window_mm,colormap,min,max,unit
+Synthetic_1,Healthy control (uniform tube),10.0,Area,316.495,316.525,mm²
+Synthetic_1,Healthy control (uniform tube),10.0,%AS,0.0,0.0088,%
+Synthetic_2,Stenosis control (cosine waist),10.0,Area,83.0,320.0,mm²
+Synthetic_2,Stenosis control (cosine waist),10.0,%AS,0.0,74.0,%

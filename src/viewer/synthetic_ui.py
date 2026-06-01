@@ -13,7 +13,6 @@ import numpy as np
 
 from src.synthetic_profile import (
     is_stenosis_synthetic_patient,
-    synthetic_analytical_area_mm2,
     synthetic_validation_metrics,
 )
 from src.viewer.plots import (
@@ -71,87 +70,6 @@ def _fmt_area(value: float | None) -> str:
     return "—" if value is None else f"{float(value):.2f} mm²"
 
 
-def _max_area_deviation_index(branch_df: pd.DataFrame, patient_id: str) -> int | None:
-    """Index (after ``_sort_branch_rows``) of the centerline point maximising |A_pred − A_theo|."""
-    if branch_df is None or branch_df.empty:
-        return None
-    required = {"Px", "Py", "Pz", "Area"}
-    if not required.issubset(branch_df.columns):
-        return None
-    sub = _sort_branch_rows(branch_df.copy())
-    if sub.empty:
-        return None
-    pts = sub[["Px", "Py", "Pz"]].to_numpy(dtype=float)
-    a_pred = pd.to_numeric(sub["Area"], errors="coerce").to_numpy(dtype=float)
-    a_theo = synthetic_analytical_area_mm2(pts, patient_id)
-    finite = np.isfinite(a_pred) & np.isfinite(a_theo) & (a_theo > 0.0)
-    if not np.any(finite):
-        return None
-    diff = np.full(len(sub), -np.inf, dtype=float)
-    diff[finite] = np.abs(a_pred[finite] - a_theo[finite])
-    idx = int(np.argmax(diff))
-    if not np.isfinite(diff[idx]):
-        return None
-    return idx
-
-
-def _max_predicted_area_index(branch_df: pd.DataFrame) -> int | None:
-    """Index (after ``_sort_branch_rows``) of the centerline point with the largest predicted Area."""
-    if branch_df is None or branch_df.empty or "Area" not in branch_df.columns:
-        return None
-    sub = _sort_branch_rows(branch_df.copy())
-    if sub.empty:
-        return None
-    a_pred = pd.to_numeric(sub["Area"], errors="coerce").to_numpy(dtype=float)
-    if not np.any(np.isfinite(a_pred)):
-        return None
-    masked = np.where(np.isfinite(a_pred), a_pred, -np.inf)
-    idx = int(np.argmax(masked))
-    if not np.isfinite(a_pred[idx]):
-        return None
-    return idx
-
-
-def _recolor_area_bar(fig, idx: int, color: str) -> bool:
-    """Paint the Area-row bar at ``idx`` with ``color``. Returns True if successful."""
-    if idx is None or not fig.data:
-        return False
-    bar = fig.data[0]
-    raw_color = getattr(bar.marker, "color", None)
-    try:
-        x_values = list(bar.x) if bar.x is not None else []
-    except TypeError:
-        x_values = []
-    n_bars = len(x_values)
-    if isinstance(raw_color, (list, tuple)):
-        colors = list(raw_color)
-    elif isinstance(raw_color, str) and n_bars:
-        colors = [raw_color] * n_bars
-    else:
-        return False
-    if not (0 <= idx < len(colors)):
-        return False
-    colors[idx] = color
-    bar.marker.color = colors
-    return True
-
-
-def _highlight_max_predicted_area(fig, branch_df: pd.DataFrame) -> int | None:
-    """Recolor the Area bar at the max predicted-Area point red."""
-    idx = _max_predicted_area_index(branch_df)
-    if idx is None:
-        return None
-    return idx if _recolor_area_bar(fig, idx, _MAX_PRED_AREA_RED) else None
-
-
-def _highlight_max_area_deviation(fig, branch_df: pd.DataFrame, patient_id: str) -> int | None:
-    """Recolor the Area bar at the max |A_pred − A_theo| point orange (no annotation)."""
-    idx = _max_area_deviation_index(branch_df, patient_id)
-    if idx is None:
-        return None
-    return idx if _recolor_area_bar(fig, idx, _MAX_AREA_DEV_ORANGE) else None
-
-
 _ARROW_OVER_GREEN = "#22c55e"
 _ARROW_UNDER_RED = "#ef4444"
 
@@ -172,7 +90,7 @@ def _render_colored_metric_tile(
     """
     title_attr = f" title=\"{html.escape(help_text, quote=True)}\"" if help_text else ""
     delta_html = (
-        "<div style='font-size: 0.82rem; color: rgba(255,255,255,0.55); "
+        "<div style='font-size: 0.82rem; color: rgba(0,0,0,0.55); "
         f"margin-top: 0.25rem;'>{html.escape(delta_text)}</div>"
         if delta_text
         else ""
@@ -203,7 +121,7 @@ def _render_colored_metric_tile(
         "<div style='padding: 0.25rem 0;'>"
         f"<div style='font-size: 0.875rem; color: {color}; font-weight: 600;'{title_attr}>"
         f"{html.escape(label)}</div>"
-        "<div style='font-size: 2.0rem; color: #e8e8e8; font-weight: 600; "
+        "<div style='font-size: 2.0rem; color: #1a1a1a; font-weight: 600; "
         "line-height: 1.1; margin-top: 0.15rem;'>"
         f"{html.escape(value_text)}{arrow_html}</div>"
         f"{delta_html}"
@@ -239,7 +157,7 @@ def _render_max_area_deviation_tile(
         _MAX_AREA_DEV_ORANGE,
         help_text=(
             "Maximum of |A_predicted(z) − A_theoretical(z)| along the vessel tube. "
-            "The orange bar in the Area profile below marks the centerline point where it occurs."
+            "Identifies the centerline point where |A_predicted − A_theoretical| is largest."
         ),
         delta_text=delta_text,
     )
@@ -435,7 +353,7 @@ def _render_validation_metrics(metrics: dict, patient_id: str) -> None:
                 ),
                 help_text=(
                     "Maximum lumen Area measured along the vessel "
-                    "(red bar in the Area profile below). "
+                    "(purple bar in the %AS profile marks peak stenosis). "
                     "Arrow: ▲ predicted > theoretical, ▼ predicted < theoretical."
                 ),
                 color=_MAX_PRED_AREA_RED,
@@ -556,6 +474,7 @@ def render_synthetic_dashboard(
                     df_syn,
                     color_column,
                     trace_name="Synthetic",
+                    is_synthetic=True,
                 )
                 _syn_kw = dict(
                     use_container_width=True,
@@ -621,15 +540,6 @@ def render_synthetic_dashboard(
 
     try:
         fig_prof = create_synthetic_tube_geodesic_profile(branch_df)
-        try:
-            _highlight_max_area_deviation(fig_prof, branch_df, patient_id)
-        except Exception:
-            pass
-        if is_stenosis_synthetic_patient(patient_id):
-            try:
-                _highlight_max_predicted_area(fig_prof, branch_df)
-            except Exception:
-                pass
         _prof_kw = dict(
             use_container_width=True,
             config=plotly_config,

@@ -1,0 +1,3 @@
+patient_id,case,reference_window_mm,metric,unit,theoretical,predicted,absolute_error
+Synthetic_1,Healthy control (uniform tube),10.0,Maximum % area stenosis,%,0.0,0.01,0.01
+Synthetic_1,Healthy control (uniform tube),10.0,Mean cross-sectional area,mm²,314.16,316.5,2.34
