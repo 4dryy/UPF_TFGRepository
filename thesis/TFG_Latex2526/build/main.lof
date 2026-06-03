@@ -1,0 +1,19 @@
+\babel@toc {english}{}\relax 
+\babel@toc {spanish}{}\relax 
+\babel@toc {english}{}\relax 
+\babel@toc {catalan}{}\relax 
+\babel@toc {spanish}{}\relax 
+\babel@toc {english}{}\relax 
+\babel@toc {english}{}\relax 
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {1.1}{\ignorespaces Anterior view of the human coronary tree. Coronary arteries are highlighted in red, and other cardiac structures in blue. Adapted from Lynch et al.~\cite {lynch2010_coronary}.}}{1}{figure.1.1}%
+\contentsline {figure}{\numberline {1.2}{\ignorespaces Coronary arteries narrowed by atherosclerotic plaque. Adapted from Kaiser Permanente~\cite {kaiser_atherosclerosis}.}}{2}{figure.1.2}%
+\contentsline {figure}{\numberline {1.3}{\ignorespaces Current CAD diagnostic workflow at Hospital de Sant Pau. The primary operational bottleneck (image assessment and reporting) is highlighted in red. Adapted from Ferrer Beltran~\cite {ferrer2024}.}}{4}{figure.1.3}%
+\contentsline {figure}{\numberline {1.4}{\ignorespaces Detailed representation of the image analysis and reporting workflow at Hospital de Sant Pau. Adapted from Acebes Pinilla~\cite {acebes2024}.}}{5}{figure.1.4}%
+\contentsline {figure}{\numberline {1.5}{\ignorespaces Contextual overview of the proposed automated diagnostic framework at Hospital de la Santa Creu i Sant Pau. The contributions of this thesis (green dashed box) bridge the gap between existing hospital data systems (blue) and the final clinical report. Adapted from Acebes Pinilla~\cite {acebes2024}.}}{7}{figure.1.5}%
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {2.1}{\ignorespaces End-to-end automated workflow for a single patient case. Each block constitutes a self-contained processing stage; arrows indicate mandatory sequential dependencies and the principal data passed between stages.}}{8}{figure.2.1}%
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\addvspace {10\p@ }
