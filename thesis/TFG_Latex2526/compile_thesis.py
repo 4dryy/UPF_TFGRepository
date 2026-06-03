@@ -21,6 +21,7 @@ for i, cmd in enumerate(commands, start=1):
         sys.stderr.write(result.stderr[-1000:])
     if result.returncode != 0:
         print(f"Exit code: {result.returncode}")
+        sys.exit(result.returncode)
 
 log_path = root / "main.log"
 log = log_path.read_text(encoding="utf-8", errors="replace") if log_path.exists() else ""

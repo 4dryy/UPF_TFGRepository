@@ -21,7 +21,15 @@
 \usepackage{grffile}
 \usepackage{pdfpages}
 \usepackage{float}
-\graphicspath{{figures/}}
+% Figures and tables: one subfolder per thesis section (see ``figures and tables/'')
+\graphicspath{%
+  {figures and tables/1_Introduction/}%
+  {figures and tables/2_Methodology/}%
+  {figures and tables/3_Results/}%
+  {figures and tables/4_Discussions/}%
+  {figures and tables/5_Conclusions/}%
+  {figures and tables/6_Apendix/}%
+}
 
 % Captions: bold float label (e.g., "Figure 1.5:"), normal explanatory text
 \makeatletter
@@ -43,9 +51,9 @@
 % Plain page style (no headings)
 \pagestyle{plain}
 
-% Bibliography (author--year: Author, Year in text)
-\usepackage[round,authoryear]{natbib}
-\bibliographystyle{apalike}
+% Bibliography: numeric in-text citations [n]; alphabetical reference list
+\usepackage[numbers,sort&compress]{natbib}
+\bibliographystyle{plain}
 
 % Appendix support
 \usepackage{appendix}
