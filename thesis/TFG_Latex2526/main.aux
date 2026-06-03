@@ -123,6 +123,7 @@
 \@writefile{toc}{\contentsline {section}{\numberline {1.5}Objectives}{7}{section.1.5}\protected@file@percent }
 \newlabel{sec:objectives}{{1.5}{7}{Objectives}{section.1.5}{}}
 \newlabel{sec:objectives@cref}{{[section][5][1]1.5}{[1][7][]7}{}{}{}}
+\citation{clapers2025}
 \@writefile{toc}{\contentsline {chapter}{\numberline {2}{\MakeUppercase    []{ Methodology}}}{8}{chapter.2}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
@@ -131,73 +132,82 @@
 \@writefile{toc}{\contentsline {section}{\numberline {2.1}System Overview and Core Automated Workflow}{8}{section.2.1}\protected@file@percent }
 \newlabel{sec:methodology-overview}{{2.1}{8}{System Overview and Core Automated Workflow}{section.2.1}{}}
 \newlabel{sec:methodology-overview@cref}{{[section][1][2]2.1}{[1][8][]8}{}{}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {2.2}Dataset: ASOCA and MACS-18 Annotations}{8}{section.2.2}\protected@file@percent }
-\newlabel{sec:methodology-datasets}{{2.2}{8}{Dataset: ASOCA and MACS-18 Annotations}{section.2.2}{}}
-\newlabel{sec:methodology-datasets@cref}{{[section][2][2]2.2}{[1][8][]8}{}{}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {2.3}Block 1: 3D Artery Anatomy Extraction}{8}{section.2.3}\protected@file@percent }
-\newlabel{sec:methodology-block1}{{2.3}{8}{Block 1: 3D Artery Anatomy Extraction}{section.2.3}{}}
-\newlabel{sec:methodology-block1@cref}{{[section][3][2]2.3}{[1][8][]8}{}{}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {2.4}Block 2: Geometric Stenosis Quantification}{8}{section.2.4}\protected@file@percent }
-\newlabel{sec:methodology-block2}{{2.4}{8}{Block 2: Geometric Stenosis Quantification}{section.2.4}{}}
-\newlabel{sec:methodology-block2@cref}{{[section][4][2]2.4}{[1][8][]8}{}{}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {2.5}Block 3: Artery Labeling and CAD-RADS 2.0 Scoring}{8}{section.2.5}\protected@file@percent }
-\newlabel{sec:methodology-block3}{{2.5}{8}{Block 3: Artery Labeling and CAD-RADS 2.0 Scoring}{section.2.5}{}}
-\newlabel{sec:methodology-block3@cref}{{[section][5][2]2.5}{[1][8][]8}{}{}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {2.6}Block 4: Patient Visualization Dashboard}{8}{section.2.6}\protected@file@percent }
-\newlabel{sec:methodology-block4}{{2.6}{8}{Block 4: Patient Visualization Dashboard}{section.2.6}{}}
-\newlabel{sec:methodology-block4@cref}{{[section][6][2]2.6}{[1][8][]8}{}{}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {2.7}Experimental Design and Validation Framework}{8}{section.2.7}\protected@file@percent }
-\newlabel{sec:methodology-validation}{{2.7}{8}{Experimental Design and Validation Framework}{section.2.7}{}}
-\newlabel{sec:methodology-validation@cref}{{[section][7][2]2.7}{[1][8][]8}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.7.1}Workflow Validation on Real Datasets: ASOCA}{8}{subsection.2.7.1}\protected@file@percent }
-\newlabel{subsec:validation-asoca}{{2.7.1}{8}{Workflow Validation on Real Datasets: ASOCA}{subsection.2.7.1}{}}
-\newlabel{subsec:validation-asoca@cref}{{[subsection][1][2,7]2.7.1}{[1][8][]8}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.7.2}Workflow Validation on Real Datasets: MACS-18}{8}{subsection.2.7.2}\protected@file@percent }
-\newlabel{subsec:validation-macs}{{2.7.2}{8}{Workflow Validation on Real Datasets: MACS-18}{subsection.2.7.2}{}}
-\newlabel{subsec:validation-macs@cref}{{[subsection][2][2,7]2.7.2}{[1][8][]8}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.7.3}Geometry and Quantification Verification: Synthetic Data}{8}{subsection.2.7.3}\protected@file@percent }
-\newlabel{subsec:validation-synthetic}{{2.7.3}{8}{Geometry and Quantification Verification: Synthetic Data}{subsection.2.7.3}{}}
-\newlabel{subsec:validation-synthetic@cref}{{[subsection][3][2,7]2.7.3}{[1][8][]8}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.7.4}User Experience and Interface Usability Evaluation}{8}{subsection.2.7.4}\protected@file@percent }
-\newlabel{subsec:validation-ux}{{2.7.4}{8}{User Experience and Interface Usability Evaluation}{subsection.2.7.4}{}}
-\newlabel{subsec:validation-ux@cref}{{[subsection][4][2,7]2.7.4}{[1][8][]8}{}{}{}}
-\@writefile{toc}{\contentsline {chapter}{\numberline {3}{\MakeUppercase    []{ Results}}}{9}{chapter.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1.1}End-to-End Data Flow}{8}{subsection.2.1.1}\protected@file@percent }
+\newlabel{subsec:pipeline-dataflow}{{2.1.1}{8}{End-to-End Data Flow}{subsection.2.1.1}{}}
+\newlabel{subsec:pipeline-dataflow@cref}{{[subsection][1][2,1]2.1.1}{[1][8][]8}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2.1}{\ignorespaces End-to-end automated workflow for a single patient case. Each block constitutes a self-contained processing stage; arrows indicate mandatory sequential dependencies and the principal data passed between stages.}}{8}{figure.2.1}\protected@file@percent }
+\newlabel{fig:e2e-workflow}{{2.1}{8}{End-to-end automated workflow for a single patient case. Each block constitutes a self-contained processing stage; arrows indicate mandatory sequential dependencies and the principal data passed between stages}{figure.2.1}{}}
+\newlabel{fig:e2e-workflow@cref}{{[figure][1][2]2.1}{[1][8][]8}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {2.1}{\ignorespaces Overview of the four pipeline blocks: processing role, primary inputs, and principal outputs per patient case.}}{9}{table.2.1}\protected@file@percent }
+\newlabel{tab:pipeline-blocks-overview}{{2.1}{9}{Overview of the four pipeline blocks: processing role, primary inputs, and principal outputs per patient case}{table.2.1}{}}
+\newlabel{tab:pipeline-blocks-overview@cref}{{[table][1][2]2.1}{[1][9][]9}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {2.2}Dataset: ASOCA and MACS-18 Annotations}{9}{section.2.2}\protected@file@percent }
+\newlabel{sec:methodology-datasets}{{2.2}{9}{Dataset: ASOCA and MACS-18 Annotations}{section.2.2}{}}
+\newlabel{sec:methodology-datasets@cref}{{[section][2][2]2.2}{[1][9][]9}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {2.3}Block 1: 3D Artery Anatomy Extraction}{9}{section.2.3}\protected@file@percent }
+\newlabel{sec:methodology-block1}{{2.3}{9}{Block 1: 3D Artery Anatomy Extraction}{section.2.3}{}}
+\newlabel{sec:methodology-block1@cref}{{[section][3][2]2.3}{[1][9][]9}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {2.4}Block 2: Geometric Stenosis Quantification}{9}{section.2.4}\protected@file@percent }
+\newlabel{sec:methodology-block2}{{2.4}{9}{Block 2: Geometric Stenosis Quantification}{section.2.4}{}}
+\newlabel{sec:methodology-block2@cref}{{[section][4][2]2.4}{[1][9][]9}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {2.5}Block 3: Artery Labeling and CAD-RADS 2.0 Scoring}{9}{section.2.5}\protected@file@percent }
+\newlabel{sec:methodology-block3}{{2.5}{9}{Block 3: Artery Labeling and CAD-RADS 2.0 Scoring}{section.2.5}{}}
+\newlabel{sec:methodology-block3@cref}{{[section][5][2]2.5}{[1][9][]9}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {2.6}Block 4: Patient Visualization Dashboard}{9}{section.2.6}\protected@file@percent }
+\newlabel{sec:methodology-block4}{{2.6}{9}{Block 4: Patient Visualization Dashboard}{section.2.6}{}}
+\newlabel{sec:methodology-block4@cref}{{[section][6][2]2.6}{[1][9][]9}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {2.7}Experimental Design and Validation Framework}{9}{section.2.7}\protected@file@percent }
+\newlabel{sec:methodology-validation}{{2.7}{9}{Experimental Design and Validation Framework}{section.2.7}{}}
+\newlabel{sec:methodology-validation@cref}{{[section][7][2]2.7}{[1][9][]9}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.7.1}Workflow Validation on Real Datasets: ASOCA}{9}{subsection.2.7.1}\protected@file@percent }
+\newlabel{subsec:validation-asoca}{{2.7.1}{9}{Workflow Validation on Real Datasets: ASOCA}{subsection.2.7.1}{}}
+\newlabel{subsec:validation-asoca@cref}{{[subsection][1][2,7]2.7.1}{[1][9][]9}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.7.2}Workflow Validation on Real Datasets: MACS-18}{9}{subsection.2.7.2}\protected@file@percent }
+\newlabel{subsec:validation-macs}{{2.7.2}{9}{Workflow Validation on Real Datasets: MACS-18}{subsection.2.7.2}{}}
+\newlabel{subsec:validation-macs@cref}{{[subsection][2][2,7]2.7.2}{[1][9][]9}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.7.3}Geometry and Quantification Verification: Synthetic Data}{9}{subsection.2.7.3}\protected@file@percent }
+\newlabel{subsec:validation-synthetic}{{2.7.3}{9}{Geometry and Quantification Verification: Synthetic Data}{subsection.2.7.3}{}}
+\newlabel{subsec:validation-synthetic@cref}{{[subsection][3][2,7]2.7.3}{[1][9][]9}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.7.4}User Experience and Interface Usability Evaluation}{9}{subsection.2.7.4}\protected@file@percent }
+\newlabel{subsec:validation-ux}{{2.7.4}{9}{User Experience and Interface Usability Evaluation}{subsection.2.7.4}{}}
+\newlabel{subsec:validation-ux@cref}{{[subsection][4][2,7]2.7.4}{[1][9][]9}{}{}{}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {3}{\MakeUppercase    []{ Results}}}{10}{chapter.3}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\newlabel{ch:results}{{3}{9}{Results}{chapter.3}{}}
-\newlabel{ch:results@cref}{{[chapter][3][]3}{[1][9][]9}{}{}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {3.1}Pipeline Execution: ASOCA vs.\ MACS-18}{9}{section.3.1}\protected@file@percent }
-\newlabel{sec:results-pipeline}{{3.1}{9}{Pipeline Execution: ASOCA vs.\ MACS-18}{section.3.1}{}}
-\newlabel{sec:results-pipeline@cref}{{[section][1][3]3.1}{[1][9][]9}{}{}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {3.2}Geometric and Algorithmic Accuracy via Synthetic Data}{9}{section.3.2}\protected@file@percent }
-\newlabel{sec:results-synthetic}{{3.2}{9}{Geometric and Algorithmic Accuracy via Synthetic Data}{section.3.2}{}}
-\newlabel{sec:results-synthetic@cref}{{[section][2][3]3.2}{[1][9][]9}{}{}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {3.3}Coronary Artery Dashboard Visualization Output}{9}{section.3.3}\protected@file@percent }
-\newlabel{sec:results-dashboard}{{3.3}{9}{Coronary Artery Dashboard Visualization Output}{section.3.3}{}}
-\newlabel{sec:results-dashboard@cref}{{[section][3][3]3.3}{[1][9][]9}{}{}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {3.4}User Experience and Interface Usability Evaluation}{9}{section.3.4}\protected@file@percent }
-\newlabel{sec:results-ux}{{3.4}{9}{User Experience and Interface Usability Evaluation}{section.3.4}{}}
-\newlabel{sec:results-ux@cref}{{[section][4][3]3.4}{[1][9][]9}{}{}{}}
-\@writefile{toc}{\contentsline {chapter}{\numberline {4}{\MakeUppercase    []{ Discussion}}}{10}{chapter.4}\protected@file@percent }
+\newlabel{ch:results}{{3}{10}{Results}{chapter.3}{}}
+\newlabel{ch:results@cref}{{[chapter][3][]3}{[1][10][]10}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {3.1}Pipeline Execution: ASOCA vs.\ MACS-18}{10}{section.3.1}\protected@file@percent }
+\newlabel{sec:results-pipeline}{{3.1}{10}{Pipeline Execution: ASOCA vs.\ MACS-18}{section.3.1}{}}
+\newlabel{sec:results-pipeline@cref}{{[section][1][3]3.1}{[1][10][]10}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {3.2}Geometric and Algorithmic Accuracy via Synthetic Data}{10}{section.3.2}\protected@file@percent }
+\newlabel{sec:results-synthetic}{{3.2}{10}{Geometric and Algorithmic Accuracy via Synthetic Data}{section.3.2}{}}
+\newlabel{sec:results-synthetic@cref}{{[section][2][3]3.2}{[1][10][]10}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {3.3}Coronary Artery Dashboard Visualization Output}{10}{section.3.3}\protected@file@percent }
+\newlabel{sec:results-dashboard}{{3.3}{10}{Coronary Artery Dashboard Visualization Output}{section.3.3}{}}
+\newlabel{sec:results-dashboard@cref}{{[section][3][3]3.3}{[1][10][]10}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {3.4}User Experience and Interface Usability Evaluation}{10}{section.3.4}\protected@file@percent }
+\newlabel{sec:results-ux}{{3.4}{10}{User Experience and Interface Usability Evaluation}{section.3.4}{}}
+\newlabel{sec:results-ux@cref}{{[section][4][3]3.4}{[1][10][]10}{}{}{}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {4}{\MakeUppercase    []{ Discussion}}}{11}{chapter.4}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\newlabel{ch:discussion}{{4}{10}{Discussion}{chapter.4}{}}
-\newlabel{ch:discussion@cref}{{[chapter][4][]4}{[1][10][]10}{}{}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {4.1}Analysis of the Results}{10}{section.4.1}\protected@file@percent }
-\newlabel{sec:discussion-analysis}{{4.1}{10}{Analysis of the Results}{section.4.1}{}}
-\newlabel{sec:discussion-analysis@cref}{{[section][1][4]4.1}{[1][10][]10}{}{}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {4.2}Technical and Anatomical Limitations}{10}{section.4.2}\protected@file@percent }
-\newlabel{sec:discussion-limitations}{{4.2}{10}{Technical and Anatomical Limitations}{section.4.2}{}}
-\newlabel{sec:discussion-limitations@cref}{{[section][2][4]4.2}{[1][10][]10}{}{}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {4.3}Future Work}{10}{section.4.3}\protected@file@percent }
-\newlabel{sec:discussion-future}{{4.3}{10}{Future Work}{section.4.3}{}}
-\newlabel{sec:discussion-future@cref}{{[section][3][4]4.3}{[1][10][]10}{}{}{}}
+\newlabel{ch:discussion}{{4}{11}{Discussion}{chapter.4}{}}
+\newlabel{ch:discussion@cref}{{[chapter][4][]4}{[1][11][]11}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.1}Analysis of the Results}{11}{section.4.1}\protected@file@percent }
+\newlabel{sec:discussion-analysis}{{4.1}{11}{Analysis of the Results}{section.4.1}{}}
+\newlabel{sec:discussion-analysis@cref}{{[section][1][4]4.1}{[1][11][]11}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.2}Technical and Anatomical Limitations}{11}{section.4.2}\protected@file@percent }
+\newlabel{sec:discussion-limitations}{{4.2}{11}{Technical and Anatomical Limitations}{section.4.2}{}}
+\newlabel{sec:discussion-limitations@cref}{{[section][2][4]4.2}{[1][11][]11}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.3}Future Work}{11}{section.4.3}\protected@file@percent }
+\newlabel{sec:discussion-future}{{4.3}{11}{Future Work}{section.4.3}{}}
+\newlabel{sec:discussion-future@cref}{{[section][3][4]4.3}{[1][11][]11}{}{}{}}
 \bibdata{bib/references}
-\@writefile{toc}{\contentsline {chapter}{\numberline {5}{\MakeUppercase    []{ Conclusions}}}{11}{chapter.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {chapter}{\numberline {5}{\MakeUppercase    []{ Conclusions}}}{12}{chapter.5}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\newlabel{ch:conclusions}{{5}{11}{Conclusions}{chapter.5}{}}
-\newlabel{ch:conclusions@cref}{{[chapter][5][]5}{[1][11][]11}{}{}{}}
+\newlabel{ch:conclusions}{{5}{12}{Conclusions}{chapter.5}{}}
+\newlabel{ch:conclusions@cref}{{[chapter][5][]5}{[1][12][]12}{}{}{}}
 \bibcite{acebes2024}{{1}{}{{}}{{}}}
 \bibcite{antiga2008}{{2}{}{{}}{{}}}
 \bibcite{artrya2024}{{3}{}{{}}{{}}}
@@ -227,9 +237,9 @@
 \bibcite{yang2020}{{27}{}{{}}{{}}}
 \bibcite{zhang2024}{{28}{}{{}}{{}}}
 \providecommand\NAT@force@numbers{}\NAT@force@numbers
-\@writefile{toc}{\contentsline {chapter}{\numberline {A}{\MakeUppercase    []{ Supporting Material}}}{14}{appendix.Alph1}\protected@file@percent }
+\@writefile{toc}{\contentsline {chapter}{\numberline {A}{\MakeUppercase    []{ Supporting Material}}}{15}{appendix.Alph1}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\newlabel{app:supporting-material}{{A}{14}{Supporting Material}{appendix.Alph1}{}}
-\newlabel{app:supporting-material@cref}{{[chapter][1][]A}{[1][14][]14}{}{}{}}
-\gdef \@abspage@last{23}
+\newlabel{app:supporting-material}{{A}{15}{Supporting Material}{appendix.Alph1}{}}
+\newlabel{app:supporting-material@cref}{{[chapter][1][]A}{[1][15][]15}{}{}{}}
+\gdef \@abspage@last{24}

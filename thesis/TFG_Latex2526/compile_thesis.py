@@ -4,6 +4,29 @@ from pathlib import Path
 
 root = Path(__file__).resolve().parent
 
+
+def auxiliary_files_look_corrupt() -> bool:
+    """Detect aux files truncated by an interrupted pdflatex run (causes ?? refs)."""
+    aux = root / "main.aux"
+    if not aux.exists():
+        return False
+    text = aux.read_text(encoding="utf-8", errors="replace")
+    # A successful thesis run records many labels and citation keys.
+    return len(text) < 2000 or "\\newlabel" not in text
+
+
+def remove_stale_auxiliary_files() -> None:
+    for name in ("main.aux", "main.out"):
+        path = root / name
+        if path.exists():
+            path.unlink()
+            print(f"Removed stale {name}")
+
+
+if auxiliary_files_look_corrupt():
+    print("Stale or truncated auxiliary files detected; cleaning before build.")
+    remove_stale_auxiliary_files()
+
 commands = [
     ["pdflatex", "-interaction=nonstopmode", "main.tex"],
     ["bibtex", "main"],

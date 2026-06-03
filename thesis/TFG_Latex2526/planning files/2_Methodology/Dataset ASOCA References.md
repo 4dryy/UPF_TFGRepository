@@ -1,0 +1,9 @@
+To create the citations an reference when introducing the asoca dataset, retrieve the inforamtion from this source: 
+
+https://www.sciencedirect.com/science/article/pii/S0895611122000222
+
+Abstract
+Cardiovascular disease is a major cause of death worldwide. Computed Tomography Coronary Angiography (CTCA) is a non-invasive method used to evaluate coronary artery disease, as well as evaluating and reconstructing heart and coronary vessel structures. Reconstructed models have a wide array of for educational, training and research applications such as the study of diseased and non-diseased coronary anatomy, machine learning based disease risk prediction and in-silico and in-vitro testing of medical devices. However, coronary arteries are difficult to image due to their small size, location, and movement, causing poor resolution and artefacts. Segmentation of coronary arteries has traditionally focused on semi-automatic methods where a human expert guides the algorithm and corrects errors, which severely limits large-scale applications and integration within clinical systems. International challenges aiming to overcome this barrier have focussed on specific tasks such as centreline extraction, stenosis quantification, and segmentation of specific artery segments only. Here we present the results of the first challenge to develop fully automatic segmentation methods of full coronary artery trees and establish the first large standardized dataset of normal and diseased arteries. This forms a new automated segmentation benchmark allowing the automated processing of CTCAs directly relevant for large-scale and personalized clinical applications.
++++
+
+APA Reference: Gharleghi, R., Adikari, D., Ellenberger, K., Ooi, S. Y., Ellis, C., Chen, C. M., ... & Beier, S. (2022). Automated segmentation of normal and diseased coronary arteries–the asoca challenge. Computerized Medical Imaging and Graphics, 97, 102049.

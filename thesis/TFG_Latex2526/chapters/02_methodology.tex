@@ -1,8 +1,63 @@
 \chapter{Methodology}
 \label{ch:methodology}
 
+% Readable paragraph spacing (matches Introduction)
+\setlength{\parskip}{0.65em plus 0.15em minus 0.05em}
+\setlength{\parindent}{0pt}
+
 \section{System Overview and Core Automated Workflow}
 \label{sec:methodology-overview}
+
+This section formalizes the modular Python pipeline introduced in \Cref{sec:scope}, translating the clinical decision-support framework into an executable computational workflow. For each patient identifier, a pre-segmented coronary lumen mask is processed sequentially into quantitative stenosis metrics, a CAD-RADS~2.0-oriented report, and an interactive visualization session.
+
+The workflow comprises four automated blocks (\crefrange{sec:methodology-block1}{sec:methodology-block4}) executed as a linear chain, with each stage consuming the artifacts produced by its predecessor and no manual intervention between steps. A unified patient identifier routes ASOCA, MACS-18, and synthetic cohorts through the same implementations, while runtimes and extraction metrics are logged for \Cref{sec:methodology-validation}.
+
+\subsection{End-to-End Data Flow}
+\label{subsec:pipeline-dataflow}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\linewidth]{{Figure 1. E2E Workflow Diagram.pdf}}
+  \caption{End-to-end automated workflow for a single patient case. Each block constitutes a self-contained processing stage; arrows indicate mandatory sequential dependencies and the principal data passed between stages.}
+  \label{fig:e2e-workflow}
+\end{figure}
+
+\Cref{fig:e2e-workflow} summarizes the four-block architecture. The workflow assumes as input a pre-segmented coronary lumen mask and, when available, anatomical segment labels from prior segmentation and labeling work at the hospital~\cite{clapers2025}.
+
+\begin{table}[H]
+  \centering
+  \caption{Overview of the four pipeline blocks: processing role, primary inputs, and principal outputs per patient case.}
+  \label{tab:pipeline-blocks-overview}
+  \vspace{0.65em}
+  \small
+  \renewcommand{\arraystretch}{1.4}
+  \setlength{\tabcolsep}{8pt}
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.23\linewidth}>{\raggedright\arraybackslash}p{0.335\linewidth}>{\raggedright\arraybackslash}p{0.335\linewidth}@{}}
+    \toprule
+    \cellcolor{gray!12}\textbf{Block} &
+    \cellcolor{gray!12}\textbf{Primary input(s)} &
+    \cellcolor{gray!12}\textbf{Principal output(s)} \\
+    \midrule
+    \textbf{1} Anatomy Extraction &
+    Binary lumen mask &
+    Centerline geometry, branch paths, and vessel surface models \\
+    \midrule
+    \textbf{2} Stenosis Quantification &
+    Centerline and surface representations from Block~1 &
+    Cross-sectional area profiles, percentage area stenosis (\%AS), and merged branch-level data \\
+    \midrule
+    \textbf{3} Labeling \& CAD-RADS &
+    Geometric and stenosis tables &
+    Segment stenosis summary and patient CAD-RADS report \\
+    \midrule
+    \textbf{4} Visualization &
+    Aggregated metrics and geometry from Blocks~1--3 &
+    Interactive clinical decision-support dashboard \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+To ensure explainability, the system retains intermediate mesh and tabular representations for potential clinical audits. The clinical cohorts utilized, along with the methodological depth of each processing block, are detailed below.
 
 \section{Dataset: ASOCA and MACS-18 Annotations}
 \label{sec:methodology-datasets}
@@ -33,3 +88,7 @@
 
 \subsection{User Experience and Interface Usability Evaluation}
 \label{subsec:validation-ux}
+
+% Restore default paragraph spacing for subsequent chapters
+\setlength{\parskip}{0pt plus 1pt}
+\setlength{\parindent}{15pt}
