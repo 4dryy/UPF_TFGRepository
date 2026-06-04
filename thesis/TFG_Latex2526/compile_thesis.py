@@ -1,5 +1,6 @@
 import os
 import re
+import shutil
 import subprocess
 import sys
 import time
@@ -7,31 +8,33 @@ from pathlib import Path
 
 root = Path(__file__).resolve().parent
 build_dir = root / "build"
+compile_dir = build_dir / "_compile"
 build_dir.mkdir(exist_ok=True)
 
-# All LaTeX outputs live here. Open build/main.pdf after compiling.
-BUILD_JOB = "main"
-BUILD_PDF = build_dir / f"{BUILD_JOB}.pdf"
-BUILD_LOG = build_dir / f"{BUILD_JOB}.log"
-BUILD_AUX = build_dir / f"{BUILD_JOB}.aux"
+# LaTeX writes into build/_compile/ during the run; only build/main.* remain afterward.
+FINAL_JOB = "main"
+COMPILE_DIR = compile_dir
+BUILD_OUT_DIR = compile_dir.resolve().as_posix()
+
+FINAL_PDF = build_dir / f"{FINAL_JOB}.pdf"
+BUILD_PDF = compile_dir / f"{FINAL_JOB}.pdf"
+BUILD_LOG = compile_dir / f"{FINAL_JOB}.log"
+BUILD_AUX = compile_dir / f"{FINAL_JOB}.aux"
 
 BUILD_SUFFIXES = (".aux", ".out", ".toc", ".lof", ".lot", ".log", ".blg", ".bbl", ".pdf")
 LIGHT_CLEAN_SUFFIXES = (".aux", ".out", ".toc", ".lof", ".lot", ".log", ".blg")
-# Keep ``.bbl`` so a single pdflatex pass after aux repair still resolves ``[?]`` citations.
 CORRUPT_CLEAN_SUFFIXES = (".aux", ".out", ".toc", ".lof", ".lot", ".log", ".blg")
 
-LOCK_RETRY_ATTEMPTS = 8
-LOCK_RETRY_DELAY_SEC = 3.0
+LOCK_RETRY_ATTEMPTS = 10
+LOCK_RETRY_DELAY_SEC = 5.0
 CONVERGENCE_PDFLATEX_PASSES = 3
 LOCKED_OUTPUT_RE = re.compile(r"I can't write on file `([^']+)'")
 
-# MiKTeX may exit with code 1 after "have not checked for updates"; still treat build as OK if PDF exists.
 COMPILE_ENV = {
     **os.environ,
     "MIKTEX_DISABLE_INSTALLER": "1",
 }
 
-# Leftovers from older compile layouts (root copies or thesis_output jobname).
 LEGACY_ROOT_NAMES = (
     "main.aux",
     "main.out",
@@ -81,6 +84,17 @@ def remove_legacy_artifacts() -> None:
         remove_file(build_dir / f"thesis_output{suffix}")
 
 
+def remove_stale_duplicate_build_files() -> None:
+    """Drop main_compile.* and other leftovers from earlier compile script versions."""
+    for suffix in BUILD_SUFFIXES:
+        remove_file(build_dir / f"main_compile{suffix}")
+    staging = build_dir / f"{FINAL_JOB}.pdf.new"
+    remove_file(staging)
+    if compile_dir.exists():
+        shutil.rmtree(compile_dir, ignore_errors=True)
+    compile_dir.mkdir(parents=True, exist_ok=True)
+
+
 def auxiliary_files_look_corrupt() -> bool:
     if not BUILD_AUX.exists():
         return False
@@ -89,12 +103,12 @@ def auxiliary_files_look_corrupt() -> bool:
 
 
 def hyperref_bookmarks_look_stale() -> bool:
-    out_file = build_dir / f"{BUILD_JOB}.out"
+    out_file = compile_dir / f"{FINAL_JOB}.out"
     text = read_text(out_file)
     return bool(text and any(marker in text for marker in STALE_HYPERREF_MARKERS))
 
 
-def clean_build_artifacts(
+def clean_compile_workspace(
     *,
     full: bool = True,
     corrupt: bool = False,
@@ -106,7 +120,7 @@ def clean_build_artifacts(
     else:
         suffixes = LIGHT_CLEAN_SUFFIXES
     for suffix in suffixes:
-        remove_file(build_dir / f"{BUILD_JOB}{suffix}")
+        remove_file(compile_dir / f"{FINAL_JOB}{suffix}")
 
 
 def path_is_writable(path: Path) -> bool:
@@ -124,9 +138,8 @@ def resolve_locked_output_path(name: str) -> Path:
     candidate = Path(name)
     if candidate.is_absolute():
         return candidate
-    in_build = build_dir / candidate.name
-    if in_build.exists() or name.startswith("build"):
-        return in_build
+    if (compile_dir / candidate.name).exists():
+        return compile_dir / candidate.name
     return build_dir / candidate.name
 
 
@@ -137,8 +150,8 @@ def locked_outputs_from_log(log: str) -> list[Path]:
 
 def preflight_pdflatex_outputs() -> list[Path]:
     blocked: list[Path] = []
-    for suffix in (".pdf", ".lof", ".lot", ".toc", ".aux", ".out"):
-        path = build_dir / f"{BUILD_JOB}{suffix}"
+    for suffix in (".pdf", ".lof", ".lot", ".toc", ".aux", ".out", ".log"):
+        path = compile_dir / f"{FINAL_JOB}{suffix}"
         if not path_is_writable(path):
             blocked.append(path)
     return blocked
@@ -184,17 +197,52 @@ def log_needs_rerun(log: str) -> bool:
     return any(m in log for m in markers)
 
 
-def report_build_status() -> bool:
-    log = read_log()
+def log_has_natbib_author_warnings(log: str) -> bool:
+    return "Author undefined for citation" in log
 
-    if not pdf_was_written(log):
-        print("\nCheck build/main.log for errors")
+
+def promote_build_outputs() -> bool:
+    """Copy build/_compile/main.* to build/main.* and remove the temporary workspace."""
+    if not BUILD_PDF.exists():
+        return False
+
+    promoted_any = False
+    for suffix in BUILD_SUFFIXES:
+        src = compile_dir / f"{FINAL_JOB}{suffix}"
+        if not src.exists():
+            continue
+        dst = build_dir / f"{FINAL_JOB}{suffix}"
+        staging = dst.with_name(dst.name + ".new")
+        try:
+            shutil.copy2(src, staging)
+            staging.replace(dst)
+            promoted_any = True
+        except OSError:
+            if staging.exists():
+                staging.unlink(missing_ok=True)
+            print(
+                f"Could not update {dst.relative_to(root)} (close any preview of that file).",
+                file=sys.stderr,
+            )
+            return False
+
+    shutil.rmtree(compile_dir, ignore_errors=True)
+    return promoted_any
+
+
+def report_build_status() -> bool:
+    log = read_text(build_dir / f"{FINAL_JOB}.log")
+    if not log:
+        log = read_log()
+
+    if not FINAL_PDF.exists():
+        print(f"\nCheck {BUILD_LOG.relative_to(root)} for errors")
         for line in log.splitlines():
             if line.startswith("!") or "Emergency stop" in line or "Fatal error" in line:
                 print(line)
         return False
 
-    print(f"\nSUCCESS: {BUILD_PDF} generated")
+    print(f"\nSUCCESS: {FINAL_PDF.relative_to(root)} generated")
     undefined_cites = [line for line in log.splitlines() if "Citation" in line and "undefined" in line]
     undefined_refs = [line for line in log.splitlines() if "Reference" in line and "undefined" in line]
     stale_dest = [line for line in log.splitlines() if "pdfTeX warning (dest)" in line]
@@ -203,10 +251,6 @@ def report_build_status() -> bool:
         print(f"WARNING: {len(undefined_cites)} undefined citation(s) remain")
         for line in undefined_cites[:5]:
             print(line)
-        print(
-            "Close build/main.pdf in every viewer, then run: python compile_thesis.py",
-            file=sys.stderr,
-        )
     else:
         print("All citations resolved.")
 
@@ -223,8 +267,15 @@ def report_build_status() -> bool:
             file=sys.stderr,
         )
 
-    print(f"Open the thesis PDF at: {BUILD_PDF}")
-    return not undefined_cites and not undefined_refs and not stale_dest
+    if log_has_natbib_author_warnings(log):
+        print(
+            "WARNING: \\citeauthor is undefined for at least one entry (common with plain.bst + numeric natbib).",
+            file=sys.stderr,
+        )
+
+    print(f"Open the thesis PDF at: {FINAL_PDF}")
+    ok = not undefined_cites and not undefined_refs and not stale_dest
+    return ok and not log_has_natbib_author_warnings(log)
 
 
 def run_command(cmd: list[str]) -> subprocess.CompletedProcess[str]:
@@ -242,9 +293,8 @@ def print_locked_file_help(locked: list[Path]) -> None:
     rel = ", ".join(str(p.relative_to(root)) for p in locked)
     print(
         f"\nLaTeX could not write: {rel}.\n"
-        "Close build/main.pdf and any PDF preview inside the IDE, then run compile again.\n"
-        "Do not open build/main.pdf until the script finishes.\n"
-        "If the project folder is under OneDrive, pause sync briefly or exclude the build/ folder.",
+        f"Close any preview of build/{FINAL_JOB}.pdf, then run compile again.\n"
+        "If the project is under OneDrive, pause sync briefly or exclude build/ from sync.",
         file=sys.stderr,
     )
 
@@ -274,11 +324,6 @@ def run_pdflatex_with_retries(cmd: list[str], step_index: int) -> tuple[subproce
         locked = locked_outputs_from_log(last_log)
         if locked:
             print_locked_file_help(locked)
-            # Never delete main.pdf here: removing it mid-run leaves citations/refs as [?].
-            for path in locked:
-                if path.resolve() == BUILD_PDF.resolve():
-                    continue
-                remove_file(path)
 
     assert last_result is not None
     return last_result, last_log
@@ -300,25 +345,21 @@ def run_convergence_passes(cmd: list[str], start_step: int) -> None:
             break
 
 
-pdflatex_cmd = [
-    "pdflatex",
-    "-interaction=nonstopmode",
-    "-jobname",
-    BUILD_JOB,
-    "-output-directory=build",
-    "main.tex",
-]
-
-commands: list[tuple[str, list[str]]] = [
-    ("pdflatex", pdflatex_cmd),
-    ("bibtex", ["bibtex", f"build/{BUILD_JOB}"]),
-    ("pdflatex", pdflatex_cmd),
-    ("pdflatex", pdflatex_cmd),
-]
+def build_pdflatex_cmd() -> list[str]:
+    return [
+        "pdflatex",
+        "-interaction=nonstopmode",
+        "-synctex=0",
+        "-jobname",
+        FINAL_JOB,
+        f"-output-directory={BUILD_OUT_DIR}",
+        "main.tex",
+    ]
 
 
 def main() -> int:
     remove_legacy_artifacts()
+    remove_stale_duplicate_build_files()
 
     blocked = preflight_pdflatex_outputs()
     if blocked:
@@ -329,14 +370,25 @@ def main() -> int:
     corrupt = auxiliary_files_look_corrupt()
     stale = hyperref_bookmarks_look_stale()
     if corrupt:
-        print("Cleaning build/ auxiliary files (truncated aux); keeping main.bbl for citations.")
-        clean_build_artifacts(corrupt=True)
+        print("Cleaning build/_compile/ (truncated aux); keeping bibliography if present.")
+        clean_compile_workspace(corrupt=True)
     elif stale:
-        print("Cleaning build/ auxiliary files (stale bookmarks; keeping PDF and bibliography).")
-        clean_build_artifacts(full=False)
+        print("Cleaning build/_compile/ (stale bookmarks).")
+        clean_compile_workspace(full=False)
 
-    print("Compiling to build/main.pdf (all LaTeX outputs stay in build/).")
-    print("Tip: keep build/main.pdf closed in viewers until this script exits.\n")
+    pdflatex_cmd = build_pdflatex_cmd()
+    bibtex_target = (compile_dir / FINAL_JOB).relative_to(root).as_posix()
+    commands: list[tuple[str, list[str]]] = [
+        ("pdflatex", pdflatex_cmd),
+        ("bibtex", ["bibtex", bibtex_target]),
+        ("pdflatex", pdflatex_cmd),
+        ("pdflatex", pdflatex_cmd),
+    ]
+
+    print(
+        "Compiling in build/_compile/, then updating build/main.pdf and related files.\n"
+        "Tip: open only build/main.pdf (not files inside _compile/).\n"
+    )
 
     for i, (kind, cmd) in enumerate(commands, start=1):
         print(f"\n=== Step {i}: {' '.join(cmd)} ===")
@@ -359,8 +411,6 @@ def main() -> int:
                 )
             if pdflatex_failed_due_to_locked_output(log):
                 print_locked_file_help(locked_outputs_from_log(log) or preflight_pdflatex_outputs())
-            if report_build_status():
-                return 0
             return result.returncode if result.returncode else 1
 
         if kind == "bibtex" and result.returncode != 0:
@@ -368,6 +418,14 @@ def main() -> int:
             return result.returncode
 
     run_convergence_passes(pdflatex_cmd, start_step=len(commands))
+
+    if not promote_build_outputs():
+        print(
+            "\nCompile finished in build/_compile/ but could not update build/main.pdf.",
+            file=sys.stderr,
+        )
+        print(f"Open: {BUILD_PDF.relative_to(root)}", file=sys.stderr)
+        return 1
 
     return 0 if report_build_status() else 1
 

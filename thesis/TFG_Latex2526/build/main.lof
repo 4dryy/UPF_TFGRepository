@@ -15,6 +15,7 @@
 \contentsline {figure}{\numberline {2.1}{\ignorespaces End-to-end automated workflow for a single patient case. Each block constitutes a self-contained processing stage; arrows indicate mandatory sequential dependencies and the principal data passed between stages.}}{8}{figure.2.1}%
 \contentsline {figure}{\numberline {2.2}{\ignorespaces Block~1 hybrid workflow: spatial separation of the right and left coronary trees, automated seed placement on each tree, and extraction of centerline geometry with branch packaging.}}{10}{figure.2.2}%
 \contentsline {figure}{\numberline {2.3}{\ignorespaces Block~2 workflow: orthogonal cross-sectional area extraction on each artery centerline and surface mesh, tabular integration, proximal/distal reference estimation, and \%AS quantification.}}{12}{figure.2.3}%
+\contentsline {figure}{\numberline {2.4}{\ignorespaces Block~3 workflow: segment aggregation based on the AHA 17-segment model and automated CAD-RADS~2.0 scoring.}}{15}{figure.2.4}%
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }

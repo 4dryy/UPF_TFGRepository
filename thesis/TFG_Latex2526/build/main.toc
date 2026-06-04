@@ -35,20 +35,23 @@
 \contentsline {paragraph}{Phase 3: Geodesic Distance and Reference Area Estimation}{14}{section*.9}%
 \contentsline {paragraph}{Phase 4: Percentage Area Stenosis and Patient-Level Aggregation}{14}{section*.10}%
 \contentsline {section}{\numberline {2.5}Block 3: Artery Labeling and CAD-RADS 2.0 Scoring}{15}{section.2.5}%
-\contentsline {section}{\numberline {2.6}Block 4: Patient Visualization Dashboard}{15}{section.2.6}%
-\contentsline {section}{\numberline {2.7}Experimental Design and Validation Framework}{15}{section.2.7}%
-\contentsline {subsection}{\numberline {2.7.1}Workflow Validation on Real Datasets: ASOCA}{15}{subsection.2.7.1}%
-\contentsline {subsection}{\numberline {2.7.2}Workflow Validation on Real Datasets: MACS-18}{15}{subsection.2.7.2}%
-\contentsline {subsection}{\numberline {2.7.3}Geometry and Quantification Verification: Synthetic Data}{15}{subsection.2.7.3}%
-\contentsline {subsection}{\numberline {2.7.4}User Experience and Interface Usability Evaluation}{15}{subsection.2.7.4}%
-\contentsline {chapter}{\numberline {3}{\MakeUppercase []{ Results}}}{16}{chapter.3}%
-\contentsline {section}{\numberline {3.1}Pipeline Execution: ASOCA vs.\ MACS-18}{16}{section.3.1}%
-\contentsline {section}{\numberline {3.2}Geometric and Algorithmic Accuracy via Synthetic Data}{16}{section.3.2}%
-\contentsline {section}{\numberline {3.3}Coronary Artery Dashboard Visualization Output}{16}{section.3.3}%
-\contentsline {section}{\numberline {3.4}User Experience and Interface Usability Evaluation}{16}{section.3.4}%
-\contentsline {chapter}{\numberline {4}{\MakeUppercase []{ Discussion}}}{17}{chapter.4}%
-\contentsline {section}{\numberline {4.1}Analysis of the Results}{17}{section.4.1}%
-\contentsline {section}{\numberline {4.2}Technical and Anatomical Limitations}{17}{section.4.2}%
-\contentsline {section}{\numberline {4.3}Future Work}{17}{section.4.3}%
-\contentsline {chapter}{\numberline {5}{\MakeUppercase []{ Conclusions}}}{18}{chapter.5}%
-\contentsline {chapter}{\numberline {A}{\MakeUppercase []{ Supporting Material}}}{21}{appendix.Alph1}%
+\contentsline {subsection}{\numberline {2.5.1}Anatomical Context: AHA 17-Segment Model}{15}{subsection.2.5.1}%
+\contentsline {subsection}{\numberline {2.5.2}Segment-Level Stenosis Aggregation}{16}{subsection.2.5.2}%
+\contentsline {subsection}{\numberline {2.5.3}Patient-Level CAD-RADS 2.0 Classification}{17}{subsection.2.5.3}%
+\contentsline {section}{\numberline {2.6}Block 4: Patient Visualization Dashboard}{18}{section.2.6}%
+\contentsline {section}{\numberline {2.7}Experimental Design and Validation Framework}{18}{section.2.7}%
+\contentsline {subsection}{\numberline {2.7.1}Workflow Validation on Real Datasets: ASOCA}{18}{subsection.2.7.1}%
+\contentsline {subsection}{\numberline {2.7.2}Workflow Validation on Real Datasets: MACS-18}{18}{subsection.2.7.2}%
+\contentsline {subsection}{\numberline {2.7.3}Geometry and Quantification Verification: Synthetic Data}{18}{subsection.2.7.3}%
+\contentsline {subsection}{\numberline {2.7.4}User Experience and Interface Usability Evaluation}{18}{subsection.2.7.4}%
+\contentsline {chapter}{\numberline {3}{\MakeUppercase []{ Results}}}{19}{chapter.3}%
+\contentsline {section}{\numberline {3.1}Pipeline Execution: ASOCA vs.\ MACS-18}{19}{section.3.1}%
+\contentsline {section}{\numberline {3.2}Geometric and Algorithmic Accuracy via Synthetic Data}{19}{section.3.2}%
+\contentsline {section}{\numberline {3.3}Coronary Artery Dashboard Visualization Output}{19}{section.3.3}%
+\contentsline {section}{\numberline {3.4}User Experience and Interface Usability Evaluation}{19}{section.3.4}%
+\contentsline {chapter}{\numberline {4}{\MakeUppercase []{ Discussion}}}{20}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Analysis of the Results}{20}{section.4.1}%
+\contentsline {section}{\numberline {4.2}Technical and Anatomical Limitations}{20}{section.4.2}%
+\contentsline {section}{\numberline {4.3}Future Work}{20}{section.4.3}%
+\contentsline {chapter}{\numberline {5}{\MakeUppercase []{ Conclusions}}}{21}{chapter.5}%
+\contentsline {chapter}{\numberline {A}{\MakeUppercase []{ Supporting Material}}}{24}{appendix.Alph1}%

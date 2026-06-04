@@ -182,6 +182,127 @@ Ultimately, Block~2 yields two structured outputs: the enriched individual branc
 \section{Block 3: Artery Labeling and CAD-RADS 2.0 Scoring}
 \label{sec:methodology-block3}
 
+Block~3 translates the quantitative stenosis metrics produced in Block~2 into a standardized clinical classification using the Coronary Artery Disease Reporting and Data System (CAD-RADS~2.0) framework~\cite{cury2022}.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\linewidth]{{Figure 4. Block 3 Workflow Diagram.pdf}}
+  \caption{Block~3 workflow: segment aggregation based on the AHA 17-segment model and automated CAD-RADS~2.0 scoring.}
+  \label{fig:block3-workflow}
+\end{figure}
+
+As illustrated in \Cref{fig:block3-workflow}, this block ingests the merged patient-level stenosis table from Block~2 together with the anatomical segment labels inherited from Block~1. The pipeline first summarizes the stenosis severity at the individual segment level. These segments are subsequently grouped into the primary coronary territories (RCA, LM, LAD, and LCx), establishing the essential anatomical framework required for the CAD-RADS~2.0 evaluation. Finally, the system applies rule-based logic to derive the overall patient-level CAD-RADS category and calculates the Segment Involvement Score (SIS), structuring these findings into the definitive outputs consumed by Block~4.
+
+\subsection{Anatomical Context: AHA 17-Segment Model}
+\label{subsec:block3-aha}
+
+Reliable CAD-RADS assignment requires mapping each evaluated centerline point to a recognized coronary territory. The pipeline adopts the 17-segment American Heart Association (AHA) model, a widely used reporting standard for regional coronary anatomy~\cite{austen1975}. This choice is not only clinically established but also technically aligned with the voxel labeling scheme of the primary cohorts used in this thesis: integer labels in the ASOCA annotation volumes~\cite{gharleghi2022asoca} are consumed directly as segment~ID values without intermediate remapping. This direct compatibility preserves pipeline robustness and keeps segment-level aggregation consistent across patients.
+
+Beyond individual anatomical segments, this model maps every branch into one of four primary coronary territories: the Right Coronary Artery (RCA), Left Main (LM), Left Anterior Descending (LAD), and Left Circumflex (LCX). This territorial grouping is a fundamental requirement of the CAD-RADS~2.0 scoring framework, which assigns the patient-level category from the most severe stenosis observed across these vessels~\cite{cury2022}. \Cref{tab:aha_17_segment} summarizes the complete segment-to-territory dictionary used throughout Block~3 and the clinical dashboard. Background voxels are encoded as segment~0 and are subsequently excluded from stenosis aggregation.
+
+\begin{table}[H]
+  \centering
+  \caption{AHA 17-segment dictionary used for anatomical labeling and CAD-RADS territory grouping. Adapted from Austen et al.~\cite{austen1975}.}
+  \label{tab:aha_17_segment}
+  \vspace{0.5em}
+  \footnotesize
+  \renewcommand{\arraystretch}{1.25}
+  \setlength{\tabcolsep}{5pt}
+  \begin{tabular}{@{}c >{\raggedright\arraybackslash}p{0.14\linewidth} l l@{}}
+    \toprule
+    \cellcolor{gray!12}\textbf{ID} &
+    \cellcolor{gray!12}\textbf{Abbreviation} &
+    \cellcolor{gray!12}\textbf{Anatomical name} &
+    \cellcolor{gray!12}\textbf{Territory} \\
+    \midrule
+    1 & pRCA & Proximal RCA & RCA \\
+    2 & mRCA & Mid RCA & RCA \\
+    3 & dRCA & Distal RCA & RCA \\
+    4 & rPDA & Right PDA & RCA \\
+    5 & LM & Left Main & LM \\
+    6 & pLAD & Proximal LAD & LAD \\
+    7 & mLAD & Mid LAD & LAD \\
+    8 & dLAD & Distal LAD & LAD \\
+    9 & D1 & First diagonal & LAD \\
+    10 & D2 & Second diagonal & LAD \\
+    11 & pLCX & Proximal LCX & LCX \\
+    12 & OM1 & First obtuse marginal & LCX \\
+    13 & dLCX & Distal LCX & LCX \\
+    14 & OM2 & Second obtuse marginal & LCX \\
+    15 & lPDA & Left coronary PDA & LCX \\
+    16 & L-ILB & LCX inferolateral branch & LCX \\
+    17 & L-PLB & LCX posterolateral branch & LCX \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Segment-Level Stenosis Aggregation}
+\label{subsec:block3-segment-aggregation}
+
+For each patient, all centerline rows in the Block~2 merged table that carry a valid \texttt{Segment\_ID} are grouped by segment identifier using tabular aggregation. Within each segment, the algorithm retains the absolute maximum \%AS, ensuring that focal lesions are not underestimated when multiple samples exist along the same anatomical region. Each segment is then assigned a discrete stenosis severity grade aligned with the CAD-RADS luminal stenosis bins (see \Cref{tab:cad-rads-stenosis}).
+
+Any \texttt{Segment\_ID} present in the input data but outside the 1--17 dictionary (for example, labels introduced by extended annotation schemes) is flagged as \emph{unmapped}. These rows may still appear in exploratory outputs, but they are excluded from the standard territory groupings used for CAD-RADS~2.0 triage, preventing execution failure while making non-standard labels explicit.
+
+\subsection{Patient-Level CAD-RADS 2.0 Classification}
+\label{subsec:block3-cad-rads}
+
+Patient-level scoring follows the CAD-RADS~2.0 decision principles~\cite{cury2022}. The algorithm first determines the highest segment-level stenosis grade from the aggregated table. That grade is derived from the maximum \%AS observed across all mapped segments and mapped to the standard luminal categories in \Cref{tab:cad-rads-stenosis}. Total coronary occlusion (category~5) is assigned when any segment reaches 100\% \%AS.
+
+Categories~4A and~4B distinguish high-risk patterns among severe stenoses. Category~4B is assigned when either (i)~left-main (segment~5) stenosis is at least 50\% \%AS, or (ii)~obstructive disease ($\geq 70\%$ \%AS) is present in each of the three major territories (RCA, LAD, and LCX) defined in \Cref{tab:cad-rads-territories}. If severe stenosis is present but neither criterion is met, the patient is classified as CAD-RADS~4A. Categories~0--3 are assigned directly from the highest segment grade when no category~4 or~5 rule overrides the result.
+
+\begin{table}[H]
+  \centering
+  \caption{CAD-RADS~2.0 luminal stenosis categories applied to maximum segment-level \%AS (adapted from~\cite{cury2022}).}
+  \label{tab:cad-rads-stenosis}
+  \vspace{0.5em}
+  \small
+  \renewcommand{\arraystretch}{1.35}
+  \setlength{\tabcolsep}{6pt}
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.14\linewidth}>{\raggedright\arraybackslash}p{0.26\linewidth}>{\raggedright\arraybackslash}p{0.52\linewidth}@{}}
+    \toprule
+    \cellcolor{gray!12}\textbf{Category} &
+    \cellcolor{gray!12}\textbf{Max.\ \%AS (segment)} &
+    \cellcolor{gray!12}\textbf{Clinical interpretation (summary)} \\
+    \midrule
+    0 & 0\% & No visible stenosis \\
+    1 & 1--24\% & Minimal stenosis \\
+    2 & 25--49\% & Mild stenosis \\
+    3 & 50--69\% & Moderate stenosis \\
+    4A & 70--99\% & Severe stenosis without CAD-RADS~4B criteria \\
+    4B & 70--99\% (territory pattern) or LM $\geq 50\%$ & High-risk severe disease pattern \\
+    5 & 100\% & Total coronary occlusion \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \caption{Major coronary territories used for CAD-RADS~2.0 triage rules in this pipeline (segment IDs follow the AHA 17-segment model; adapted from~\cite{cury2022,austen1975}).}
+  \label{tab:cad-rads-territories}
+  \vspace{0.5em}
+  \small
+  \renewcommand{\arraystretch}{1.35}
+  \setlength{\tabcolsep}{6pt}
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.18\linewidth}>{\raggedright\arraybackslash}p{0.34\linewidth}>{\raggedright\arraybackslash}p{0.38\linewidth}@{}}
+    \toprule
+    \cellcolor{gray!12}\textbf{Territory} &
+    \cellcolor{gray!12}\textbf{Segment IDs} &
+    \cellcolor{gray!12}\textbf{Role in automated scoring} \\
+    \midrule
+    RCA & 1, 2, 3, 4 &
+    Obstructive/severe flags per vessel; contributes to three-vessel 4B rule \\
+    LM & 5 &
+    Left-main $\geq 50\%$ \%AS triggers CAD-RADS~4B \\
+    LAD & 6, 7, 8, 9, 10 &
+    Obstructive/severe flags per vessel; contributes to three-vessel 4B rule \\
+    LCX & 11, 12, 13, 14, 15, 16, 17 &
+    Obstructive/severe flags per vessel; contributes to three-vessel 4B rule \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Finally, a plaque-burden modifier (P1--P4) is appended using the Segment Involvement Score (SIS): the number of segments with any measurable plaque, normalized against the 17 assessable segments~\cite{cury2022}. Block~3 exports a segment stenosis summary, a patient-level CAD-RADS report (category, rationale, highest lesion location, territory flags, and SIS), and enriched tables for visualization in Block~4.
+
 \section{Block 4: Patient Visualization Dashboard}
 \label{sec:methodology-block4}
 
