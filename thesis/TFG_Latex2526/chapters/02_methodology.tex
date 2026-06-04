@@ -62,36 +62,119 @@ To ensure explainability, the system retains intermediate mesh and tabular repre
 \section{ASOCA and MACS-18: Coronary Segmentation and Labeling Data}
 \label{sec:methodology-datasets}
 
-In medical image analysis, \emph{segmentation} denotes the partition of a three-dimensional scan into meaningful regions. For each voxel in the volume, an expert or algorithm decides whether it belongs to a structure of interest, such as the blood-filled interior (\emph{lumen}) of the coronary arteries, rather than to background tissue, myocardium, or surrounding anatomy. The result is not a single measurement but a spatial map that localizes the vessel tree within the patient-specific CCTA grid.
-
-The ASOCA and MACS-18 resources provide this map, together with companion anatomical label volumes, for a shared cohort of 40 CCTA cases (20 normal and 20 diseased anatomy). These data served primarily as the reference on which Blocks~1--4 were designed and implemented. Once the pipeline was in place, the full cohort was processed to evaluate end-to-end behavior. The experimental protocol and result analysis are reported in \Cref{sec:methodology-validation}.
+In medical image analysis, \emph{segmentation} denotes the partition of a three-dimensional scan into meaningful regions. For each voxel in the volume, an expert or algorithm decides whether it belongs to a structure of interest, such as the blood-filled interior (\emph{lumen}) of the coronary arteries, rather than to background tissue, myocardium, or surrounding anatomy. The result is not a single measurement but a spatial map that localizes the vessel tree within the patient-specific CCTA grid. The ASOCA and MACS-18 resources provide this map, together with companion anatomical label volumes, for a shared cohort of 40 CCTA cases (20 normal and 20 diseased anatomy). These data served as the reference on which Blocks~1--4 were designed and implemented. Once the pipeline was operational, the full cohort was processed to assess end-to-end behavior. The experimental protocol and result analysis are reported in \Cref{sec:methodology-validation}.
 
 \subsection{Segmentation and Label Volumes}
 \label{subsec:dataset-formats}
 
-For each patient case, the \emph{segmentation annotation} is stored as a three-dimensional voxel grid in NRRD format. Each voxel indicates whether it belongs to the coronary lumen. The pipeline treats this volume as a binary mask from which centerlines, branch topology, and surface geometry are extracted (Block~1). The grid is registered to the same physical coordinate system as the source CCTA, preserving patient-specific scale and orientation.
+For each patient case, two aligned three-dimensional grids are provided, both registered to the physical coordinate system of the source CCTA so that scale and orientation are preserved.
 
-The \emph{segment label volume} is a separate three-dimensional grid aligned with the segmentation, stored as a compressed NIfTI file. Instead of a binary lumen flag, each foreground voxel stores an integer class identifier that maps to a standardized coronary segment under the AHA 17-segment model~\cite{austen1975} (e.g., proximal left anterior descending, circumflex branches). Background voxels are assigned zero. The same label volumes are used for every case in the cohort regardless of whether the ASOCA or MACS-18 lumen mask is supplied to Block~1.
+The \emph{segmentation annotation} is stored as a voxel grid in NRRD format. Each voxel indicates whether it belongs to the coronary lumen or to background tissue. The pipeline treats this volume as a binary mask.
 
-\subsection{ASOCA Dataset}
-\label{subsec:dataset-asoca}
+The \emph{segment label volume} is a separate grid, stored as a compressed NIfTI file, aligned with the segmentation. Instead of a binary lumen flag, each foreground voxel stores an integer class identifier that maps to a standardized coronary segment under the AHA 17-segment model~\cite{austen1975}. Background voxels are assigned zero.
 
-The ASOCA (\emph{Automated Segmentation of Coronary Arteries}) challenge established the first large, standardized benchmark for fully automatic segmentation of complete normal and diseased coronary trees from CCTA~\cite{gharleghi2022asoca}. The resource addresses the difficulty of imaging small, moving vessels and supports research on end-to-end coronary analysis beyond semi-automatic, expert-guided workflows.
+\subsection{Datasets: ASOCA and MACS-18}
+\label{subsec:datasets-asoca-macs}
 
-ASOCA is a publicly available dataset. In this project, its release provided the initial lumen segmentation masks for the 40-patient cohort and constituted the working ground truth during pipeline development. These challenge annotations define the coronary tree extent used as the default Block~1 input and remain the public reference against which the hospital-refined alternative described below is compared.
+The ASOCA (\emph{Automated Segmentation of Coronary Arteries}) challenge established one of the first large, standardized benchmarks for fully automatic segmentation of complete normal and diseased coronary trees from CCTA~\cite{gharleghi2022asoca}. The resource addresses the difficulty of imaging small, moving vessels. ASOCA is publicly available and provided the original lumen masks for the 40-patient cohort. In this project, those masks served as the working reference during pipeline development and remain the default segmentation supplied to Block~1.
 
-\subsection{MACS-18 Dataset}
-\label{subsec:dataset-macs}
-
-While public benchmarks such as ASOCA have accelerated algorithm development, their lumen annotations often prioritize voxel-level overlap over topological completeness~\cite{acebes_macs18_wip}. Discontinuities in the mask and inconsistent distal coverage can limit centerline extraction, branch-level quantification, and geometric analysis in Blocks~1 and~2.
-
-MACS-18 (\emph{Multiclass Anatomical Coronary Segmentation, 18-segment}) is a re-segmentation of the same 40 ASOCA patient volumes currently under development at Hospital de la Santa Creu i Sant Pau under the supervision of C\'{e}sar Acebes Pinilla~\cite{acebes_macs18_wip,acebes2024}. Unlike ASOCA, this resource is not yet publicly released. Expert refinements target continuous lumen connectivity from the aortic root to the most distal visible branches, yielding more anatomically faithful masks without altering the underlying imaging data or patient identity. The aim is to obtain more accurate segmentations of the existing cases, not to introduce new patients or a different labeling scheme. Each MACS-18 volume therefore uses the identical AHA segment label map as its ASOCA counterpart; only the lumen mask differs between the two sources. Both datasets are processed by the same pipeline implementation.
+MACS-18 (\emph{Multiclass Anatomical Coronary Segmentation}) is a re-segmentation of the same 40 ASOCA patient volumes, currently in development at Hospital de la Santa Creu i Sant Pau and supervised by C\'{e}sar Acebes Pinilla~\cite{acebes_macs18_wip,acebes2024}. Unlike ASOCA, this resource is not yet publicly available. Widely used public datasets have helped train automatic segmentation methods, but their lumen masks are often evaluated mainly by how well voxels match a reference, not by whether the vessel tree forms a continuous, anatomically plausible path~\cite{acebes_macs18_wip}. When the lumen mask contains breaks or fails to follow the full length of the branches, extracting reliable centerlines and quantifying vessel geometry in Blocks~1 and~2 becomes more difficult. Expert manual refinements in MACS-18 target continuous lumen connectivity from the aortic root to the most distal visible branches, yielding more anatomically faithful masks without altering the underlying imaging data, patient identity, or labeling scheme. In this project, the same AHA segment label volumes are used for both ASOCA and MACS-18 cases; only the lumen mask differs between the two sources. The pipeline implementation is otherwise identical for both datasets.
 
 \section{Block 1: 3D Artery Anatomy Extraction}
 \label{sec:methodology-block1}
 
+Block~1 transforms the binary lumen mask into robust 3D vessel surfaces and mathematical centerlines. By extracting global RCA and LCA geometries alongside isolated paths from the ostium to each distal tip, it establishes the anatomical framework required for stenosis quantification in Block~2.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\linewidth]{{Figure 2. Block 1 Workflow Diagram.pdf}}
+  \caption{Block~1 hybrid workflow: spatial separation of the right and left coronary trees, automated seed placement on each tree, and extraction of centerline geometry with branch packaging.}
+  \label{fig:block1-workflow}
+\end{figure}
+
+As illustrated in \Cref{fig:block1-workflow}, this block implements a hybrid approach. Instead of relying on a single tool, it combines automated voxel analysis with the surface and centerline extraction algorithms of the Vascular Modeling Toolkit (VMTK). This design completely removes the need for manual seed-point selection while maintaining the precise 3D shape of the smoothed vessels.
+
+\paragraph{Phase 1: Spatial RCA/LCA Separation}\mbox{}\par\vspace{0.5em}
+The process begins by reading the binary lumen mask using \texttt{vmtkImageReader} to preserve voxel spacing and physical origin. To process the Right Coronary Artery (RCA) and Left Coronary Artery (LCA) independently, \texttt{scipy.ndimage.label} is applied to isolate the two largest connected components. In order to correctly classify these isolated components into the main RCA and LCA trees, the algorithm calculates their spatial center of mass. This metric represents the average 3D coordinate of all voxels within each object. By sorting these center points along the patient's spatial $x$-axis, the system follows standard anatomical conventions: the rightmost component is classified as the RCA, and the leftmost as the LCA. This splitting step produces two independent binary sub-volumes. Processing them separately is logically necessary before geometric extraction, as VMTK algorithms require a single starting source per connected surface.
+
+\paragraph{Phase 2: Per-Artery Surface Reconstruction and Automated Seeding}\mbox{}\par\vspace{0.5em}
+The two independent binary sub-volumes outputted by Phase~1 serve as the direct input for the surface reconstruction. For each isolated tree, a 3D surface mesh is generated using \texttt{vmtkMarchingCubes}. This function creates a continuous geometric boundary formed by connected triangles by interpolating the exact boundary between the foreground lumen voxels and the background. The raw mesh is then refined via \texttt{vmtkSurfaceSmoothing} using a pass-band filter. In this context, a pass-band filter works by separating high-frequency noise from the actual anatomical structure. It removes the rough, blocky edges caused by the original voxels and this creates a clean, mathematically stable surface for the next calculations without altering the true size of the artery.
+
+The next step requires placing seed points, which are the explicit starting and ending spatial coordinates required by VMTK to trace the centerlines. To fully automate this placement and eliminate manual user interaction, the system analyzes the overall 3D shape of the voxel mask to automatically find key structural landmarks. The algorithm to obtain these seed points works by iteratively ``peeling'' away the outer layers of the voxel grid (a process known as skeletonization) and was leveraged from prior work~\cite{clapers2025}. The volume is thinned using \texttt{skimage.morphology.skeletonize}, reducing the complex 3D shape down to a one-voxel-wide medial axis. Topological endpoints are then easily identified as voxels that have exactly one neighboring voxel (a node degree of one).
+
+The ostium, where the artery leaves the aorta and centerline tracing must begin, is selected among the skeleton endpoints using the AHA label volume (\Cref{subsec:dataset-formats}). Under the AHA 17-segment model, segment~1 identifies the proximal RCA and segment~5 the proximal LCA~\cite{austen1975}; an endpoint inside either region is designated as the ostium point. If none qualifies, the widest endpoint by maximum inscribed sphere radius is used as a fallback.
+
+All remaining endpoints are designated as distal targets. Because these endpoints are initially identified in a discrete voxel grid $(i, j, k)$, they must be mapped to the continuous physical space $(x, y, z)$ to be compatible with the mesh. This is achieved using the image origin $(O_x, O_y, O_z)$ and the voxel spacing $(S_x, S_y, S_z)$ through the following spatial transformation:
+\begin{equation}
+  x = O_x + i\,S_x,\quad y = O_y + j\,S_y,\quad z = O_z + k\,S_z.
+  \label{eq:voxel-to-physical}
+\end{equation}
+Once mapped, these physical coordinates are projected onto the nearest vertex of the smoothed mesh to ensure the seed points lie exactly on the mathematical manifold.
+
+\paragraph{Phase 3: Centerline Extraction, Topology Labeling, and Branch Packaging}\mbox{}\par\vspace{0.5em}
+With the seed points mapped onto the mathematical manifold, \texttt{vmtkCenterlines} is executed on the smoothed surface mesh. By providing the identified ostium as the source and the distal targets as the endpoints, the algorithm extracts the centerlines for each component of the coronary tree. These centerlines are 1D mathematical curves tracing exactly through the middle of the 3D vessels, creating a connected network that accurately maps the complex branching structure of the arteries. At every discrete point along these curves, the algorithm also calculates the \texttt{MaximumInscribedSphereRadius}, providing an initial estimation of the local vessel width.
+
+Once the centerlines are generated, a labeling step assigns a specific topological point type to every coordinate based on its structural position. To guarantee anatomical validity for downstream stenosis quantification, the centerlines are partitioned into continuous branch paths running directly from the ostium to each distal endpoint. Geometrical artifacts are then removed by applying a strict filtering logic: paths containing fewer than 20 points, originating more than 4\,mm from the true ostium, or failing to terminate at a valid endpoint are automatically discarded.
+
+Finally, the extracted data is packaged into a structured format. The spatial coordinates ($P_x$, $P_y$, $P_z$), local radius, assigned point type, and corresponding AHA segment identifiers are stored as ordered tables for both the individual branches and the global coronary tree. The generated surface and centerline meshes are also saved in \texttt{.vtp} format for visual rendering. Concluding Block~1, the RCA and LCA tables are concatenated into a unified patient record, providing the exact geometric dataset required for Block~2.
+
+% APPENDIX CANDIDATE: Full ostium-score weights, z-score terms, RCA/LCA top-$k$ pairing objective, and inward seed-snapping geometry — omit here for page budget unless you want them in the main text.
+
 \section{Block 2: Geometric Stenosis Quantification}
 \label{sec:methodology-block2}
+
+Block~2 transforms the Block~1 centerline and surface representations into percentage area stenosis (\%AS) profiles by measuring cross-sectional lumen area and comparing each point against a locally interpolated healthy reference.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\linewidth]{{Figure 3. Block 2 Workflow Diagram.pdf}}
+  \caption{Block~2 workflow: orthogonal cross-sectional area extraction on each artery centerline and surface mesh, tabular integration, proximal/distal reference estimation, and \%AS quantification.}
+  \label{fig:block2-workflow}
+\end{figure}
+
+As illustrated in \Cref{fig:block2-workflow}, Block~2 processes each available artery (RCA and LCA) independently. For every tree, it consumes the paired centerline and smoothed surface meshes produced in \Cref{sec:methodology-block1}.
+
+The computational logic for stenosis quantification and the methodology used to identify local healthy reference values build upon prior internal research by Burrull~\cite{burrull2023}, originally grounded in the standard percentage diameter stenosis (\%DS) framework described by Hideo-Kajita et al.~\cite{hideo_kajita2019}. Rather than reproducing diameter-based scores directly, this pipeline adapts those reference principles to cross-sectional \emph{area} and percentage area stenosis (\%AS).
+
+In coronary arteries, atherosclerotic plaque frequently develops eccentrically rather than as a perfect concentric ring. Relying solely on one-dimensional diameter estimates, such as the Maximum Inscribed Sphere Radius (MISR), can therefore misrepresent luminal narrowing. In an elliptical or irregularly narrowed vessel, the inscribed sphere captures only the narrowest physical constraint and ignores the lateral space through which blood may still flow.
+
+Conversely, the cross-sectional area captures the absolute reduction of the luminal opening regardless of cross-sectional shape. This yields a more robust representation of flow restriction and a geometric metric that correlates more closely with hemodynamic pressure drop than diameter alone~\cite{hideo_kajita2019}. The following phases mirror the diagram, detailing execution from localized area computation through patient-level aggregation.
+
+\paragraph{Phase 1: Cross-Sectional Area Extraction}\mbox{}\par\vspace{0.5em}
+The process begins by lightly smoothing the global centerline and resampling it to establish a uniform spatial resolution. The polyline is interpolated so that the physical distance between consecutive discrete points is standardized to 0.1\,mm by default. While larger intervals could reduce computational load, this spacing is deliberately chosen to capture high-fidelity geometric detail and subtle anatomical variations along the vessel. For exceptionally long arterial trees, this spacing is adaptively increased to ensure the total number of evaluated points does not exceed a maximum limit of 12{,}000 per component.
+
+At every resampled centerline point, \texttt{vmtkCenterlineSections} computes the cross-sectional lumen area at that specific point. To do this, the algorithm finds the local direction (tangent) of the centerline and creates a flat, perpendicular cutting plane. It then slices the 3D smoothed surface mesh (from Block~1) with this plane to extract the exact 2D boundary of the vessel lumen, calculating its enclosed area in mm$^2$. Any incomplete or open slices are automatically discarded.
+
+Highly tortuous or irregular geometries can occasionally cause the native VMTK sectioning step to fail, typically as an internal kernel error. To guarantee a complete, continuous area profile, a robust fallback replicates the same orthogonal slicing logic with Visualization Toolkit (VTK) operators when a failure is detected. At each evaluation point along the centerline, a \texttt{vtkPlane} (oriented perpendicularly to the centerline) combined with a \texttt{vtkCutter} slices the 3D surface to extract the cross-sectional lumen contour and compute its enclosed area in mm$^2$ using a standard polygon formula. This ensures accurate cross-sectional areas even in the most challenging anatomical segments.
+
+\paragraph{Phase 2: Tabular Area Integration and Branch Mapping}\mbox{}\par\vspace{0.5em}
+To perform localized stenosis quantification, the cross-sectional areas computed across the global coronary tree must be accurately mapped to the individual ostium-to-endpoint branch dataframes generated in Block~1.
+
+For every spatial coordinate $(P_x, P_y, P_z)$ in a branch table, if the sequence of centerline points aligns perfectly with the global area output, the value is assigned via direct row matching. If the points do not align exactly, the system uses a \texttt{scipy.spatial.cKDTree} nearest-neighbour query to find the closest evaluated station in 3D space and map its computed area to the specific branch point.
+
+Ultimately, this mapping step propagates a continuous \texttt{Area} metric to every discrete coordinate across all branch paths. It seamlessly merges the newly extracted geometry with the anatomical information inherited from Block~1, preparing the exact dataset required for the next baseline reference calculations.
+
+\paragraph{Phase 3: Geodesic Distance and Reference Area Estimation}\mbox{}\par\vspace{0.5em}
+Stenosis severity is evaluated independently along each individual branch path rather than on the global coronary tree dataset. This isolation is critical: it ensures that spatial evaluation strictly follows the natural, antegrade blood flow from the ostium to the distal tip. Evaluating the tree globally could inadvertently select reference points that are spatially close in Euclidean space but belong to entirely different, non-connected vessels.
+
+To measure distance along the tortuous 3D vessel, consecutive centerline points are connected by straight segments, and the cumulative sum of these segment lengths defines a one-dimensional geodesic distance ($g_d$). This $g_d$ value is then integrated into the branch dataframe for every discrete coordinate.
+
+To evaluate stenosis at any specific point, the algorithm requires a healthy reference area for comparison. The system first identifies proximal and distal centerline points located at geodesic positions $g_d - W$ and $g_d + W$, respectively. The reference half-window $W$ is a crucial hyperparameter in the pipeline. Based on the geometric stenosis framework introduced by Burrull~\cite{burrull2023} and standard angiographic principles described by Hideo-Kajita et al.~\cite{hideo_kajita2019}, $W$ is set to 10\,mm in this project. However, this 10\,mm threshold is an empirical approximation: there is no universally optimal value, as the ideal reference distance depends on patient-specific anatomy and individual lesion length. Ideally, to maximize clinical accuracy, the system would allow a physician to manually select or adjust proximal and distal reference points based on visual anatomical assessment. Because the computed stenosis varies significantly with the automated window size, this introduces an important methodological limitation that is discussed later.
+
+Once the two reference points are identified along the same branch, their corresponding mapped areas ($A_{\mathrm{prox}}$ and $A_{\mathrm{dist}}$) are retrieved. The healthy reference area ($A_{\mathrm{ref}}$) at the evaluation point is then calculated as the arithmetic mean of these bilateral values:
+\begin{equation}
+  A_{\mathrm{ref}} = \frac{A_{\mathrm{prox}} + A_{\mathrm{dist}}}{2}.
+  \label{eq:area-reference}
+\end{equation}
+Because this formula requires both proximal and distal context, percentage area stenosis cannot be calculated for points at the very extremities of branch paths. Consequently, any evaluation point lying within distance $W$ from the ostium or the distal tip is excluded, as it would possess only a one-sided reference. Alongside sensitivity to window size, additional anatomical challenges of this automated baseline (such as unpredictable behaviour near major bifurcations) are addressed in \Cref{ch:discussion}.
+
+\paragraph{Phase 4: Percentage Area Stenosis and Patient-Level Aggregation}\mbox{}\par\vspace{0.5em}
+For each qualifying centerline point, \%AS compares the local lumen area $A$ against $A_{\mathrm{ref}}$:
+\begin{equation}
+  \%\mathrm{AS} = \left(1 - \frac{A}{A_{\mathrm{ref}}}\right) \times 100.
+  \label{eq:pct-as}
+\end{equation}
+Branch tables are then merged into a single patient record. Because independent branch paths can share nearly identical coordinates near bifurcations, deduplication is applied \emph{within} each branch spreadsheet on rounded $(P_x, P_y, P_z)$ tuples, retaining the row with the highest \%AS. This conservative rule avoids underestimating lesion severity where paths overlap anatomically. The enriched tables (including $g_d$, $A_{\mathrm{prox}}$, $A_{\mathrm{dist}}$, $A_{\mathrm{ref}}$, and \%AS) constitute the quantitative input consumed by Block~3.
 
 \section{Block 3: Artery Labeling and CAD-RADS 2.0 Scoring}
 \label{sec:methodology-block3}

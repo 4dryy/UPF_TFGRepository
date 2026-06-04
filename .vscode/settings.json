@@ -1,3 +1,34 @@
 {
-     "editor.cursorBlinking": "smooth"
+  "editor.cursorBlinking": "smooth",
+  "latex-workshop.latex.rootFile": "thesis/TFG_Latex2526/main.tex",
+  "latex-workshop.latex.outDir": "%DIR%/build",
+  "latex-workshop.latex.tools": [
+    {
+      "name": "pdflatex-thesis",
+      "command": "pdflatex",
+      "args": [
+        "-interaction=nonstopmode",
+        "-jobname=main",
+        "-output-directory=build",
+        "%DOC%"
+      ]
+    },
+    {
+      "name": "bibtex-thesis",
+      "command": "bibtex",
+      "args": ["build/main"]
+    }
+  ],
+  "latex-workshop.latex.recipes": [
+    {
+      "name": "thesis (pdflatex + bibtex)",
+      "tools": [
+        "pdflatex-thesis",
+        "bibtex-thesis",
+        "pdflatex-thesis",
+        "pdflatex-thesis"
+      ]
+    }
+  ],
+  "latex-workshop.latex.recipe.default": "thesis (pdflatex + bibtex)"
 }

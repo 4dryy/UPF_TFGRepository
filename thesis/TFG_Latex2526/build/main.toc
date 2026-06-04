@@ -24,25 +24,31 @@
 \contentsline {subsection}{\numberline {2.1.1}End-to-End Data Flow}{8}{subsection.2.1.1}%
 \contentsline {section}{\numberline {2.2}ASOCA and MACS-18: Coronary Segmentation and Labeling Data}{9}{section.2.2}%
 \contentsline {subsection}{\numberline {2.2.1}Segmentation and Label Volumes}{9}{subsection.2.2.1}%
-\contentsline {subsection}{\numberline {2.2.2}ASOCA Dataset}{10}{subsection.2.2.2}%
-\contentsline {subsection}{\numberline {2.2.3}MACS-18 Dataset}{10}{subsection.2.2.3}%
-\contentsline {section}{\numberline {2.3}Block 1: 3D Artery Anatomy Extraction}{11}{section.2.3}%
-\contentsline {section}{\numberline {2.4}Block 2: Geometric Stenosis Quantification}{11}{section.2.4}%
-\contentsline {section}{\numberline {2.5}Block 3: Artery Labeling and CAD-RADS 2.0 Scoring}{11}{section.2.5}%
-\contentsline {section}{\numberline {2.6}Block 4: Patient Visualization Dashboard}{11}{section.2.6}%
-\contentsline {section}{\numberline {2.7}Experimental Design and Validation Framework}{11}{section.2.7}%
-\contentsline {subsection}{\numberline {2.7.1}Workflow Validation on Real Datasets: ASOCA}{11}{subsection.2.7.1}%
-\contentsline {subsection}{\numberline {2.7.2}Workflow Validation on Real Datasets: MACS-18}{11}{subsection.2.7.2}%
-\contentsline {subsection}{\numberline {2.7.3}Geometry and Quantification Verification: Synthetic Data}{11}{subsection.2.7.3}%
-\contentsline {subsection}{\numberline {2.7.4}User Experience and Interface Usability Evaluation}{11}{subsection.2.7.4}%
-\contentsline {chapter}{\numberline {3}{\MakeUppercase []{ Results}}}{12}{chapter.3}%
-\contentsline {section}{\numberline {3.1}Pipeline Execution: ASOCA vs.\ MACS-18}{12}{section.3.1}%
-\contentsline {section}{\numberline {3.2}Geometric and Algorithmic Accuracy via Synthetic Data}{12}{section.3.2}%
-\contentsline {section}{\numberline {3.3}Coronary Artery Dashboard Visualization Output}{12}{section.3.3}%
-\contentsline {section}{\numberline {3.4}User Experience and Interface Usability Evaluation}{12}{section.3.4}%
-\contentsline {chapter}{\numberline {4}{\MakeUppercase []{ Discussion}}}{13}{chapter.4}%
-\contentsline {section}{\numberline {4.1}Analysis of the Results}{13}{section.4.1}%
-\contentsline {section}{\numberline {4.2}Technical and Anatomical Limitations}{13}{section.4.2}%
-\contentsline {section}{\numberline {4.3}Future Work}{13}{section.4.3}%
-\contentsline {chapter}{\numberline {5}{\MakeUppercase []{ Conclusions}}}{14}{chapter.5}%
-\contentsline {chapter}{\numberline {A}{\MakeUppercase []{ Supporting Material}}}{17}{appendix.Alph1}%
+\contentsline {subsection}{\numberline {2.2.2}Datasets: ASOCA and MACS-18}{10}{subsection.2.2.2}%
+\contentsline {section}{\numberline {2.3}Block 1: 3D Artery Anatomy Extraction}{10}{section.2.3}%
+\contentsline {paragraph}{Phase 1: Spatial RCA/LCA Separation}{11}{section*.4}%
+\contentsline {paragraph}{Phase 2: Per-Artery Surface Reconstruction and Automated Seeding}{11}{section*.5}%
+\contentsline {paragraph}{Phase 3: Centerline Extraction, Topology Labeling, and Branch Packaging}{12}{section*.6}%
+\contentsline {section}{\numberline {2.4}Block 2: Geometric Stenosis Quantification}{12}{section.2.4}%
+\contentsline {paragraph}{Phase 1: Cross-Sectional Area Extraction}{13}{section*.7}%
+\contentsline {paragraph}{Phase 2: Tabular Area Integration and Branch Mapping}{13}{section*.8}%
+\contentsline {paragraph}{Phase 3: Geodesic Distance and Reference Area Estimation}{14}{section*.9}%
+\contentsline {paragraph}{Phase 4: Percentage Area Stenosis and Patient-Level Aggregation}{14}{section*.10}%
+\contentsline {section}{\numberline {2.5}Block 3: Artery Labeling and CAD-RADS 2.0 Scoring}{15}{section.2.5}%
+\contentsline {section}{\numberline {2.6}Block 4: Patient Visualization Dashboard}{15}{section.2.6}%
+\contentsline {section}{\numberline {2.7}Experimental Design and Validation Framework}{15}{section.2.7}%
+\contentsline {subsection}{\numberline {2.7.1}Workflow Validation on Real Datasets: ASOCA}{15}{subsection.2.7.1}%
+\contentsline {subsection}{\numberline {2.7.2}Workflow Validation on Real Datasets: MACS-18}{15}{subsection.2.7.2}%
+\contentsline {subsection}{\numberline {2.7.3}Geometry and Quantification Verification: Synthetic Data}{15}{subsection.2.7.3}%
+\contentsline {subsection}{\numberline {2.7.4}User Experience and Interface Usability Evaluation}{15}{subsection.2.7.4}%
+\contentsline {chapter}{\numberline {3}{\MakeUppercase []{ Results}}}{16}{chapter.3}%
+\contentsline {section}{\numberline {3.1}Pipeline Execution: ASOCA vs.\ MACS-18}{16}{section.3.1}%
+\contentsline {section}{\numberline {3.2}Geometric and Algorithmic Accuracy via Synthetic Data}{16}{section.3.2}%
+\contentsline {section}{\numberline {3.3}Coronary Artery Dashboard Visualization Output}{16}{section.3.3}%
+\contentsline {section}{\numberline {3.4}User Experience and Interface Usability Evaluation}{16}{section.3.4}%
+\contentsline {chapter}{\numberline {4}{\MakeUppercase []{ Discussion}}}{17}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Analysis of the Results}{17}{section.4.1}%
+\contentsline {section}{\numberline {4.2}Technical and Anatomical Limitations}{17}{section.4.2}%
+\contentsline {section}{\numberline {4.3}Future Work}{17}{section.4.3}%
+\contentsline {chapter}{\numberline {5}{\MakeUppercase []{ Conclusions}}}{18}{chapter.5}%
+\contentsline {chapter}{\numberline {A}{\MakeUppercase []{ Supporting Material}}}{21}{appendix.Alph1}%

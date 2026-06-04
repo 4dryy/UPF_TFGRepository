@@ -25,3 +25,15 @@ __pycache__/
 # OS generated files
 .DS_Store
 Thumbs.db
+
+# LaTeX thesis build outputs (source lives in thesis/TFG_Latex2526/)
+thesis/TFG_Latex2526/build/
+thesis/TFG_Latex2526/main.pdf
+thesis/TFG_Latex2526/main.aux
+thesis/TFG_Latex2526/main.bbl
+thesis/TFG_Latex2526/main.blg
+thesis/TFG_Latex2526/main.log
+thesis/TFG_Latex2526/main.out
+thesis/TFG_Latex2526/main.toc
+thesis/TFG_Latex2526/main.lof
+thesis/TFG_Latex2526/main.lot

@@ -13,6 +13,8 @@
 \contentsline {figure}{\numberline {1.5}{\ignorespaces Contextual overview of the proposed automated diagnostic framework at Hospital de la Santa Creu i Sant Pau. The contributions of this thesis (green dashed box) bridge the gap between existing hospital data systems (blue) and the final clinical report. Adapted from Acebes Pinilla~\cite {acebes2024}.}}{7}{figure.1.5}%
 \addvspace {10\p@ }
 \contentsline {figure}{\numberline {2.1}{\ignorespaces End-to-end automated workflow for a single patient case. Each block constitutes a self-contained processing stage; arrows indicate mandatory sequential dependencies and the principal data passed between stages.}}{8}{figure.2.1}%
+\contentsline {figure}{\numberline {2.2}{\ignorespaces Block~1 hybrid workflow: spatial separation of the right and left coronary trees, automated seed placement on each tree, and extraction of centerline geometry with branch packaging.}}{10}{figure.2.2}%
+\contentsline {figure}{\numberline {2.3}{\ignorespaces Block~2 workflow: orthogonal cross-sectional area extraction on each artery centerline and surface mesh, tabular integration, proximal/distal reference estimation, and \%AS quantification.}}{12}{figure.2.3}%
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }
