@@ -169,12 +169,15 @@ Once the two reference points are identified along the same branch, their corres
 Because this formula requires both proximal and distal context, percentage area stenosis cannot be calculated for points at the very extremities of branch paths. Consequently, any evaluation point lying within distance $W$ from the ostium or the distal tip is excluded, as it would possess only a one-sided reference. Alongside sensitivity to window size, additional anatomical challenges of this automated baseline (such as unpredictable behaviour near major bifurcations) are addressed in \Cref{ch:discussion}.
 
 \paragraph{Phase 4: Percentage Area Stenosis and Patient-Level Aggregation}\mbox{}\par\vspace{0.5em}
-For each qualifying centerline point, \%AS compares the local lumen area $A$ against $A_{\mathrm{ref}}$:
+For each qualifying centerline point, the pipeline quantifies stenosis severity. The percentage area stenosis (\%AS) formula, adapted from Burrull~\cite{burrull2023}, compares the local cross-sectional lumen area ($A$) directly against its corresponding healthy reference ($A_{\mathrm{ref}}$):
 \begin{equation}
   \%\mathrm{AS} = \left(1 - \frac{A}{A_{\mathrm{ref}}}\right) \times 100.
   \label{eq:pct-as}
 \end{equation}
-Branch tables are then merged into a single patient record. Because independent branch paths can share nearly identical coordinates near bifurcations, deduplication is applied \emph{within} each branch spreadsheet on rounded $(P_x, P_y, P_z)$ tuples, retaining the row with the highest \%AS. This conservative rule avoids underestimating lesion severity where paths overlap anatomically. The enriched tables (including $g_d$, $A_{\mathrm{prox}}$, $A_{\mathrm{dist}}$, $A_{\mathrm{ref}}$, and \%AS) constitute the quantitative input consumed by Block~3.
+
+Next, the separate branch tables are merged into a unified patient record. Since all extracted branches trace continuously from the ostium to a distal endpoint, they inherently share identical coordinates along common arterial trunks. When these tables are combined, spatial deduplication is applied based on rounded $(P_x, P_y, P_z)$ tuples. If multiple overlapping points exist at the same coordinate, the algorithm strictly retains the row with the highest \%AS value. This conservative rule ensures that no maximum stenosis is hidden, preventing clinical underestimation of lesion severity where anatomical paths overlap.
+
+Ultimately, Block~2 yields two structured outputs: the enriched individual branch datasets (containing $g_d$, $A_{\mathrm{prox}}$, $A_{\mathrm{dist}}$, $A_{\mathrm{ref}}$, and \%AS, among others) and the deduplicated global coronary tree dataset. These comprehensive tables constitute the definitive quantitative input consumed by Block~3.
 
 \section{Block 3: Artery Labeling and CAD-RADS 2.0 Scoring}
 \label{sec:methodology-block3}

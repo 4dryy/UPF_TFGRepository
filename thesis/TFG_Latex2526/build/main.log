@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.5.29)  4 JUN 2026 20:04
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.5.29)  4 JUN 2026 20:19
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -761,7 +761,7 @@ Package pdftex.def Info: figures and tables/2_Methodology/Figure 3. Block 2 Wor
 kflow Diagram.pdf  used on input line 130.
 (pdftex.def)             Requested size: 455.24411pt x 246.46634pt.
  [12 <./figures and tables/2_Methodology/Figure 3. Block 2 Workflow Diagram.pdf
->] [13]) (chapters/03_results.tex [14] [15]
+>] [13] [14]) (chapters/03_results.tex [15]
 Chapter 3.
 ) (chapters/04_discussion.tex [16
 
@@ -830,9 +830,9 @@ a/Local/Programs/MiKTeX/fonts/type1/urw/times/utmb8a.pfb><C:/Users/adria/AppDat
 a/Local/Programs/MiKTeX/fonts/type1/urw/times/utmr8a.pfb><C:/Users/adria/AppDat
 a/Local/Programs/MiKTeX/fonts/type1/urw/times/utmri8a.pfb>
 Output written on C:\Users\adria\OneDrive\Escriptori\UPF'\TFG\UPF_TFGRepository
-\thesis\TFG_Latex2526\build\main.pdf (30 pages, 4128782 bytes).
+\thesis\TFG_Latex2526\build\main.pdf (30 pages, 4129352 bytes).
 PDF statistics:
- 742 PDF objects out of 1000 (max. 8388607)
+ 743 PDF objects out of 1000 (max. 8388607)
  123 named destinations out of 1000 (max. 500000)
  376 words of extra memory for PDF output out of 10000 (max. 10000000)
 
