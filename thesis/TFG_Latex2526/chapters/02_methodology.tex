@@ -358,17 +358,161 @@ In Modules~3 and~4, explicitly plotting the peak stenosis alongside its bilatera
 \section{Experimental Design and Validation Framework}
 \label{sec:methodology-validation}
 
+Validating an automated clinical decision-support pipeline requires complementary evidence at multiple levels of abstraction. As established in the project objectives (\Cref{sec:objectives}), the primary goal of this thesis is to construct and integrate the complete computational workflow, rather than to maximize or optimize the clinical accuracy of stenosis quantification.
+
+Because of anatomical limitations discussed in \Cref{sec:discussion-limitations}, the pipeline overestimates stenosis severity in complex regions. Consequently, the current iteration of the pipeline does not possess reliable clinical predictive value. To align with the project scope, clinical stenosis accuracy and CAD-RADS~2.0 concordance against real-world patient diagnoses are explicitly excluded from the evaluation design.
+
+Instead, this thesis adopts a three-tier validation framework: \textbf{(i)}~operational validation on real patient cohorts (ASOCA and MACS-18) to assess algorithmic robustness and geometric extraction precision; \textbf{(ii)}~controlled algorithmic verification on synthetic phantoms with analytical ground truth to validate the underlying mathematical logic; and \textbf{(iii)}~a pilot clinical usability study using the System Usability Scale (SUS), conducted with specialized cardiologists at Hospital de la Santa Creu i Sant Pau, to evaluate the interactive Block~4 interface. Numerical outcomes are reported in \Cref{ch:results}; interpretation of limitations and future directions is reserved for \Cref{ch:discussion}.
+
+\subsection{Real-Data Evaluation Metrics and Acceptance Criteria}
+\label{subsec:validation-real-metrics}
+
+The first validation tier applies a shared 40-patient cohort (20 normal and 20 diseased anatomy) defined in \Cref{sec:methodology-datasets}. The real-data metrics in \Cref{tab:validation-real-metrics} were defined to evaluate pipeline reliability, geometric extraction quality, and runtime scalability on ASOCA and MACS-18. They measure whether the workflow runs successfully, whether Block~1 recovers plausible coronary topology, and whether automated processing remains practical at cohort scale. Runtime is reported as an engineering indicator only: it is not comparable to the full manual CCTA review times described in \Cref{sec:clinical-context}, because this system is designed as decision support rather than a standalone diagnostic tool. Clinicians are still expected to perform visual assessment; the dashboard aims to reduce review burden and support faster, better-informed triage when deciding which patients warrant deeper inspection.
+
+\begin{table}[H]
+  \caption{Real-data evaluation metrics used in \Cref{subsec:validation-asoca,subsec:validation-macs}.}
+  \label{tab:validation-real-metrics}
+  \vspace{0.5em}
+  \centering
+  \small
+  \renewcommand{\arraystretch}{1.35}
+  \setlength{\tabcolsep}{6pt}
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.12\linewidth}>{\raggedright\arraybackslash}p{0.42\linewidth}>{\raggedright\arraybackslash}p{0.36\linewidth}@{}}
+    \toprule
+    \cellcolor{gray!12}\textbf{Metric} &
+    \cellcolor{gray!12}\textbf{Definition} &
+    \cellcolor{gray!12}\textbf{Measurement} \\
+    \midrule
+    ESR & Execution Success Rate: fraction of cases completing Blocks~1--4 without fatal error & Automated pipeline logs \\
+    MPE & Mean endpoints per patient: average skeleton endpoint count per case & Block~1 output (descriptive topology richness) \\
+    EISR & Endpoint Identification Success Rate: correct endpoints / all detected endpoints & Manual visual audit per endpoint (ASOCA) \\
+    OISR & Ostium Identification Success Rate: correctly placed RCA/LCA ostia / 2 expected per patient & Manual visual inspection vs.\ aortic origin \\
+    CESR & Centerline Extraction Success Rate: successful ostium-to-endpoint paths / attempted extractions & Automated computation from Block~1 extraction records \\
+    Runtime & Wall-clock seconds per block and total per patient & Logged timestamps \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\Cref{tab:validation-real-thresholds} assigns each metric a \emph{good}, \emph{neutral}, or \emph{poor} band to simplify interpretation of the Chapter~3 results. All cutoffs, including runtime bands, were defined by the author in consultation with clinical supervisors at Hospital de la Santa Creu i Sant Pau and should be read as pragmatic internal criteria, not established medical standards.
+
+\begin{table}[H]
+  \caption{Acceptance bands for real-data pipeline metrics.}
+  \label{tab:validation-real-thresholds}
+  \vspace{0.5em}
+  \centering
+  \small
+  \renewcommand{\arraystretch}{1.35}
+  \setlength{\tabcolsep}{6pt}
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.18\linewidth}ccc>{\raggedright\arraybackslash}p{0.30\linewidth}@{}}
+    \toprule
+    \cellcolor{gray!12}\textbf{Metric} &
+    \cellcolor{gray!12}\textbf{Good} &
+    \cellcolor{gray!12}\textbf{Neutral} &
+    \cellcolor{gray!12}\textbf{Poor} &
+    \cellcolor{gray!12}\textbf{Basis} \\
+    \midrule
+    ESR & 100\% & 95--99\% & $<$95\% & Author-defined operational target \\
+    OISR / CESR & $\geq$90\% & 80--89\% & $<$80\% & Author-defined; discussed with clinical supervisors \\
+    EISR (ASOCA) & $\geq$90\% & 80--89\% & $<$80\% & Author-defined endpoint precision target \\
+    Mean total runtime & $<$600\,s & 600--1200\,s & $>$1200\,s & Author-defined batch processing target \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsubsection{Scope Exclusion: Clinical Stenosis and CAD-RADS Accuracy on Real Cases}
+\label{subsec:validation-stenosis-limitation}
+
+On real patient cohorts, the pipeline systematically overestimates stenosis severity due to current Block~2 limitations: the fixed 10\,mm reference half-window, bifurcation effects, partial-volume and segmentation artifacts, and area-based reference interpolation (see \Cref{sec:methodology-block2}). Consequently, clinical stenosis accuracy, \%AS ground-truth comparison against expert measurements, and CAD-RADS concordance against reference reports are \emph{explicitly excluded} from the real-data evaluation scope. Real-cohort experiments therefore focus on pipeline reliability, geometric extraction quality, and runtime scalability only. The mechanistic discussion of stenosis bias is deferred to \Cref{sec:discussion-limitations}.
+
 \subsection{Workflow Validation on Real Datasets: ASOCA}
 \label{subsec:validation-asoca}
+
+The ASOCA resource~\cite{gharleghi2022asoca} served as the development reference for Blocks~1--4. After pipeline stabilization, the full 40-patient ASOCA cohort was processed end-to-end with identical configuration to that described in \crefrange{sec:methodology-block1}{sec:methodology-block4}.
+
+\textbf{Goal.} Evaluate geometric precision, runtime efficiency, and execution success on the initial public benchmark masks.
+
+\textbf{Procedure.} For each patient, the pipeline was executed without manual intervention. ESR, EISR, OISR, CESR, and per-block runtimes were recorded for normal, diseased, and combined subgroups. Ostium correctness was judged by overlaying detected ostium coordinates on the 3D coronary surface and comparing them to the anatomical origins at the aortic root. Endpoint correctness was assessed by visual inspection of each detected endpoint. CESR was computed automatically from Block~1 extraction records as defined in \Cref{tab:validation-real-metrics}.
+
+\textbf{Scope.} As stated in \Cref{subsec:validation-stenosis-limitation}, no stenosis-severity or CAD-RADS concordance analysis was performed on ASOCA cases. Comparative numerical results are reported in \Cref{sec:results-pipeline}.
 
 \subsection{Workflow Validation on Real Datasets: MACS-18}
 \label{subsec:validation-macs}
 
+The identical pipeline was re-executed on expert-refined MACS-18 lumen masks for the same 40 patient identifiers~\cite{acebes_macs18_wip,acebes2024}. Only the input segmentation differed; segment label volumes and pipeline hyperparameters were held constant.
+
+\textbf{Goal.} Determine whether improved lumen connectivity in MACS-18 affects geometric extraction robustness, topological endpoint density, and computational cost relative to ASOCA.
+
+\textbf{Comparative design.} Paired comparison on shared patient IDs enables direct contrast of ESR, MPE, OISR, CESR, and runtime between cohorts. The same evaluation protocol of \Cref{subsec:validation-asoca} was applied for ostium and endpoint review; CESR was computed automatically on both cohorts. As stated in \Cref{subsec:validation-stenosis-limitation}, clinical stenosis accuracy remains out of scope.
+
+\textbf{Working hypotheses} (tested neutrally; interpretation in \Cref{ch:discussion}): \textbf{H1}~MACS-18 increases CESR through better continuous lumen topology; \textbf{H2}~MACS-18 increases MPE and may decrease OISR due to richer distal branching; \textbf{H3}~MACS-18 increases total runtime due to denser geometry and more cross-section evaluations. Results are reported in \Cref{sec:results-pipeline}.
+
 \subsection{Geometry and Quantification Verification: Synthetic Data}
 \label{subsec:validation-synthetic}
 
+Real-patient evaluation cannot provide voxel-independent ground truth for \%AS. To isolate Block~2 quantification logic, two idealized vessel phantoms were generated programmatically~\cite{burrull2023} and processed through the full pipeline using the same $W = 10$\,mm reference window as the clinical cohorts.
+
+\textbf{Phantom design.} Both masks occupy a $100 \times 100 \times 100$ voxel grid with 1.0\,mm isotropic spacing. Each phantom is a capped cylinder along $Z \in [15, 85]$ with hemispherical end caps to ensure closed surfaces compatible with VMTK cross-sectioning.
+
+\begin{itemize}
+  \item \textbf{Synthetic\_1 (healthy):} Constant radius $R = 10$\,mm. Theoretical cross-sectional area $A = \pi R^2 \approx 314.16$\,mm$^2$ and maximum \%AS $= 0\%$.
+  \item \textbf{Synthetic\_2 (stenosis):} Same base radius with a symmetric cosine narrowing on $Z \in [40, 60]$, minimum radius $R_{\min} = 5$\,mm at $Z = 50$. Theoretical $A_{\max} \approx 314.16$\,mm$^2$, $A_{\min} \approx 78.54$\,mm$^2$, and maximum \%AS $= 75\%$.
+\end{itemize}
+
+The stenosis radius profile follows
+\begin{equation}
+  R(z) = R_{\min} + (R_{\mathrm{base}} - R_{\min})\,\frac{1 - \cos\!\left(\pi\,\frac{z - Z_{\mathrm{mid}}}{H}\right)}{2},
+  \quad z \in [40, 60],
+  \label{eq:synthetic-radius}
+\end{equation}
+with $R_{\mathrm{base}} = 10$\,mm, $R_{\min} = 5$\,mm, $Z_{\mathrm{mid}} = 50$, and half-width $H = 10$\,mm.
+
+\textbf{Evaluation metrics.} For each phantom, the pipeline's peak \%AS and cross-sectional area samples were compared against analytical ground truth. Errors are reported as absolute differences in percentage points (for \%AS) and mm$^2$ (for area). Longitudinal area and \%AS profiles provide visual verification.
+
+\begin{table}[H]
+  \centering
+  \caption{Acceptance bands for synthetic phantom validation.}
+  \label{tab:validation-synthetic-thresholds}
+  \small
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.26\linewidth}ccc>{\raggedright\arraybackslash}p{0.30\linewidth}@{}}
+    \toprule
+    \textbf{Metric} & \textbf{Good} & \textbf{Neutral} & \textbf{Poor} & \textbf{Reference basis} \\
+    \midrule
+    Max \%AS absolute error & $<$5\% & 5--10\% & $>$10\% & Inter-observer variability 5--10\%~\cite{hideo_kajita2019,garcia2014,kalisz2016} \\
+    Mean area error (healthy) & $<$2\% rel.\ ($\approx$6\,mm$^2$) & 2--5\% & $>$5\% & Mesh discretization tolerance \\
+    Min-area error (stenosis) & $<$5\,mm$^2$ & 5--15\,mm$^2$ & $>$15\,mm$^2$ & Local neck fidelity \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Numerical outcomes are reported in \Cref{sec:results-synthetic}.
+
 \subsection{User Experience and Interface Usability Evaluation}
 \label{subsec:validation-ux}
+
+Block~4 was evaluated through a pilot System Usability Scale (SUS) study~\cite{brooke1996} with cardiologists at Hospital de la Santa Creu i Sant Pau. SUS measures perceived interface usability; it does not assess diagnostic accuracy, consistent with the decision-support framing of \Cref{sec:methodology-block4}.
+
+\textbf{Participants and procedure.} Three cardiologists completed a guided session on representative pipeline outputs, then responded to a 10-item Likert questionnaire (1 = strongly disagree, 5 = strongly agree) followed by an optional open feedback prompt. The full item wording is provided in \Cref{app:sus-questionnaire}.
+
+\textbf{Scoring.} Responses were converted using the standard SUS formula: odd items contribute $(\text{score} - 1)$, even items contribute $(5 - \text{score})$; the sum is multiplied by 2.5 to yield a 0--100 score per participant~\cite{brooke1996}. Mean and sample standard deviation are reported across participants.
+
+\begin{table}[H]
+  \centering
+  \caption{SUS score interpretation bands (Bangor adjective scale).}
+  \label{tab:validation-sus-thresholds}
+  \small
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.14\linewidth}>{\raggedright\arraybackslash}p{0.22\linewidth}>{\raggedright\arraybackslash}p{0.48\linewidth}@{}}
+    \toprule
+    \textbf{SUS score} & \textbf{Grade} & \textbf{Interpretation} \\
+    \midrule
+    $\geq$80 & Excellent & High usability~\cite{bangor2009} \\
+    68--79 & Good & Above-average; acceptable for release consideration~\cite{bangor2009} \\
+    50--67 & OK & Improvement needed~\cite{bangor2009} \\
+    $<$50 & Poor & Not acceptable~\cite{bangor2009} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\textbf{Pilot limitation.} With $n = 3$, the study is exploratory; results indicate directional usability acceptance but should not be generalized without a larger sample (\Cref{sec:discussion-future}). Quantitative SUS outcomes appear in \Cref{sec:results-ux}; dashboard screenshots in \Cref{sec:results-dashboard}. Qualitative cardiologist feedback is analyzed only in \Cref{sec:discussion-future}.
 
 % Restore default paragraph spacing for subsequent chapters
 \setlength{\parskip}{0pt plus 1pt}

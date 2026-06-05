@@ -35,11 +35,24 @@ W.~G. Austen, J.~E. Edwards, R.~L. Frye, G.~G. Gensini, V.~L. Gott, L.~S.
   {Council} on {Cardiovascular Surgery}, {American Heart Association}.
 \newblock {\em Circulation}, 51(4 Suppl):5--40, 1975.
 
+\bibitem{bangor2009}
+Aaron Bangor, Philip Kortum, and James Miller.
+\newblock Determining what individual {SUS} scores mean: Adding an adjective
+  rating scale.
+\newblock {\em Journal of Usability Studies}, 4(3):114--123, 2009.
+
 \bibitem{borkin2011}
 M.~Borkin, K.~Gajos, A.~Peters, D.~Mitsouras, S.~Melchionna, F.~Rybicki, et~al.
 \newblock Evaluation of artery visualizations for heart disease diagnosis.
 \newblock {\em IEEE Transactions on Visualization and Computer Graphics},
   17(12):2479--2488, 2011.
+
+\bibitem{brooke1996}
+John Brooke.
+\newblock {SUS}: A quick and dirty usability scale.
+\newblock In P.~W. Jordan, B.~Thomas, B.~A. Weerdmeester, and I.~L. McClelland,
+  editors, {\em Usability Evaluation in Industry}, pages 189--194. Taylor \&
+  Francis, London, 1996.
 
 \bibitem{burrull2023}
 E.~Burrull.

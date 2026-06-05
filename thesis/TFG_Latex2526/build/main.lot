@@ -11,7 +11,17 @@
 \contentsline {table}{\numberline {2.2}{\ignorespaces AHA 17-segment dictionary used for anatomical labeling and CAD-RADS territory grouping. Adapted from Austen et al.~\cite {austen1975}.}}{16}{table.2.2}%
 \contentsline {table}{\numberline {2.3}{\ignorespaces CAD-RADS~2.0 luminal stenosis categories applied to maximum segment-level \%AS. Adapted from Cury et al.~\cite {cury2022}.}}{17}{table.2.3}%
 \contentsline {table}{\numberline {2.4}{\ignorespaces Major coronary territories used for CAD-RADS~2.0 triage rules in this pipeline (segment IDs follow the AHA 17-segment model). Adapted from Austen et al.\ and Cury et al.~\cite {austen1975,cury2022}.}}{17}{table.2.4}%
+\contentsline {table}{\numberline {2.5}{\ignorespaces Real-data evaluation metrics used in \Cref {subsec:validation-asoca,subsec:validation-macs}.}}{20}{table.2.5}%
+\contentsline {table}{\numberline {2.6}{\ignorespaces Acceptance bands for real-data pipeline metrics.}}{20}{table.2.6}%
+\contentsline {table}{\numberline {2.7}{\ignorespaces Acceptance bands for synthetic phantom validation.}}{22}{table.2.7}%
+\contentsline {table}{\numberline {2.8}{\ignorespaces SUS score interpretation bands (Bangor adjective scale).}}{22}{table.2.8}%
 \addvspace {10\p@ }
+\contentsline {table}{\numberline {3.1}{\ignorespaces Endpoint summary statistics per cohort and subgroup. MPE denotes mean endpoints per patient; EISR is reported for ASOCA only (\Cref {tab:validation-real-metrics}).}}{24}{table.3.1}%
+\contentsline {table}{\numberline {3.2}{\ignorespaces Ostium accuracy (OISR) and centerline precision (CESR) by cohort and subgroup (\%).}}{25}{table.3.2}%
+\contentsline {table}{\numberline {3.3}{\ignorespaces Synthetic\_1 validation metrics ($W = 10$\,mm).}}{28}{table.3.3}%
+\contentsline {table}{\numberline {3.4}{\ignorespaces Synthetic\_2 validation metrics ($W = 10$\,mm).}}{29}{table.3.4}%
+\contentsline {table}{\numberline {3.5}{\ignorespaces Raw Likert responses (1 = strongly disagree, 5 = strongly agree) per SUS item.}}{34}{table.3.5}%
+\contentsline {table}{\numberline {3.6}{\ignorespaces SUS score summary per participant and cohort statistics.}}{34}{table.3.6}%
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }

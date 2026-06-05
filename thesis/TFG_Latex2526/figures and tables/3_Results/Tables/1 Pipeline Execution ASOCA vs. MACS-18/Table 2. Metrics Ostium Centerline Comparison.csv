@@ -1,0 +1,7 @@
+Cohort,Subgroup,Ostium accuracy (%),Centerline precision (%)
+ASOCA,All,85.0,83.19
+ASOCA,Normal,85.0,83.18
+ASOCA,Diseased,85.0,83.21
+MACS-18,All,73.75,95.62
+MACS-18,Normal,75.0,96.87
+MACS-18,Diseased,72.5,94.04

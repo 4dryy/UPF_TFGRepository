@@ -1,0 +1,7 @@
+Cohort,Subgroup,n,Mean,Std,Min,Max,Median,Total
+ASOCA,All,40,17.1,4.78,10,32,16.0,684
+ASOCA,Normal,20,18.2,5.61,12,32,16.5,364
+ASOCA,Diseased,20,16.0,3.58,10,22,15.5,320
+MACS-18,All,40,27.7,10.0,12,64,26.0,1108
+MACS-18,Normal,20,30.75,11.6,17,64,27.5,615
+MACS-18,Diseased,20,24.65,7.15,12,42,23.5,493
