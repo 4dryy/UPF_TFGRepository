@@ -246,13 +246,13 @@ Any \texttt{Segment\_ID} present in the input data but outside the 1--17 diction
 \subsection{Patient-Level CAD-RADS 2.0 Classification}
 \label{subsec:block3-cad-rads}
 
-Patient-level scoring follows the CAD-RADS~2.0 decision principles~\cite{cury2022}. The algorithm first determines the highest segment-level stenosis grade from the aggregated table. That grade is derived from the maximum \%AS observed across all mapped segments and mapped to the standard luminal categories in \Cref{tab:cad-rads-stenosis}. Total coronary occlusion (category~5) is assigned when any segment reaches 100\% \%AS.
+Patient-level scoring follows the CAD-RADS~2.0 decision principles~\cite{cury2022}. The algorithm first determines the highest segment-level stenosis grade from the aggregated table. This grade is derived from the maximum \%AS observed across all evaluated segments and subsequently classified into the standard luminal categories detailed in \Cref{tab:cad-rads-stenosis}. Total coronary occlusion (category~5) is assigned when any segment reaches 100\% \%AS.
 
-Categories~4A and~4B distinguish high-risk patterns among severe stenoses. Category~4B is assigned when either (i)~left-main (segment~5) stenosis is at least 50\% \%AS, or (ii)~obstructive disease ($\geq 70\%$ \%AS) is present in each of the three major territories (RCA, LAD, and LCX) defined in \Cref{tab:cad-rads-territories}. If severe stenosis is present but neither criterion is met, the patient is classified as CAD-RADS~4A. Categories~0--3 are assigned directly from the highest segment grade when no category~4 or~5 rule overrides the result.
+Categories~4A and~4B distinguish high-risk patterns among severe stenoses. As established by the CAD-RADS~2.0 framework~\cite{cury2022}, category~4B is assigned when either (i)~left-main (segment~5) stenosis is at least 50\% \%AS, or (ii)~obstructive disease ($\geq 70\%$ \%AS) is present in each of the three major territories (RCA, LAD, and LCX) defined in \Cref{tab:cad-rads-territories}. If severe stenosis is present but neither of these criteria is met, the patient is classified as CAD-RADS~4A. Categories~0--3 are assigned directly from the highest segment grade when no category~4 or~5 rule overrides the result.
 
 \begin{table}[H]
   \centering
-  \caption{CAD-RADS~2.0 luminal stenosis categories applied to maximum segment-level \%AS (adapted from~\cite{cury2022}).}
+  \caption{CAD-RADS~2.0 luminal stenosis categories applied to maximum segment-level \%AS. Adapted from Cury et al.~\cite{cury2022}.}
   \label{tab:cad-rads-stenosis}
   \vspace{0.5em}
   \small
@@ -277,7 +277,7 @@ Categories~4A and~4B distinguish high-risk patterns among severe stenoses. Categ
 
 \begin{table}[H]
   \centering
-  \caption{Major coronary territories used for CAD-RADS~2.0 triage rules in this pipeline (segment IDs follow the AHA 17-segment model; adapted from~\cite{cury2022,austen1975}).}
+  \caption{Major coronary territories used for CAD-RADS~2.0 triage rules in this pipeline (segment IDs follow the AHA 17-segment model). Adapted from Austen et al.\ and Cury et al.~\cite{austen1975,cury2022}.}
   \label{tab:cad-rads-territories}
   \vspace{0.5em}
   \small
@@ -301,7 +301,7 @@ Categories~4A and~4B distinguish high-risk patterns among severe stenoses. Categ
   \end{tabular}
 \end{table}
 
-Finally, a plaque-burden modifier (P1--P4) is appended using the Segment Involvement Score (SIS): the number of segments with any measurable plaque, normalized against the 17 assessable segments~\cite{cury2022}. Block~3 exports a segment stenosis summary, a patient-level CAD-RADS report (category, rationale, highest lesion location, territory flags, and SIS), and enriched tables for visualization in Block~4.
+Finally, the system calculates the Segment Involvement Score (SIS), defined as the absolute number of assessable coronary segments exhibiting any measurable atherosclerotic plaque~\cite{cury2022}. Block~3 concludes by exporting a comprehensive set of structured outputs: a segment-level stenosis summary, a patient-level CAD-RADS report (detailing the assigned category, classification rationale, highest lesion location, territory flags, and SIS), and the geometrically enriched branch tables. All these generated metrics and records are specifically formatted to serve as the direct quantitative input for the interactive clinical visualization dashboard detailed in Block~4.
 
 \section{Block 4: Patient Visualization Dashboard}
 \label{sec:methodology-block4}

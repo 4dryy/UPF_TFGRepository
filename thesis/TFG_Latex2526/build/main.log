@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.5.29)  5 JUN 2026 01:01
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.5.29)  5 JUN 2026 11:44
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -825,7 +825,7 @@ Package rerunfilecheck Info: File `main.out' has not changed.
 Here is how much of TeX's memory you used:
  15161 strings out of 467871
  263169 string characters out of 5418376
- 717806 words of memory out of 5000000
+ 718806 words of memory out of 5000000
  43652 multiletter control sequences out of 15000+600000
  659050 words of font info for 89 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
@@ -843,9 +843,9 @@ a/Local/Programs/MiKTeX/fonts/type1/urw/times/utmb8a.pfb><C:/Users/adria/AppDat
 a/Local/Programs/MiKTeX/fonts/type1/urw/times/utmr8a.pfb><C:/Users/adria/AppDat
 a/Local/Programs/MiKTeX/fonts/type1/urw/times/utmri8a.pfb>
 Output written on C:/Users\adria\OneDrive\Escriptori\UPF'\TFG\UPF_TFGRepository
-\thesis\TFG_Latex2526\build\_compile\main.pdf (33 pages, 4624818 bytes).
+\thesis\TFG_Latex2526\build\_compile\main.pdf (33 pages, 4625343 bytes).
 PDF statistics:
- 841 PDF objects out of 1000 (max. 8388607)
+ 842 PDF objects out of 1000 (max. 8388607)
  133 named destinations out of 1000 (max. 500000)
  405 words of extra memory for PDF output out of 10000 (max. 10000000)
 

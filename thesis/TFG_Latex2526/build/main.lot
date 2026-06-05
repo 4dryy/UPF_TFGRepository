@@ -9,8 +9,8 @@
 \addvspace {10\p@ }
 \contentsline {table}{\numberline {2.1}{\ignorespaces Overview of the four pipeline blocks: processing role, primary inputs, and principal outputs per patient case.}}{9}{table.2.1}%
 \contentsline {table}{\numberline {2.2}{\ignorespaces AHA 17-segment dictionary used for anatomical labeling and CAD-RADS territory grouping. Adapted from Austen et al.~\cite {austen1975}.}}{16}{table.2.2}%
-\contentsline {table}{\numberline {2.3}{\ignorespaces CAD-RADS~2.0 luminal stenosis categories applied to maximum segment-level \%AS (adapted from~\cite {cury2022}).}}{17}{table.2.3}%
-\contentsline {table}{\numberline {2.4}{\ignorespaces Major coronary territories used for CAD-RADS~2.0 triage rules in this pipeline (segment IDs follow the AHA 17-segment model; adapted from~\cite {cury2022,austen1975}).}}{17}{table.2.4}%
+\contentsline {table}{\numberline {2.3}{\ignorespaces CAD-RADS~2.0 luminal stenosis categories applied to maximum segment-level \%AS. Adapted from Cury et al.~\cite {cury2022}.}}{17}{table.2.3}%
+\contentsline {table}{\numberline {2.4}{\ignorespaces Major coronary territories used for CAD-RADS~2.0 triage rules in this pipeline (segment IDs follow the AHA 17-segment model). Adapted from Austen et al.\ and Cury et al.~\cite {austen1975,cury2022}.}}{17}{table.2.4}%
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }
