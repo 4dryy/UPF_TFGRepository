@@ -16,6 +16,7 @@
 \contentsline {figure}{\numberline {2.2}{\ignorespaces Block~1 hybrid workflow: spatial separation of the right and left coronary trees, automated seed placement on each tree, and extraction of centerline geometry with branch packaging.}}{10}{figure.2.2}%
 \contentsline {figure}{\numberline {2.3}{\ignorespaces Block~2 workflow: orthogonal cross-sectional area extraction on each artery centerline and surface mesh, tabular integration, proximal/distal reference estimation, and \%AS quantification.}}{12}{figure.2.3}%
 \contentsline {figure}{\numberline {2.4}{\ignorespaces Block~3 workflow: segment aggregation based on the AHA 17-segment model and automated CAD-RADS~2.0 scoring.}}{15}{figure.2.4}%
+\contentsline {figure}{\numberline {2.5}{\ignorespaces Block~4 user interface layout and interaction flow: from global 3D anatomy and clinical summary to segment-level and branch-level metric validation.}}{18}{figure.2.5}%
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }

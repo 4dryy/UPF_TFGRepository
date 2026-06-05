@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.5.29)  5 JUN 2026 11:44
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.5.29)  5 JUN 2026 17:18
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -269,6 +269,334 @@ Package: array 2025/09/25 v2.6n Tabular extension package (FMi)
 \minrowclearance=\skip56
 \rownum=\count302
 )
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/latex/pgf/frontendlayer\tikz.
+sty
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/latex/pgf/basiclayer\pgf.sty
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/latex/pgf/utilities\pgfrcs.st
+y
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfutil
+-common.tex
+\pgfutil@everybye=\toks27
+\pgfutil@tempdima=\dimen185
+\pgfutil@tempdimb=\dimen186
+)
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfutil
+-latex.def
+\pgfutil@abb=\box59
+)
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfrcs.
+code.tex
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/pgf\pgf.revision.tex)
+Package: pgfrcs 2025-08-29 v3.1.11a (3.1.11a)
+))
+Package: pgf 2025-08-29 v3.1.11a (3.1.11a)
+
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/latex/pgf/basiclayer\pgfcore.
+sty
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/latex/pgf/systemlayer\pgfsys.
+sty
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgfsy
+s.code.tex
+Package: pgfsys 2025-08-29 v3.1.11a (3.1.11a)
+
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfkeys
+.code.tex
+\pgfkeys@pathtoks=\toks28
+\pgfkeys@temptoks=\toks29
+
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfkeys
+libraryfiltered.code.tex
+\pgfkeys@tmptoks=\toks30
+))
+\pgf@x=\dimen187
+\pgf@y=\dimen188
+\pgf@xa=\dimen189
+\pgf@ya=\dimen190
+\pgf@xb=\dimen191
+\pgf@yb=\dimen192
+\pgf@xc=\dimen193
+\pgf@yc=\dimen194
+\pgf@xd=\dimen195
+\pgf@yd=\dimen196
+\w@pgf@writea=\write3
+\r@pgf@reada=\read3
+\c@pgf@counta=\count303
+\c@pgf@countb=\count304
+\c@pgf@countc=\count305
+\c@pgf@countd=\count306
+\t@pgf@toka=\toks31
+\t@pgf@tokb=\toks32
+\t@pgf@tokc=\toks33
+\pgf@sys@id@count=\count307
+
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgf.c
+fg
+File: pgf.cfg 2025-08-29 v3.1.11a (3.1.11a)
+)
+Driver file for pgf: pgfsys-pdftex.def
+
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgfsy
+s-pdftex.def
+File: pgfsys-pdftex.def 2025-08-29 v3.1.11a (3.1.11a)
+
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgfsy
+s-common-pdf.def
+File: pgfsys-common-pdf.def 2025-08-29 v3.1.11a (3.1.11a)
+)))
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgfsy
+ssoftpath.code.tex
+File: pgfsyssoftpath.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgfsyssoftpath@smallbuffer@items=\count308
+\pgfsyssoftpath@bigbuffer@items=\count309
+)
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgfsy
+sprotocol.code.tex
+File: pgfsysprotocol.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+))
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
+e.code.tex
+Package: pgfcore 2025-08-29 v3.1.11a (3.1.11a)
+
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmath.code
+.tex
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathutil.
+code.tex)
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathparse
+r.code.tex
+\pgfmath@dimen=\dimen197
+\pgfmath@count=\count310
+\pgfmath@box=\box60
+\pgfmath@toks=\toks34
+\pgfmath@stack@operand=\toks35
+\pgfmath@stack@operation=\toks36
+)
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunct
+ions.code.tex)
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunct
+ions.basic.code.tex)
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunct
+ions.trigonometric.code.tex)
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunct
+ions.random.code.tex)
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunct
+ions.comparison.code.tex)
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunct
+ions.base.code.tex)
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunct
+ions.round.code.tex)
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunct
+ions.misc.code.tex)
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunct
+ions.integerarithmetics.code.tex)
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathcalc.
+code.tex)
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfloat
+.code.tex
+\c@pgfmathroundto@lastzeros=\count311
+))
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfint.code.
+tex)
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
+epoints.code.tex
+File: pgfcorepoints.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgf@picminx=\dimen198
+\pgf@picmaxx=\dimen199
+\pgf@picminy=\dimen256
+\pgf@picmaxy=\dimen257
+\pgf@pathminx=\dimen258
+\pgf@pathmaxx=\dimen259
+\pgf@pathminy=\dimen260
+\pgf@pathmaxy=\dimen261
+\pgf@xx=\dimen262
+\pgf@xy=\dimen263
+\pgf@yx=\dimen264
+\pgf@yy=\dimen265
+\pgf@zx=\dimen266
+\pgf@zy=\dimen267
+)
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
+epathconstruct.code.tex
+File: pgfcorepathconstruct.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgf@path@lastx=\dimen268
+\pgf@path@lasty=\dimen269
+)
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
+epathusage.code.tex
+File: pgfcorepathusage.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgf@shorten@end@additional=\dimen270
+\pgf@shorten@start@additional=\dimen271
+)
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
+escopes.code.tex
+File: pgfcorescopes.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgfpic=\box61
+\pgf@hbox=\box62
+\pgf@layerbox@main=\box63
+\pgf@picture@serial@count=\count312
+)
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
+egraphicstate.code.tex
+File: pgfcoregraphicstate.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgflinewidth=\dimen272
+)
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
+etransformations.code.tex
+File: pgfcoretransformations.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgf@pt@x=\dimen273
+\pgf@pt@y=\dimen274
+\pgf@pt@temp=\dimen275
+)
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
+equick.code.tex
+File: pgfcorequick.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+)
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
+eobjects.code.tex
+File: pgfcoreobjects.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+)
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
+epathprocessing.code.tex
+File: pgfcorepathprocessing.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+)
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
+earrows.code.tex
+File: pgfcorearrows.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgfarrowsep=\dimen276
+)
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
+eshade.code.tex
+File: pgfcoreshade.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgf@max=\dimen277
+\pgf@sys@shading@range@num=\count313
+\pgf@shadingcount=\count314
+)
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
+eimage.code.tex
+File: pgfcoreimage.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+)
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
+eexternal.code.tex
+File: pgfcoreexternal.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgfexternal@startupbox=\box64
+)
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
+elayers.code.tex
+File: pgfcorelayers.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+)
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
+etransparency.code.tex
+File: pgfcoretransparency.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+)
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
+epatterns.code.tex
+File: pgfcorepatterns.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+)
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
+erdf.code.tex
+File: pgfcorerdf.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+)))
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/pgf/modules\pgfmodule
+shapes.code.tex
+File: pgfmoduleshapes.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgfnodeparttextbox=\box65
+)
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/pgf/modules\pgfmodule
+plot.code.tex
+File: pgfmoduleplot.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+)
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/latex/pgf/compatibility\pgfco
+mp-version-0-65.sty
+Package: pgfcomp-version-0-65 2025-08-29 v3.1.11a (3.1.11a)
+\pgf@nodesepstart=\dimen278
+\pgf@nodesepend=\dimen279
+)
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/latex/pgf/compatibility\pgfco
+mp-version-1-18.sty
+Package: pgfcomp-version-1-18 2025-08-29 v3.1.11a (3.1.11a)
+))
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/latex/pgf/utilities\pgffor.st
+y
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/latex/pgf/utilities\pgfkeys.s
+ty
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfkeys
+.code.tex))
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/latex/pgf/math\pgfmath.sty
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmath.code
+.tex))
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgffor.
+code.tex
+Package: pgffor 2025-08-29 v3.1.11a (3.1.11a)
+\pgffor@iter=\dimen280
+\pgffor@skip=\dimen281
+\pgffor@stack=\toks37
+\pgffor@toks=\toks38
+))
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/pgf/frontendlayer/tik
+z\tikz.code.tex
+Package: tikz 2025-08-29 v3.1.11a (3.1.11a)
+
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/pgf/libraries\pgflibr
+aryplothandlers.code.tex
+File: pgflibraryplothandlers.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgf@plot@mark@count=\count315
+\pgfplotmarksize=\dimen282
+)
+\tikz@lastx=\dimen283
+\tikz@lasty=\dimen284
+\tikz@lastxsaved=\dimen285
+\tikz@lastysaved=\dimen286
+\tikz@lastmovetox=\dimen287
+\tikz@lastmovetoy=\dimen288
+\tikzleveldistance=\dimen289
+\tikzsiblingdistance=\dimen290
+\tikz@figbox=\box66
+\tikz@figbox@bg=\box67
+\tikz@tempbox=\box68
+\tikz@tempbox@bg=\box69
+\tikztreelevel=\count316
+\tikznumberofchildren=\count317
+\tikznumberofcurrentchild=\count318
+\tikz@fig@count=\count319
+
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/pgf/modules\pgfmodule
+matrix.code.tex
+File: pgfmodulematrix.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgfmatrixcurrentrow=\count320
+\pgfmatrixcurrentcolumn=\count321
+\pgf@matrix@numberofcolumns=\count322
+)
+\tikz@expandcount=\count323
+
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/pgf/frontendlayer/tik
+z/libraries\tikzlibrarytopaths.code.tex
+File: tikzlibrarytopaths.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+)))
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/pgf/libraries\pgflibr
+aryarrows.meta.code.tex
+File: pgflibraryarrows.meta.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgfarrowinset=\dimen291
+\pgfarrowlength=\dimen292
+\pgfarrowwidth=\dimen293
+\pgfarrowlinewidth=\dimen294
+)
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/pgf/frontendlayer/tik
+z/libraries\tikzlibrarypositioning.code.tex
+File: tikzlibrarypositioning.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+)
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/pgf/frontendlayer/tik
+z/libraries\tikzlibraryfit.code.tex
+File: tikzlibraryfit.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+)
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/pgf/frontendlayer/tik
+z/libraries\tikzlibrarybackgrounds.code.tex
+File: tikzlibrarybackgrounds.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgf@layerbox@background=\box70
+\pgf@layerboxsaved@background=\box71
+)
+(C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/pgf/frontendlayer/tik
+z/libraries\tikzlibrarycalc.code.tex
+File: tikzlibrarycalc.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+)
 (C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/latex/psnfss\times.sty
 Package: times 2020/03/25 PSNFSS-v9.3 (SPQR) 
 )
@@ -277,13 +605,13 @@ Package: natbib 2010/09/13 8.31b (PWD, AO)
 \bibhang=\skip57
 \bibsep=\skip58
 LaTeX Info: Redefining \cite on input line 694.
-\c@NAT@ctr=\count303
+\c@NAT@ctr=\count324
 )
 (C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/latex/appendix\appendix.sty
 Package: appendix 2020/02/08 v1.2c extra appendix facilities
-\c@@pps=\count304
-\c@@ppsavesec=\count305
-\c@@ppsaveapp=\count306
+\c@@pps=\count325
+\c@@ppsavesec=\count326
+\c@@ppsaveapp=\count327
 )
 (C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\hyperref.sty
 Package: hyperref 2025-07-12 v7.01o Hypertext links for LaTeX
@@ -331,16 +659,16 @@ Package: gettitlestring 2019/12/15 v1.6 Cleanup title references (HO)
 (C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/latex/kvoptions\kvoptions.sty
 Package: kvoptions 2022-06-15 v3.15 Key value format for package options (HO)
 ))
-\c@section@level=\count307
+\c@section@level=\count328
 )
 (C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/stringenc\stringenc.s
 ty
 Package: stringenc 2019/11/29 v1.12 Convert strings between diff. encodings (HO
 )
 )
-\@linkdim=\dimen185
-\Hy@linkcounter=\count308
-\Hy@pagecounter=\count309
+\@linkdim=\dimen295
+\Hy@linkcounter=\count329
+\Hy@pagecounter=\count330
  (C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\pd1enc.def
 File: pd1enc.def 2025-07-12 v7.01o Hyperref: PDFDocEncoding definition (HO)
 Now handling font encoding PD1 ...
@@ -348,7 +676,7 @@ Now handling font encoding PD1 ...
 ) (C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/intcalc\intcalc.sty
 Package: intcalc 2019/12/15 v1.3 Expandable calculations with integers (HO)
 )
-\Hy@SavedSpaceFactor=\count310
+\Hy@SavedSpaceFactor=\count331
  (C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\puenc.def
 File: puenc.def 2025-07-12 v7.01o Hyperref: PDF Unicode definition (HO)
 Now handling font encoding PU ...
@@ -361,14 +689,14 @@ Package hyperref Info: Plain pages OFF on input line 4210.
 Package hyperref Info: Backreferencing OFF on input line 4215.
 Package hyperref Info: Implicit mode ON; LaTeX internals redefined.
 Package hyperref Info: Bookmarks ON on input line 4462.
-\c@Hy@tempcnt=\count311
+\c@Hy@tempcnt=\count332
 
 (C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/latex/url\url.sty
 \Urlmuskip=\muskip17
 Package: url 2013/09/16  ver 3.4  Verb mode for urls, etc.
 )
 LaTeX Info: Redefining \url on input line 4801.
-\XeTeXLinkMargin=\dimen186
+\XeTeXLinkMargin=\dimen296
 
 (C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/generic/bitset\bitset.sty
 Package: bitset 2019/12/09 v1.3 Handle bit-vector datatype (HO)
@@ -378,9 +706,9 @@ Package: bitset 2019/12/09 v1.3 Handle bit-vector datatype (HO)
 Package: bigintcalc 2019/12/15 v1.5 Expandable calculations on big integers (HO
 )
 ))
-\Fld@menulength=\count312
-\Field@Width=\dimen187
-\Fld@charsize=\dimen188
+\Fld@menulength=\count333
+\Field@Width=\dimen297
+\Fld@charsize=\dimen298
 Package hyperref Info: Hyper figures OFF on input line 6078.
 Package hyperref Info: Link nesting OFF on input line 6083.
 Package hyperref Info: Hyper index ON on input line 6086.
@@ -388,16 +716,16 @@ Package hyperref Info: backreferencing OFF on input line 6093.
 Package hyperref Info: Link coloring OFF on input line 6098.
 Package hyperref Info: Link coloring with OCG OFF on input line 6103.
 Package hyperref Info: PDF/A mode OFF on input line 6108.
-\Hy@abspage=\count313
-\c@Item=\count314
-\c@Hfootnote=\count315
+\Hy@abspage=\count334
+\c@Item=\count335
+\c@Hfootnote=\count336
 )
 Package hyperref Info: Driver (autodetected): hpdftex.
 
 (C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\hpdftex.def
 File: hpdftex.def 2025-07-12 v7.01o Hyperref driver for pdfTeX
-\Fld@listcount=\count316
-\c@bookmark@seq@number=\count317
+\Fld@listcount=\count337
+\c@bookmark@seq@number=\count338
 
 (C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/latex/rerunfilecheck\rerunfil
 echeck.sty
@@ -427,15 +755,15 @@ LaTeX Info: Redefining \labelcref on input line 2370.
 LaTeX Info: Redefining \labelcpageref on input line 2370.
 )
 ==> First Aid for cleveref.sty applied!
-LaTeX Font Info:    Trying to load font information for OT1+ptm on input line 9
-8.
+LaTeX Font Info:    Trying to load font information for OT1+ptm on input line 1
+00.
 (C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/latex/psnfss\ot1ptm.fd
 File: ot1ptm.fd 2001/06/04 font definitions for OT1/ptm.
 )
 (C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/latex/l3backend\l3backend-pdf
 tex.def
 File: l3backend-pdftex.def 2025-10-09 L3 backend support: PDF output (pdfTeX)
-\l__color_backend_stack_int=\count318
+\l__color_backend_stack_int=\count339
 )
 (C:/Users\adria\OneDrive\Escriptori\UPF'\TFG\UPF_TFGRepository\thesis\TFG_Latex
 2526\build\_compile\main.aux
@@ -450,28 +778,28 @@ LaTeX Info: Redefining \% on input line 16.
 )
 \openout1 = `main.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 98.
-LaTeX Font Info:    ... okay on input line 98.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 98.
-LaTeX Font Info:    ... okay on input line 98.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 98.
-LaTeX Font Info:    ... okay on input line 98.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 98.
-LaTeX Font Info:    ... okay on input line 98.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 98.
-LaTeX Font Info:    ... okay on input line 98.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 98.
-LaTeX Font Info:    ... okay on input line 98.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 98.
-LaTeX Font Info:    ... okay on input line 98.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 98.
-LaTeX Font Info:    ... okay on input line 98.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 98.
-LaTeX Font Info:    ... okay on input line 98.
-LaTeX Info: Redefining \. on input line 98.
-LaTeX Info: Redefining \% on input line 98.
-LaTeX Info: Redefining \l on input line 98.
-LaTeX Info: Redefining \L on input line 98.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 100.
+LaTeX Font Info:    ... okay on input line 100.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 100.
+LaTeX Font Info:    ... okay on input line 100.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 100.
+LaTeX Font Info:    ... okay on input line 100.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 100.
+LaTeX Font Info:    ... okay on input line 100.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 100.
+LaTeX Font Info:    ... okay on input line 100.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 100.
+LaTeX Font Info:    ... okay on input line 100.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 100.
+LaTeX Font Info:    ... okay on input line 100.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 100.
+LaTeX Font Info:    ... okay on input line 100.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 100.
+LaTeX Font Info:    ... okay on input line 100.
+LaTeX Info: Redefining \. on input line 100.
+LaTeX Info: Redefining \% on input line 100.
+LaTeX Info: Redefining \l on input line 100.
+LaTeX Info: Redefining \L on input line 100.
 
 *geometry* driver: auto-detecting
 *geometry* detected driver: pdftex
@@ -511,17 +839,17 @@ LaTeX Info: Redefining \L on input line 98.
 (C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/context/base/mkii\supp-pdf.mk
 ii
 [Loading MPS to PDF converter (version 2006.09.02).]
-\scratchcounter=\count319
-\scratchdimen=\dimen189
-\scratchbox=\box59
-\nofMPsegments=\count320
-\nofMParguments=\count321
-\everyMPshowfont=\toks27
-\MPscratchCnt=\count322
-\MPscratchDim=\dimen190
-\MPnumerator=\count323
-\makeMPintoPDFobject=\count324
-\everyMPtoPDFconversion=\toks28
+\scratchcounter=\count340
+\scratchdimen=\dimen299
+\scratchbox=\box72
+\nofMPsegments=\count341
+\nofMParguments=\count342
+\everyMPshowfont=\toks39
+\MPscratchCnt=\count343
+\MPscratchDim=\dimen300
+\MPnumerator=\count344
+\makeMPintoPDFobject=\count345
+\everyMPtoPDFconversion=\toks40
 )
 (C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/latex/epstopdf-pkg\epstopdf-b
 ase.sty
@@ -546,45 +874,45 @@ Package: lscape 2020/05/28 v3.02 Landscape Pages (DPC)
 )
 Package pdflscape Info: Auto-detected driver: pdftex on input line 81.
 ))
-Package hyperref Info: Link coloring OFF on input line 98.
+Package hyperref Info: Link coloring OFF on input line 100.
 
 (C:/Users\adria\OneDrive\Escriptori\UPF'\TFG\UPF_TFGRepository\thesis\TFG_Latex
 2526\build\_compile\main.out)
 (C:/Users\adria\OneDrive\Escriptori\UPF'\TFG\UPF_TFGRepository\thesis\TFG_Latex
 2526\build\_compile\main.out)
-\@outlinefile=\write3
-\openout3 = `main.out'.
+\@outlinefile=\write4
+\openout4 = `main.out'.
 
-<planning files/TFG Cover.pdf, id=175, 597.6729pt x 845.07718pt>
+<planning files/TFG Cover.pdf, id=178, 597.6729pt x 845.07718pt>
 File: planning files/TFG Cover.pdf Graphic file (type pdf)
 <use planning files/TFG Cover.pdf>
-Package pdftex.def Info: planning files/TFG Cover.pdf  used on input line 103.
+Package pdftex.def Info: planning files/TFG Cover.pdf  used on input line 105.
 (pdftex.def)             Requested size: 597.67143pt x 845.07512pt.
-<planning files/TFG Cover.pdf, id=177, page=1, 597.6729pt x 845.07718pt>
+<planning files/TFG Cover.pdf, id=180, page=1, 597.6729pt x 845.07718pt>
 File: planning files/TFG Cover.pdf Graphic file (type pdf)
 <use planning files/TFG Cover.pdf, page 1>
 Package pdftex.def Info: planning files/TFG Cover.pdf , page1 used on input lin
-e 103.
+e 105.
 (pdftex.def)             Requested size: 597.67143pt x 845.07512pt.
 File: planning files/TFG Cover.pdf Graphic file (type pdf)
 <use planning files/TFG Cover.pdf, page 1>
 Package pdftex.def Info: planning files/TFG Cover.pdf , page1 used on input lin
-e 103.
+e 105.
 (pdftex.def)             Requested size: 597.69879pt x 845.1138pt.
 File: planning files/TFG Cover.pdf Graphic file (type pdf)
 <use planning files/TFG Cover.pdf, page 1>
 Package pdftex.def Info: planning files/TFG Cover.pdf , page1 used on input lin
-e 103.
+e 105.
 (pdftex.def)             Requested size: 597.69879pt x 845.1138pt.
 File: planning files/TFG Cover.pdf Graphic file (type pdf)
 <use planning files/TFG Cover.pdf, page 1>
 Package pdftex.def Info: planning files/TFG Cover.pdf , page1 used on input lin
-e 103.
+e 105.
 (pdftex.def)             Requested size: 597.69879pt x 845.1138pt.
 File: planning files/TFG Cover.pdf Graphic file (type pdf)
 <use planning files/TFG Cover.pdf, page 1>
 Package pdftex.def Info: planning files/TFG Cover.pdf , page1 used on input lin
-e 103.
+e 105.
 (pdftex.def)             Requested size: 597.69879pt x 845.1138pt.
  [1
 
@@ -629,8 +957,8 @@ LaTeX Info: Redefining \% on input line 5.
 
 
 ])
-\tf@toc=\write4
-\openout4 = `main.toc'.
+\tf@toc=\write5
+\openout5 = `main.toc'.
 
  [7]
 (C:/Users\adria\OneDrive\Escriptori\UPF'\TFG\UPF_TFGRepository\thesis\TFG_Latex
@@ -640,8 +968,8 @@ LaTeX Info: Redefining \% on input line 2.
 LaTeX Info: Redefining \. on input line 5.
 LaTeX Info: Redefining \% on input line 5.
 )
-\tf@lof=\write5
-\openout5 = `main.lof'.
+\tf@lof=\write6
+\openout6 = `main.lof'.
 
  [8
 
@@ -654,14 +982,14 @@ LaTeX Info: Redefining \% on input line 2.
 LaTeX Info: Redefining \. on input line 5.
 LaTeX Info: Redefining \% on input line 5.
 )
-\tf@lot=\write6
-\openout6 = `main.lot'.
+\tf@lot=\write7
+\openout7 = `main.lot'.
 
  [9
 
 ] (chapters/01_introduction.tex
 Chapter 1.
-<figures and tables/1_Introduction/Figure 1. Coronary Arteries.png, id=339, 224
+<figures and tables/1_Introduction/Figure 1. Coronary Arteries.png, id=345, 224
 3.38126pt x 1442.38875pt>
 File: figures and tables/1_Introduction/Figure 1. Coronary Arteries.png Graphic
  file (type png)
@@ -674,8 +1002,8 @@ rteries.png  used on input line 19.
 
 
  <./figures and tables/1_Introduction/Figure 1. Coronary Arteries.png>]
-<figures and tables/1_Introduction/Figure 2. Coronary Artery Disease.png, id=35
-6, 544.0325pt x 347.2975pt>
+<figures and tables/1_Introduction/Figure 2. Coronary Artery Disease.png, id=36
+2, 544.0325pt x 347.2975pt>
 File: figures and tables/1_Introduction/Figure 2. Coronary Artery Disease.png G
 raphic file (type png)
 <use figures and tables/1_Introduction/Figure 2. Coronary Artery Disease.png>
@@ -686,7 +1014,7 @@ rtery Disease.png  used on input line 37.
 [2 <./figures and tables/1_Introduction/Figure 2. Coronary Artery Disease.png (
 PNG copy)>] [3]
 <figures and tables/1_Introduction/Figure 3. Current CAD Diagnostic Workflow HS
-P (2).pdf, id=392, 721.08398pt x 326.68047pt>
+P (2).pdf, id=398, 721.08398pt x 326.68047pt>
 File: figures and tables/1_Introduction/Figure 3. Current CAD Diagnostic Workfl
 ow HSP (2).pdf Graphic file (type pdf)
 <use figures and tables/1_Introduction/Figure 3. Current CAD Diagnostic Workflo
@@ -697,7 +1025,7 @@ D Diagnostic Workflow HSP (2).pdf  used on input line 76.
  [4 <./figures and tables/1_Introduction/Figure 3. Current CAD Diagnostic Workf
 low HSP (2).pdf>]
 <figures and tables/1_Introduction/Figure 4. Current Image Analysis and Reporti
-ng Workflow HSP (2).pdf, id=417, 722.7pt x 312.88895pt>
+ng Workflow HSP (2).pdf, id=423, 722.7pt x 312.88895pt>
 File: figures and tables/1_Introduction/Figure 4. Current Image Analysis and Re
 porting Workflow HSP (2).pdf Graphic file (type pdf)
 <use figures and tables/1_Introduction/Figure 4. Current Image Analysis and Rep
@@ -708,7 +1036,7 @@ age Analysis and Reporting Workflow HSP (2).pdf  used on input line 94.
  [5 <./figures and tables/1_Introduction/Figure 4. Current Image Analysis and R
 eporting Workflow HSP (2).pdf>]
 <figures and tables/1_Introduction/Figure 5. Proposed Image Analysis and Report
-ing Workflow HSP (2).pdf, id=469, 722.07768pt x 293.44632pt>
+ing Workflow HSP (2).pdf, id=475, 722.07768pt x 293.44632pt>
 File: figures and tables/1_Introduction/Figure 5. Proposed Image Analysis and R
 eporting Workflow HSP (2).pdf Graphic file (type pdf)
 <use figures and tables/1_Introduction/Figure 5. Proposed Image Analysis and Re
@@ -720,7 +1048,7 @@ mage Analysis and Reporting Workflow HSP (2).pdf  used on input line 127.
 (chapters/02_methodology.tex [7 <./figures and tables/1_Introduction/Figure 5. 
 Proposed Image Analysis and Reporting Workflow HSP (2).pdf>]
 Chapter 2.
-<figures and tables/2_Methodology/Figure 1. E2E Workflow Diagram.pdf, id=500, 7
+<figures and tables/2_Methodology/Figure 1. E2E Workflow Diagram.pdf, id=506, 7
 04.77304pt x 399.41222pt>
 File: figures and tables/2_Methodology/Figure 1. E2E Workflow Diagram.pdf Graph
 ic file (type pdf)
@@ -737,8 +1065,8 @@ LaTeX Font Info:    External font `cmex10' loaded for size
 (Font)              <5> on input line 35.
 
 [9]
-<figures and tables/2_Methodology/Figure 2. Block 1 Workflow Diagram.pdf, id=54
-8, 722.7pt x 394.39346pt>
+<figures and tables/2_Methodology/Figure 2. Block 1 Workflow Diagram.pdf, id=55
+4, 722.7pt x 394.39346pt>
 File: figures and tables/2_Methodology/Figure 2. Block 1 Workflow Diagram.pdf G
 raphic file (type pdf)
 <use figures and tables/2_Methodology/Figure 2. Block 1 Workflow Diagram.pdf>
@@ -752,8 +1080,8 @@ LaTeX Font Info:    Trying to load font information for OT1+pcr on input line 9
  (C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/latex/psnfss\ot1pcr.fd
 File: ot1pcr.fd 2001/06/04 font definitions for OT1/pcr.
 ) [11]
-<figures and tables/2_Methodology/Figure 3. Block 2 Workflow Diagram.pdf, id=60
-5, 722.7pt x 391.26173pt>
+<figures and tables/2_Methodology/Figure 3. Block 2 Workflow Diagram.pdf, id=61
+1, 722.7pt x 391.26173pt>
 File: figures and tables/2_Methodology/Figure 3. Block 2 Workflow Diagram.pdf G
 raphic file (type pdf)
 <use figures and tables/2_Methodology/Figure 3. Block 2 Workflow Diagram.pdf>
@@ -762,8 +1090,8 @@ kflow Diagram.pdf  used on input line 130.
 (pdftex.def)             Requested size: 455.24411pt x 246.46634pt.
  [12 <./figures and tables/2_Methodology/Figure 3. Block 2 Workflow Diagram.pdf
 >] [13] [14]
-<figures and tables/2_Methodology/Figure 4. Block 3 Workflow Diagram.pdf, id=66
-4, 722.28848pt x 385.85155pt>
+<figures and tables/2_Methodology/Figure 4. Block 3 Workflow Diagram.pdf, id=67
+0, 722.28848pt x 385.85155pt>
 File: figures and tables/2_Methodology/Figure 4. Block 3 Workflow Diagram.pdf G
 raphic file (type pdf)
 <use figures and tables/2_Methodology/Figure 4. Block 3 Workflow Diagram.pdf>
@@ -774,19 +1102,19 @@ kflow Diagram.pdf  used on input line 189.
 >]
 LaTeX Font Info:    External font `cmex10' loaded for size
 (Font)              <9> on input line 211.
- [16]) (chapters/03_results.tex [17] [18]
+ [16] [17] [18]) (chapters/03_results.tex [19]
 Chapter 3.
-) (chapters/04_discussion.tex [19
+) (chapters/04_discussion.tex [20
 
 ]
 Chapter 4.
-) (chapters/05_conclusions.tex [20
+) (chapters/05_conclusions.tex [21
 
 ]
 Chapter 5.
 )
 (C:/Users\adria\OneDrive\Escriptori\UPF'\TFG\UPF_TFGRepository\thesis\TFG_Latex
-2526\build\_compile\main.bbl [21
+2526\build\_compile\main.bbl [22
 
 ]
 Underfull \hbox (badness 10000) in paragraph at lines 69--75
@@ -800,11 +1128,11 @@ Underfull \hbox (badness 1675) in paragraph at lines 69--75
 rteries$[]\OT1/ptm/m/n/10.95 , 2024.  Ac-
  []
 
-[22
+[23
 
-]) [23] (chapters/06_appendix.tex
+] [24]) [25] (chapters/06_appendix.tex
 Appendix A.
-) [24
+) [26
 
 
 ]
@@ -823,13 +1151,13 @@ Package rerunfilecheck Info: File `main.out' has not changed.
 (rerunfilecheck)             Checksum: C521EC6EFEEA05535D6739BA18911DF0;10523.
  ) 
 Here is how much of TeX's memory you used:
- 15161 strings out of 467871
- 263169 string characters out of 5418376
- 718806 words of memory out of 5000000
- 43652 multiletter control sequences out of 15000+600000
- 659050 words of font info for 89 fonts, out of 8000000 for 9000
+ 25721 strings out of 467871
+ 499917 string characters out of 5418376
+ 919409 words of memory out of 5000000
+ 53986 multiletter control sequences out of 15000+600000
+ 660734 words of font info for 91 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 75i,17n,90p,1328b,845s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 84i,17n,94p,1328b,845s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <C:/Users/adria/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/
 cmex10.pfb><C:/Users/adria/AppData/Local/Programs/MiKTeX/fonts/type1/public/ams
 fonts/cm/cmmi10.pfb><C:/Users/adria/AppData/Local/Programs/MiKTeX/fonts/type1/p
@@ -843,9 +1171,9 @@ a/Local/Programs/MiKTeX/fonts/type1/urw/times/utmb8a.pfb><C:/Users/adria/AppDat
 a/Local/Programs/MiKTeX/fonts/type1/urw/times/utmr8a.pfb><C:/Users/adria/AppDat
 a/Local/Programs/MiKTeX/fonts/type1/urw/times/utmri8a.pfb>
 Output written on C:/Users\adria\OneDrive\Escriptori\UPF'\TFG\UPF_TFGRepository
-\thesis\TFG_Latex2526\build\_compile\main.pdf (33 pages, 4625343 bytes).
+\thesis\TFG_Latex2526\build\_compile\main.pdf (35 pages, 4637821 bytes).
 PDF statistics:
- 842 PDF objects out of 1000 (max. 8388607)
- 133 named destinations out of 1000 (max. 500000)
- 405 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 869 PDF objects out of 1000 (max. 8388607)
+ 139 named destinations out of 1000 (max. 500000)
+ 417 words of extra memory for PDF output out of 10000 (max. 10000000)
 

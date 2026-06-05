@@ -150,7 +150,7 @@ Highly tortuous or irregular geometries can occasionally cause the native VMTK s
 \paragraph{Phase 2: Tabular Area Integration and Branch Mapping}\mbox{}\par\vspace{0.5em}
 To perform localized stenosis quantification, the cross-sectional areas computed across the global coronary tree must be accurately mapped to the individual ostium-to-endpoint branch dataframes generated in Block~1.
 
-For every spatial coordinate $(P_x, P_y, P_z)$ in a branch table, if the sequence of centerline points aligns perfectly with the global area output, the value is assigned via direct row matching. If the points do not align exactly, the system uses a \texttt{scipy.spatial.cKDTree} nearest-neighbour query to find the closest evaluated station in 3D space and map its computed area to the specific branch point.
+For every spatial coordinate $(P_x, P_y, P_z)$ in a branch table, if the sequence of centerline points aligns perfectly with the global area output, the value is assigned via direct row matching. If the points do not align exactly, the system uses a \texttt{scipy.spatial.cKDTree} nearest-neighbor query to find the closest evaluated station in 3D space and map its computed area to the specific branch point.
 
 Ultimately, this mapping step propagates a continuous \texttt{Area} metric to every discrete coordinate across all branch paths. It seamlessly merges the newly extracted geometry with the anatomical information inherited from Block~1, preparing the exact dataset required for the next baseline reference calculations.
 
@@ -166,7 +166,7 @@ Once the two reference points are identified along the same branch, their corres
   A_{\mathrm{ref}} = \frac{A_{\mathrm{prox}} + A_{\mathrm{dist}}}{2}.
   \label{eq:area-reference}
 \end{equation}
-Because this formula requires both proximal and distal context, percentage area stenosis cannot be calculated for points at the very extremities of branch paths. Consequently, any evaluation point lying within distance $W$ from the ostium or the distal tip is excluded, as it would possess only a one-sided reference. Alongside sensitivity to window size, additional anatomical challenges of this automated baseline (such as unpredictable behaviour near major bifurcations) are addressed in \Cref{ch:discussion}.
+Because this formula requires both proximal and distal context, percentage area stenosis cannot be calculated for points at the very extremities of branch paths. Consequently, any evaluation point lying within distance $W$ from the ostium or the distal tip is excluded, as it would possess only a one-sided reference. Alongside sensitivity to window size, additional anatomical challenges of this automated baseline (such as unpredictable behavior near major bifurcations) are addressed in \Cref{ch:discussion}.
 
 \paragraph{Phase 4: Percentage Area Stenosis and Patient-Level Aggregation}\mbox{}\par\vspace{0.5em}
 For each qualifying centerline point, the pipeline quantifies stenosis severity. The percentage area stenosis (\%AS) formula, adapted from Burrull~\cite{burrull2023}, compares the local cross-sectional lumen area ($A$) directly against its corresponding healthy reference ($A_{\mathrm{ref}}$):
@@ -305,6 +305,55 @@ Finally, the system calculates the Segment Involvement Score (SIS), defined as t
 
 \section{Block 4: Patient Visualization Dashboard}
 \label{sec:methodology-block4}
+
+Block~4 constitutes the final user-facing layer of the automated workflow, functioning as an interactive clinical decision-support interface built with the Streamlit framework~\cite{streamlit}. Whereas the preceding blocks operate as fully automated processing stages, this final block translates their geometric meshes and tabular records into an explorable visual environment. Specifically, the dashboard ingests the extracted centerline coordinates, cross-sectional areas, percentage area stenosis profiles, AHA segment labels, segment-level summaries, and the patient-level CAD-RADS~2.0 report.
+
+Conceived as a rapid evaluation pop-up rather than a standalone diagnostic system, the interface synthesizes these artifacts into a single navigable session. The design attempts to avoid ``black-box'' behavior, recognizing that medical professionals highly value the transparency and explainability of automated tools. Consequently, every displayed score remains directly traceable to the underlying geometric measurements.
+
+Within the clinical workflow of Hospital de la Santa Creu i Sant Pau, this dashboard is designed to integrate seamlessly with the recently developed patient prioritization system~\cite{ferrer2024}. By accessing this interface for prioritized cases, cardiologists can obtain a rapid, detailed overview to efficiently rule out low-risk patients or decide if a deeper inspection of the raw coronary computed tomography angiography (CCTA) scans is required.
+
+\begin{figure}[H]
+  \centering
+  \begin{tikzpicture}[
+    node distance=0.95cm,
+    box/.style={
+      rectangle,
+      draw=gray!30,
+      fill=gray!10,
+      rounded corners=4pt,
+      minimum width=0.88\linewidth,
+      minimum height=1.35cm,
+      align=center,
+      font=\small,
+      inner sep=6pt
+    },
+    arr/.style={
+      -{Stealth[length=2.4mm, width=1.8mm]},
+      thick,
+      gray!55
+    }
+  ]
+    \node[box] (step1) {\textbf{1. Global 3D Coronary Trees}\\\textit{Interactive RCA \& LCA with \%AS or Area colormaps}};
+    \node[box, below=of step1] (step2) {\textbf{2. Patient Clinical Summary}\\\textit{Automated CAD-RADS~2.0, SIS, and territory rationale}};
+    \node[box, below=of step2] (step3) {\textbf{3. Segment-Level Analysis}\\\textit{3D segment colormaps paired with 2D Area and \%AS bar plots}};
+    \node[box, below=of step3] (step4) {\textbf{4. Branch-Level Analysis}\\\textit{Continuous 3D branch paths and longitudinal 2D metrics}};
+    \draw[arr] (step1) -- (step2);
+    \draw[arr] (step2) -- (step3);
+    \draw[arr] (step3) -- (step4);
+  \end{tikzpicture}
+  \caption{Block~4 user interface layout and interaction flow: from global 3D anatomy and clinical summary to segment-level and branch-level metric validation.}
+  \label{fig:block4-interaction-flow}
+\end{figure}
+
+As illustrated in \Cref{fig:block4-interaction-flow}, the Streamlit dashboard is organized into four vertically stacked modules that guide the clinical review process from global anatomy to vessel-level metrics. Module~1 opens the session with interactive three-dimensional renderings of the global RCA and LCA, which can be colored by either \%AS or cross-sectional area. Module~2 immediately follows with the patient clinical summary, reporting the automated CAD-RADS~2.0 category, the Segment Involvement Score (SIS), and the territory-level rationale~\cite{cury2022}. Below these high-level overviews, Modules~3 and~4 offer dedicated segment-level and branch-level exploration. In both layers, localized three-dimensional anatomical views are shown alongside their corresponding two-dimensional metric profiles, allowing a comprehensive evaluation of the affected vessels.
+
+\paragraph{Module 3: Segment Level Analysis}\mbox{}\par\vspace{0.5em}
+The third module focuses on the detailed analysis of individual segments, following the standard AHA 17-segment framework. The three-dimensional view initially displays the entire artery colored by segment identity. When a user selects a specific segment from either the RCA or LCA, the three-dimensional map highlights this selection so the user clearly sees the region under analysis. Concurrently, two synchronized two-dimensional bar plots update to display the cross-sectional area and \%AS profiles. This allows the user to visualize exactly how the area and stenosis behave along the length of the chosen segment. To ensure the severity calculations are transparent and easy to verify, the charts explicitly mark the point of maximum stenosis alongside the reference areas used in \Cref{eq:area-reference}. This combination of three-dimensional models and two-dimensional charts is supported by visualization research~\cite{borkin2011}. The three-dimensional anatomy provides clear spatial context, while the two-dimensional profiles eliminate visual overlap, making it significantly easier to locate lesions and accurately read the metrics.
+
+\paragraph{Module 4: Branch-Level Analysis}\mbox{}\par\vspace{0.5em}
+The fourth module applies the same dual-visualization principle as Module~3, but expands the scope to the continuous ostium-to-endpoint paths extracted in Block~1. Upon selecting a specific branch, the three-dimensional view highlights its full anatomical trajectory and flags the peak stenosis location. Below this, longitudinal area and \%AS bar plots chart the entire branch length in a strict proximal-to-distal order. Because the stenosis quantification in Block~2 is computed independently along these paths, this view exposes the exact continuous geometric context from which the reference windows and \%AS values were derived.
+
+In Modules~3 and~4, explicitly plotting the peak stenosis alongside its bilateral reference samples guarantees full algorithmic transparency. This design allows cardiologists to rapidly validate the automated findings against their clinical intuition before deeper inspection of the raw CCTA data. Full-page screenshots demonstrating these dashboard interfaces are presented in \Cref{ch:results}.
 
 \section{Experimental Design and Validation Framework}
 \label{sec:methodology-validation}

@@ -170,6 +170,12 @@ P.~J. Slomka, D.~Dey, A.~Sitek, M.~Motwani, D.~S. Berman, and G.~Germano.
 \newblock Artificial intelligence in cardiovascular imaging.
 \newblock {\em JACC: Cardiovascular Imaging}, 10(6):615--626, 2017.
 
+\bibitem{streamlit}
+{Streamlit Inc.}
+\newblock Streamlit: The fastest way to build and share data apps.
+\newblock \url{https://streamlit.io/}, 2024.
+\newblock Accessed: 2026-06-05.
+
 \bibitem{who2023_cvd}
 {World Health Organization}.
 \newblock Cardiovascular diseases ({CVDs}).
