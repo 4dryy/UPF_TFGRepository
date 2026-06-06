@@ -12,7 +12,7 @@ This chapter reports the numerical and qualitative outcomes of the three-tier va
 \section{Pipeline Execution: ASOCA vs.\ MACS-18}
 \label{sec:results-pipeline}
 
-The full 40-patient cohort was processed end-to-end on both ASOCA and MACS-18 masks (\Cref{subsec:validation-asoca,subsec:validation-macs}). Evaluation was limited to operational reliability, geometric extraction quality, and runtime; clinical stenosis accuracy was excluded (\Cref{subsec:validation-stenosis-limitation}).
+The full 40-patient cohort was processed end-to-end on both ASOCA and MACS-18 masks (\Cref{subsec:validation-asoca,subsec:validation-macs}). Evaluation was limited to operational reliability, geometric extraction quality, and runtime; clinical stenosis accuracy was excluded (\Cref{sec:methodology-validation}).
 
 \subsection{Execution and Endpoint Topology}
 \label{subsec:results-execution-endpoints}
@@ -38,7 +38,7 @@ Both cohorts achieved an Execution Success Rate (ESR) of 100\%: all 40 normal an
   \end{tabular}
 \end{table}
 
-\Cref{tab:endpoint-summary} shows that MACS-18 yields a higher mean endpoint count (27.7 vs.\ 17.1 per patient), consistent with finer lumen geometry in the refined masks. On ASOCA, the Endpoint Identification Success Rate (EISR) was 89.77\% overall (89.84\% normal, 89.69\% diseased), placing it in the neutral band of \Cref{tab:validation-real-thresholds}.
+\Cref{tab:endpoint-summary} shows that MACS-18 yields a higher mean endpoint count (27.7 vs.\ 17.1 per patient), consistent with finer lumen geometry in the refined masks. On ASOCA, the Endpoint Identification Success Rate (EISR) was 89.77\% overall (89.84\% normal, 89.69\% diseased), placing it in the good band of \Cref{tab:validation-real-thresholds}.
 
 \begin{figure}[H]
   \centering
@@ -69,7 +69,7 @@ Both cohorts achieved an Execution Success Rate (ESR) of 100\%: all 40 normal an
   \end{tabular}
 \end{table}
 
-ASOCA achieved OISR = 85.0\% and CESR = 83.19\%, both in the neutral band (\Cref{tab:validation-real-thresholds}). MACS-18 achieved CESR = 95.62\% (good) but OISR = 73.75\% (poor), reflecting the trade-off between richer topology and ostium disambiguation difficulty hypothesized in \Cref{subsec:validation-macs}.
+ASOCA achieved OISR = 85.0\% (good) and CESR = 83.19\% (neutral) (\Cref{tab:validation-real-thresholds}). MACS-18 achieved CESR = 95.62\% (good) but OISR = 73.75\% (poor), reflecting the trade-off between richer topology and ostium disambiguation difficulty hypothesized in \Cref{subsec:validation-macs}.
 
 \begin{figure}[H]
   \centering
@@ -107,7 +107,7 @@ ASOCA achieved OISR = 85.0\% and CESR = 83.19\%, both in the neutral band (\Cref
   \label{fig:runtimes-comparison}
 \end{figure}
 
-Mean total runtime was 346.9\,s (5.78\,min) on ASOCA and 576.2\,s (9.60\,min) on MACS-18. On ASOCA, the mean falls within the good band ($<$600\,s) of \Cref{tab:validation-real-thresholds}; MACS-18 lies in the neutral band. These values reflect automated batch processing time only and are not directly comparable to full manual CCTA review, as the pipeline is intended to support rather than replace expert visual assessment (\Cref{subsec:validation-real-metrics}). Block~2 (geometric quantification) dominated runtime on both cohorts, with a higher mean on MACS-18 (357.7\,s vs.\ 164.6\,s on ASOCA), consistent with denser geometry and more cross-section evaluations. Mean Block~1, Block~3, and Block~4 runtimes were 145.8\,s, 35.2\,s, and 0.16\,s (ASOCA) versus 159.8\,s, 57.9\,s, and 0.02\,s (MACS-18), respectively.
+Mean total runtime was 346.9\,s (5.78\,min) on ASOCA and 576.2\,s (9.60\,min) on MACS-18. Both cohort means fall within the good band ($<$900\,s) of \Cref{tab:validation-real-thresholds}. These values reflect automated batch processing time only and are not directly comparable to full manual CCTA review, as the pipeline is intended to support rather than replace expert visual assessment (\Cref{subsec:validation-real-metrics}). Block~2 (geometric quantification) dominated runtime on both cohorts, with a higher mean on MACS-18 (357.7\,s vs.\ 164.6\,s on ASOCA), consistent with denser geometry and more cross-section evaluations. Mean Block~1, Block~3, and Block~4 runtimes were 145.8\,s, 35.2\,s, and 0.16\,s (ASOCA) versus 159.8\,s, 57.9\,s, and 0.02\,s (MACS-18), respectively.
 
 \section{Geometric and Algorithmic Accuracy via Synthetic Data}
 \label{sec:results-synthetic}

@@ -18,22 +18,22 @@
 \contentsline {figure}{\numberline {2.4}{\ignorespaces Block~3 workflow: segment aggregation based on the AHA 17-segment model and automated CAD-RADS~2.0 scoring.}}{15}{figure.2.4}%
 \contentsline {figure}{\numberline {2.5}{\ignorespaces Block~4 user interface layout and interaction flow: from global 3D anatomy and clinical summary to segment-level and branch-level metric validation.}}{18}{figure.2.5}%
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {3.1}{\ignorespaces Distribution of detected endpoints per patient for ASOCA and MACS-18 cohorts.}}{25}{figure.3.1}%
-\contentsline {figure}{\numberline {3.2}{\ignorespaces Grouped comparison of ostium accuracy and centerline precision between ASOCA and MACS-18.}}{26}{figure.3.2}%
-\contentsline {figure}{\numberline {3.3}{\ignorespaces Representative centerline extraction comparison between ASOCA and MACS-18 masks for the same patient case.}}{26}{figure.3.3}%
-\contentsline {figure}{\numberline {3.4}{\ignorespaces Representative smoothed surface meshes derived from ASOCA and MACS-18 segmentations for the same patient case.}}{27}{figure.3.4}%
-\contentsline {figure}{\numberline {3.5}{\ignorespaces Per-block and total pipeline runtimes for ASOCA and MACS-18 cohorts.}}{27}{figure.3.5}%
-\contentsline {figure}{\numberline {3.6}{\ignorespaces Synthetic healthy and stenosis tube phantoms with extracted centerlines (\Cref {eq:synthetic-radius}).}}{28}{figure.3.6}%
-\contentsline {figure}{\numberline {3.7}{\ignorespaces Longitudinal area and \%AS profiles along the healthy synthetic tube.}}{28}{figure.3.7}%
-\contentsline {figure}{\numberline {3.8}{\ignorespaces Three-dimensional area and \%AS colormaps for the healthy synthetic tube.}}{29}{figure.3.8}%
-\contentsline {figure}{\numberline {3.9}{\ignorespaces Longitudinal area and \%AS profiles along the stenosis synthetic tube.}}{30}{figure.3.9}%
-\contentsline {figure}{\numberline {3.10}{\ignorespaces Three-dimensional area and \%AS colormaps for the stenosis synthetic tube.}}{30}{figure.3.10}%
-\contentsline {figure}{\numberline {3.11}{\ignorespaces Dashboard Module~1: interactive global RCA and LCA three-dimensional renderings with metric colormaps.}}{31}{figure.3.11}%
-\contentsline {figure}{\numberline {3.12}{\ignorespaces Dashboard Module~2: patient clinical summary with automated CAD-RADS~2.0 category, SIS, and territory rationale.}}{31}{figure.3.12}%
-\contentsline {figure}{\numberline {3.13}{\ignorespaces Dashboard Module~3: segment-level three-dimensional map and synchronized two-dimensional area and \%AS bar plots.}}{32}{figure.3.13}%
-\contentsline {figure}{\numberline {3.14}{\ignorespaces Dashboard Module~3 (continued): segment selection and annotated peak stenosis with reference markers.}}{32}{figure.3.14}%
-\contentsline {figure}{\numberline {3.15}{\ignorespaces Dashboard Module~4: branch-level three-dimensional path highlighting and longitudinal metric profiles.}}{33}{figure.3.15}%
-\contentsline {figure}{\numberline {3.16}{\ignorespaces Dashboard Module~4 (continued): full-branch area and \%AS profiles in proximal-to-distal order.}}{33}{figure.3.16}%
+\contentsline {figure}{\numberline {3.1}{\ignorespaces Distribution of detected endpoints per patient for ASOCA and MACS-18 cohorts.}}{24}{figure.3.1}%
+\contentsline {figure}{\numberline {3.2}{\ignorespaces Grouped comparison of ostium accuracy and centerline precision between ASOCA and MACS-18.}}{25}{figure.3.2}%
+\contentsline {figure}{\numberline {3.3}{\ignorespaces Representative centerline extraction comparison between ASOCA and MACS-18 masks for the same patient case.}}{25}{figure.3.3}%
+\contentsline {figure}{\numberline {3.4}{\ignorespaces Representative smoothed surface meshes derived from ASOCA and MACS-18 segmentations for the same patient case.}}{26}{figure.3.4}%
+\contentsline {figure}{\numberline {3.5}{\ignorespaces Per-block and total pipeline runtimes for ASOCA and MACS-18 cohorts.}}{26}{figure.3.5}%
+\contentsline {figure}{\numberline {3.6}{\ignorespaces Synthetic healthy and stenosis tube phantoms with extracted centerlines (\Cref {eq:synthetic-radius}).}}{27}{figure.3.6}%
+\contentsline {figure}{\numberline {3.7}{\ignorespaces Longitudinal area and \%AS profiles along the healthy synthetic tube.}}{27}{figure.3.7}%
+\contentsline {figure}{\numberline {3.8}{\ignorespaces Three-dimensional area and \%AS colormaps for the healthy synthetic tube.}}{28}{figure.3.8}%
+\contentsline {figure}{\numberline {3.9}{\ignorespaces Longitudinal area and \%AS profiles along the stenosis synthetic tube.}}{29}{figure.3.9}%
+\contentsline {figure}{\numberline {3.10}{\ignorespaces Three-dimensional area and \%AS colormaps for the stenosis synthetic tube.}}{29}{figure.3.10}%
+\contentsline {figure}{\numberline {3.11}{\ignorespaces Dashboard Module~1: interactive global RCA and LCA three-dimensional renderings with metric colormaps.}}{30}{figure.3.11}%
+\contentsline {figure}{\numberline {3.12}{\ignorespaces Dashboard Module~2: patient clinical summary with automated CAD-RADS~2.0 category, SIS, and territory rationale.}}{30}{figure.3.12}%
+\contentsline {figure}{\numberline {3.13}{\ignorespaces Dashboard Module~3: segment-level three-dimensional map and synchronized two-dimensional area and \%AS bar plots.}}{31}{figure.3.13}%
+\contentsline {figure}{\numberline {3.14}{\ignorespaces Dashboard Module~3 (continued): segment selection and annotated peak stenosis with reference markers.}}{31}{figure.3.14}%
+\contentsline {figure}{\numberline {3.15}{\ignorespaces Dashboard Module~4: branch-level three-dimensional path highlighting and longitudinal metric profiles.}}{32}{figure.3.15}%
+\contentsline {figure}{\numberline {3.16}{\ignorespaces Dashboard Module~4 (continued): full-branch area and \%AS profiles in proximal-to-distal order.}}{32}{figure.3.16}%
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }
