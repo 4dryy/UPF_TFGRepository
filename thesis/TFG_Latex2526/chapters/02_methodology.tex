@@ -362,7 +362,7 @@ Validating an automated clinical decision-support pipeline requires complementar
 
 Because of anatomical limitations discussed in \Cref{sec:discussion-limitations}, the pipeline overestimates stenosis severity in complex regions. Consequently, the current iteration of the pipeline does not possess reliable clinical predictive value. To align with the project scope, clinical stenosis accuracy and CAD-RADS~2.0 concordance against real-world patient diagnoses are explicitly excluded from the evaluation design.
 
-Instead, this thesis adopts a three-tier validation framework: \textbf{(i)}~operational validation on real patient cohorts (ASOCA and MACS-18) to assess algorithmic robustness and geometric extraction precision; \textbf{(ii)}~controlled algorithmic verification on synthetic phantoms with analytical ground truth to validate the underlying mathematical logic; and \textbf{(iii)}~a pilot clinical usability study using the System Usability Scale (SUS), conducted with specialized cardiologists at Hospital de la Santa Creu i Sant Pau, to evaluate the interactive Block~4 interface. Numerical outcomes are reported in \Cref{ch:results}; interpretation of limitations and future directions is reserved for \Cref{ch:discussion}.
+Instead, this thesis adopts a three-tier validation framework: \textbf{(i)}~operational validation on real patient cohorts (ASOCA and MACS-18) to assess algorithmic robustness and geometric extraction precision; \textbf{(ii)}~controlled algorithmic verification on synthetic phantoms with analytical ground truth to validate the underlying mathematical logic; and \textbf{(iii)}~a pilot clinical usability study using the System Usability Scale (SUS), conducted with medical experts at Hospital de la Santa Creu i Sant Pau, to evaluate the interactive Block~4 interface. Numerical outcomes are reported in \Cref{ch:results}; interpretation of limitations and future directions is reserved for \Cref{ch:discussion}.
 
 \subsection{Real-Data Evaluation Metrics and Acceptance Criteria}
 \label{subsec:validation-real-metrics}
@@ -441,15 +441,17 @@ The identical pipeline was re-executed on the expert-refined MACS-18 lumen masks
 \subsection{Geometry and Quantification Verification: Synthetic Data}
 \label{subsec:validation-synthetic}
 
-Real-patient evaluation cannot provide a voxel-independent ground truth for the percentage of area stenosis (\%AS). To strictly isolate the Block~2 quantification logic, two idealized vessel phantoms were programmatically generated~\cite{burrull2023} and processed through the full pipeline using the same 10\,mm reference half-window as the clinical cohorts.
+Clinically, stenosis quantification would typically be evaluated by comparing algorithmic CAD-RADS scores against expert radiological reports or by assessing the maximum stenosis within specific arterial segments. However, as previously noted, natural anatomical irregularities cause the pipeline's current area-based formula~\cite{burrull2023,hideo_kajita2019} to overestimate stenosis severity, limiting its direct clinical predictive value on real patient cohorts.
 
-\textbf{Goal:} Validate the underlying mathematical logic and geometric accuracy of the quantification algorithms by comparing the pipeline outputs against an absolute analytical ground truth.
+Following consultation with clinical supervisors at Hospital de la Santa Creu i Sant Pau, verification was instead conducted in a controlled setting using two programmatically generated vessel models (healthy and diseased). These idealized shapes isolate the formula from anatomical confounders and were processed through the full pipeline with the same 10\,mm reference half-window applied to the clinical cohorts.
 
-\textbf{Phantom Design:} Both masks occupy a $100 \times 100 \times 100$ voxel grid with 1.0\,mm isotropic spacing. Each phantom is a capped cylinder along the $Z$-axis (from $Z = 15$ to $Z = 85$) with hemispherical end caps to ensure closed surfaces compatible with VMTK cross-sectioning.
+\textbf{Goal:} Verify the underlying mathematical logic and geometric accuracy of the quantification algorithms by comparing the pipeline outputs against an absolute analytical ground truth, completely isolated from real-world anatomical noise. Numerical outcomes are reported in \Cref{sec:results-synthetic}.
+
+\textbf{Synthetic Model Design:} Both masks occupy a $100 \times 100 \times 100$ voxel grid with a uniform 1.0\,mm spacing in all three dimensions. Each model is a capped cylinder along the $Z$-axis (from $Z = 15$ to $Z = 85$) with hemispherical end caps to ensure closed surfaces compatible with VMTK cross-sectioning.
 
 \begin{itemize}
-  \item \textbf{Synthetic 1 (Healthy).} Constant radius $R = 10$\,mm. Theoretical cross-sectional area $A = \pi R^2 \approx 314.16$\,mm$^2$ and maximum \%AS $= 0\%$.
-  \item \textbf{Synthetic 2 (Diseased).} Same base radius with a symmetric cosine narrowing between $Z = 40$ and $Z = 60$, reaching a minimum radius $R_{\min} = 5$\,mm at $Z = 50$. Theoretical maximum area is $\approx 314.16$\,mm$^2$, minimum area is $\approx 78.54$\,mm$^2$, and maximum \%AS $= 75\%$.
+  \item \textbf{Synthetic 1 (Healthy):} Constant radius $R = 10$\,mm. Theoretical cross-sectional area $A = \pi R^2 \approx 314.16$\,mm$^2$ and maximum \%AS $= 0\%$.
+  \item \textbf{Synthetic 2 (Diseased):} Same base radius with a symmetric cosine narrowing between $Z = 40$ and $Z = 60$, reaching a minimum radius $R_{\min} = 5$\,mm at $Z = 50$. Theoretical maximum area is $\approx 314.16$\,mm$^2$, minimum area is $\approx 78.54$\,mm$^2$, and maximum \%AS $= 75\%$.
 \end{itemize}
 
 The stenosis radius profile follows the equation:
@@ -460,53 +462,58 @@ The stenosis radius profile follows the equation:
 \end{equation}
 with base radius $R_{\mathrm{base}} = 10$\,mm, minimum radius $R_{\min} = 5$\,mm, midpoint $Z_{\mathrm{mid}} = 50$, and half-width $H = 10$\,mm.
 
-\textbf{Procedure:} For each phantom, the pipeline's peak \%AS and cross-sectional area samples were directly compared against the analytical ground truth. Errors are reported as absolute differences in percentage points (for \%AS) and mm$^2$ (for area). Additionally, longitudinal area and \%AS profiles were extracted to provide visual verification. \Cref{tab:validation-synthetic-thresholds} defines the acceptance thresholds for these synthetic metrics.
+\textbf{Procedure:} For each model, the pipeline's peak \%AS and cross-sectional area samples were directly compared against the analytical ground truth. Errors are reported as absolute differences in percentage points (for \%AS) and mm$^2$ (for area). Longitudinal area and \%AS profiles were also extracted for visual verification. \Cref{tab:validation-synthetic-thresholds} assigns each metric a \emph{good}, \emph{neutral}, or \emph{poor} band using the same interpretive logic as \Cref{tab:validation-real-thresholds}: \%AS cutoffs follow the 5--10\% inter-observer variability range~\cite{hideo_kajita2019}, and area cutoffs in mm$^2$ reflect mesh-discretization tolerance on ideal models. These values were agreed with clinical supervisors and should be treated as practical project benchmarks.
 
 \begin{table}[H]
-  \centering
-  \caption{Acceptance bands for synthetic phantom validation.}
+  \caption{Acceptance thresholds for synthetic model verification.}
   \label{tab:validation-synthetic-thresholds}
+  \vspace{0.5em}
+  \centering
   \small
-  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.26\linewidth}ccc>{\raggedright\arraybackslash}p{0.30\linewidth}@{}}
+  \renewcommand{\arraystretch}{1.35}
+  \setlength{\tabcolsep}{6pt}
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.36\linewidth}ccc@{}}
     \toprule
-    \textbf{Metric} & \textbf{Good} & \textbf{Neutral} & \textbf{Poor} & \textbf{Reference basis} \\
+    \cellcolor{gray!12}\textbf{Metric} &
+    \cellcolor{gray!12}\textbf{Good} &
+    \cellcolor{gray!12}\textbf{Neutral} &
+    \cellcolor{gray!12}\textbf{Poor} \\
     \midrule
-    Max \%AS absolute error & $<$5\% & 5--10\% & $>$10\% & Inter-observer variability 5--10\%~\cite{hideo_kajita2019,garcia2014,kalisz2016} \\
-    Mean area error (healthy) & $<$2\% rel.\ ($\approx$6\,mm$^2$) & 2--5\% & $>$5\% & Mesh discretization tolerance \\
-    Min-area error (stenosis) & $<$5\,mm$^2$ & 5--15\,mm$^2$ & $>$15\,mm$^2$ & Local neck fidelity \\
+    Max \%AS Absolute Error & $<$5\% & 5--10\% & $>$10\% \\
+    Mean Area Error (Healthy) & $<$6\,mm$^2$ & 6--16\,mm$^2$ & $>$16\,mm$^2$ \\
+    Min-Area Error (Stenosis) & $<$5\,mm$^2$ & 5--15\,mm$^2$ & $>$15\,mm$^2$ \\
     \bottomrule
   \end{tabular}
 \end{table}
-
-Numerical outcomes are reported in \Cref{sec:results-synthetic}.
 
 \subsection{User Experience and Interface Usability Evaluation}
 \label{subsec:validation-ux}
 
-Block~4 was evaluated through a pilot System Usability Scale (SUS) study~\cite{brooke1996} with cardiologists at Hospital de la Santa Creu i Sant Pau. SUS measures perceived interface usability; it does not assess diagnostic accuracy, consistent with the decision-support framing of \Cref{sec:methodology-block4}.
+The third validation tier evaluates the interactive dashboard developed in Block~4 from the end user's perspective. Medical experts at Hospital de la Santa Creu i Sant Pau took part in a pilot System Usability Scale (SUS) study~\cite{brooke1996} of this interface. The study focused on usability, clarity, and overall clinical acceptance.
 
-\textbf{Participants and procedure.} Three cardiologists completed a guided session on representative pipeline outputs, then responded to a 10-item Likert questionnaire (1 = strongly disagree, 5 = strongly agree) followed by an optional open feedback prompt. The full item wording is provided in \Cref{app:sus-questionnaire}.
-
-\textbf{Scoring.} Responses were converted using the standard SUS formula: odd items contribute $(\text{score} - 1)$, even items contribute $(5 - \text{score})$; the sum is multiplied by 2.5 to yield a 0--100 score per participant~\cite{brooke1996}. Mean and sample standard deviation are reported across participants.
+\textbf{Procedure:} Three medical experts attended individual in-person or online sessions comprising a brief project introduction, hands-on interaction with the full Block~4 dashboard on representative outputs, and the standard 10-item SUS Likert questionnaire (1--5; full wording in \Cref{app:sus-questionnaire}) with optional qualitative feedback. Responses were scored 0--100 using the standard SUS formula~\cite{brooke1996}. The cohort mean and standard deviation are reported in \Cref{sec:results-ux} and interpreted using the score bands in \Cref{tab:validation-sus-thresholds}.
 
 \begin{table}[H]
-  \centering
-  \caption{SUS score interpretation bands (Bangor adjective scale).}
+  \caption{SUS score interpretation bands. Adapted from Bangor et al.\ and Brooke~\cite{bangor2009,brooke1996}.}
   \label{tab:validation-sus-thresholds}
+  \vspace{0.5em}
+  \centering
   \small
-  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.14\linewidth}>{\raggedright\arraybackslash}p{0.22\linewidth}>{\raggedright\arraybackslash}p{0.48\linewidth}@{}}
+  \renewcommand{\arraystretch}{1.35}
+  \setlength{\tabcolsep}{6pt}
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.14\linewidth}>{\raggedright\arraybackslash}p{0.18\linewidth}>{\raggedright\arraybackslash}p{0.52\linewidth}@{}}
     \toprule
-    \textbf{SUS score} & \textbf{Grade} & \textbf{Interpretation} \\
+    \cellcolor{gray!12}\textbf{SUS Score} &
+    \cellcolor{gray!12}\textbf{Grade} &
+    \cellcolor{gray!12}\textbf{Interpretation} \\
     \midrule
-    $\geq$80 & Excellent & High usability~\cite{bangor2009} \\
-    68--79 & Good & Above-average; acceptable for release consideration~\cite{bangor2009} \\
-    50--67 & OK & Improvement needed~\cite{bangor2009} \\
-    $<$50 & Poor & Not acceptable~\cite{bangor2009} \\
+    $\geq$80 & Excellent & High usability \\
+    68--79 & Good & Above-average; acceptable for release consideration \\
+    50--67 & OK & Improvement needed \\
+    $<$50 & Poor & Not acceptable \\
     \bottomrule
   \end{tabular}
 \end{table}
-
-\textbf{Pilot limitation.} With $n = 3$, the study is exploratory; results indicate directional usability acceptance but should not be generalized without a larger sample (\Cref{sec:discussion-future}). Quantitative SUS outcomes appear in \Cref{sec:results-ux}; dashboard screenshots in \Cref{sec:results-dashboard}. Qualitative cardiologist feedback is analyzed only in \Cref{sec:discussion-future}.
 
 % Restore default paragraph spacing for subsequent chapters
 \setlength{\parskip}{0pt plus 1pt}
