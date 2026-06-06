@@ -1,32 +1,49 @@
-% Figure–Table Ledger (§2.7 ↔ Ch.3 mapping)
-% Pipeline: Fig1 centerlines, Fig2 surfaces, Fig3 endpoints, Fig4 OISR/CESR, Fig5 runtimes, Tab1 endpoints, Tab2 ostium/CESR → sec:results-pipeline
-% Synthetic: Fig6 tubes, Fig7–10 profiles/tubes, Tab3–4 metrics → sec:results-synthetic
-% Dashboard: Fig12–17 interfaces → sec:results-dashboard
-% SUS: Tab6 raw, Tab7 summary → sec:results-ux
-
 \chapter{Results}
 \label{ch:results}
 
-This chapter reports the numerical and qualitative outcomes of the three-tier validation framework defined in \Cref{sec:methodology-validation}. Metrics, acceptance bands, and scope exclusions are not repeated here; each section references the corresponding methodology subsection.
+% Readable paragraph spacing (matches Introduction and Methodology)
+\setlength{\parskip}{0.65em plus 0.15em minus 0.05em}
+\setlength{\parindent}{0pt}
+
+This chapter reports the three-tier validation outcomes (\Cref{sec:methodology-validation}), classified using Tables~2.6--2.8 and discussed in \Cref{ch:discussion}.
 
 \section{Pipeline Execution: ASOCA vs.\ MACS-18}
 \label{sec:results-pipeline}
 
-The full 40-patient cohort was processed end-to-end on both ASOCA and MACS-18 masks (\Cref{subsec:validation-asoca,subsec:validation-macs}). Evaluation was limited to operational reliability, geometric extraction quality, and runtime; clinical stenosis accuracy was excluded (\Cref{sec:methodology-validation}).
+\Cref{fig:centerlines-surfaces-comparison} introduces the paired ASOCA versus MACS-18 comparison using patient Normal\_8, a representative normal case from the shared 40-patient cohort. The figure contrasts Block~1 centerline extraction, endpoint detection, ostium identification, and surface mesh generation when only the input lumen mask differs between datasets.
 
-\subsection{Execution and Endpoint Topology}
-\label{subsec:results-execution-endpoints}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\linewidth]{{Figures/1 Pipeline Execution ASOCA vs. MACS-18/Figure 1 and 2 Merged.pdf}}
+  \caption{Block~1 outputs for Normal\_8 in four side-by-side panels. Left pair (ASOCA, then MACS-18): centerline paths with red ostium points and blue branch endpoints. Right pair (ASOCA, then MACS-18): smoothed lumen surfaces with light-red LCA and light-blue RCA.}
+  \label{fig:centerlines-surfaces-comparison}
+\end{figure}
 
-Both cohorts achieved an Execution Success Rate (ESR) of 100\%: all 40 normal and 40 diseased cases completed Blocks~1--4 without fatal error.
+As stated in \Cref{subsec:datasets-asoca-macs}, MACS-18 provides more anatomically detailed lumen masks than ASOCA. For the same patient (e.g., Normal\_8), this difference can be observed in both the centerline and surface views, where MACS-18 yields sharper branch definition.
+
+On ASOCA masks, every sample completed Blocks~1--4 without fatal error (ESR = 100\%, \emph{good}). The cohort averaged 17.1 detected endpoints per patient, with 89.77\% correctly identified (EISR, \emph{good}). Ostium placement reached 85.0\% success (OISR, \emph{good}), and centerline extraction succeeded in 83.19\% of attempted paths (CESR, \emph{neutral}). Mean total runtime was 346.9\,s (\emph{good}).
+
+On MACS-18 masks, every sample completed Blocks~1--4 without fatal error (ESR = 100\%, \emph{good}). Mean endpoints per patient increased to 27.7, consistent with the richer distal branching in the refined masks. Ostium success was 73.75\% (OISR, \emph{poor}), and centerline extraction improved to 95.62\% (CESR, \emph{good}). Mean total runtime was 576.2\,s (\emph{neutral}).
+
+\Cref{tab:endpoint-summary,tab:ostium-centerline-comparison} summarize the aggregated pipeline metrics for the full 40-patient cohort, classified using the acceptance bands in \Cref{tab:validation-real-thresholds}. Extended distribution and runtime charts are provided in \Cref{app:extended-pipeline-metrics}.
 
 \begin{table}[H]
-  \centering
-  \caption{Endpoint summary statistics per cohort and subgroup. MPE denotes mean endpoints per patient; EISR is reported for ASOCA only (\Cref{tab:validation-real-metrics}).}
+  \caption{Endpoint summary statistics per cohort and subgroup.}
   \label{tab:endpoint-summary}
+  \vspace{0.5em}
+  \centering
   \small
+  \renewcommand{\arraystretch}{1.35}
+  \setlength{\tabcolsep}{5pt}
   \begin{tabular}{@{}llrrrrr@{}}
     \toprule
-    \textbf{Cohort} & \textbf{Subgroup} & \textbf{$n$} & \textbf{Mean} & \textbf{Std} & \textbf{Min} & \textbf{Max} \\
+    \cellcolor{gray!12}\textbf{Cohort} &
+    \cellcolor{gray!12}\textbf{Subgroup} &
+    \cellcolor{gray!12}\textbf{$n$} &
+    \cellcolor{gray!12}\textbf{Mean} &
+    \cellcolor{gray!12}\textbf{Std} &
+    \cellcolor{gray!12}\textbf{Min} &
+    \cellcolor{gray!12}\textbf{Max} \\
     \midrule
     ASOCA & All & 40 & 17.1 & 4.78 & 10 & 32 \\
     ASOCA & Normal & 20 & 18.2 & 5.61 & 12 & 32 \\
@@ -38,26 +55,20 @@ Both cohorts achieved an Execution Success Rate (ESR) of 100\%: all 40 normal an
   \end{tabular}
 \end{table}
 
-\Cref{tab:endpoint-summary} shows that MACS-18 yields a higher mean endpoint count (27.7 vs.\ 17.1 per patient), consistent with finer lumen geometry in the refined masks. On ASOCA, the Endpoint Identification Success Rate (EISR) was 89.77\% overall (89.84\% normal, 89.69\% diseased), placing it in the good band of \Cref{tab:validation-real-thresholds}.
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=\linewidth]{{Figures/1 Pipeline Execution ASOCA vs. MACS-18/Figure 3. Distribution Of Detected Endpoints ASOCA vs. MACS18.png}}
-  \caption{Distribution of detected endpoints per patient for ASOCA and MACS-18 cohorts.}
-  \label{fig:endpoint-distribution}
-\end{figure}
-
-\subsection{Ostium and Centerline Quality}
-\label{subsec:results-ostium-centerline}
-
 \begin{table}[H]
-  \centering
   \caption{Ostium accuracy (OISR) and centerline precision (CESR) by cohort and subgroup (\%).}
   \label{tab:ostium-centerline-comparison}
+  \vspace{0.5em}
+  \centering
   \small
+  \renewcommand{\arraystretch}{1.35}
+  \setlength{\tabcolsep}{6pt}
   \begin{tabular}{@{}llrr@{}}
     \toprule
-    \textbf{Cohort} & \textbf{Subgroup} & \textbf{Ostium (\%)} & \textbf{Centerline (\%)} \\
+    \cellcolor{gray!12}\textbf{Cohort} &
+    \cellcolor{gray!12}\textbf{Subgroup} &
+    \cellcolor{gray!12}\textbf{Ostium (\%)} &
+    \cellcolor{gray!12}\textbf{Centerline (\%)} \\
     \midrule
     ASOCA & All & 85.0 & 83.19 \\
     ASOCA & Normal & 85.0 & 83.18 \\
@@ -69,222 +80,124 @@ Both cohorts achieved an Execution Success Rate (ESR) of 100\%: all 40 normal an
   \end{tabular}
 \end{table}
 
-ASOCA achieved OISR = 85.0\% (good) and CESR = 83.19\% (neutral) (\Cref{tab:validation-real-thresholds}). MACS-18 achieved CESR = 95.62\% (good) but OISR = 73.75\% (poor), reflecting the trade-off between richer topology and ostium disambiguation difficulty hypothesized in \Cref{subsec:validation-macs}.
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.92\linewidth]{{Figures/1 Pipeline Execution ASOCA vs. MACS-18/Figure 4. Ostium Centerline Metrics.png}}
-  \caption{Grouped comparison of ostium accuracy and centerline precision between ASOCA and MACS-18.}
-  \label{fig:ostium-centerline-metrics}
-\end{figure}
-
-\subsection{Qualitative Geometry}
-\label{subsec:results-qualitative-geometry}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=\linewidth]{{Figures/1 Pipeline Execution ASOCA vs. MACS-18/Figure 1. Centerlines ASOCA vs. MACS18.pdf}}
-  \caption{Representative centerline extraction comparison between ASOCA and MACS-18 masks for the same patient case.}
-  \label{fig:centerlines-comparison}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=\linewidth]{{Figures/1 Pipeline Execution ASOCA vs. MACS-18/Figure 2. Surfaces ASOCA vs. MACS18.pdf}}
-  \caption{Representative smoothed surface meshes derived from ASOCA and MACS-18 segmentations for the same patient case.}
-  \label{fig:surfaces-comparison}
-\end{figure}
-
-\Cref{fig:centerlines-comparison,fig:surfaces-comparison} illustrate that MACS-18 surfaces preserve more distal branches and continuous lumen paths, while ASOCA meshes exhibit coarser topology with occasional surface gaps in distal segments. These visual differences align with the higher CESR on MACS-18 and the increased endpoint density reported in \Cref{tab:endpoint-summary}.
-
-\subsection{Runtime}
-\label{subsec:results-runtime}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=\linewidth]{{Figures/1 Pipeline Execution ASOCA vs. MACS-18/Figure 5. Runtimes ASPCA vs. MACS18.png}}
-  \caption{Per-block and total pipeline runtimes for ASOCA and MACS-18 cohorts.}
-  \label{fig:runtimes-comparison}
-\end{figure}
-
-Mean total runtime was 346.9\,s (5.78\,min) on ASOCA and 576.2\,s (9.60\,min) on MACS-18. Both cohort means fall within the good band ($<$900\,s) of \Cref{tab:validation-real-thresholds}. These values reflect automated batch processing time only and are not directly comparable to full manual CCTA review, as the pipeline is intended to support rather than replace expert visual assessment (\Cref{subsec:validation-real-metrics}). Block~2 (geometric quantification) dominated runtime on both cohorts, with a higher mean on MACS-18 (357.7\,s vs.\ 164.6\,s on ASOCA), consistent with denser geometry and more cross-section evaluations. Mean Block~1, Block~3, and Block~4 runtimes were 145.8\,s, 35.2\,s, and 0.16\,s (ASOCA) versus 159.8\,s, 57.9\,s, and 0.02\,s (MACS-18), respectively.
-
 \section{Geometric and Algorithmic Accuracy via Synthetic Data}
 \label{sec:results-synthetic}
 
-Two analytical phantoms (\Cref{subsec:validation-synthetic}) were processed through the full pipeline to verify Block~2 quantification against known ground truth.
-
-\subsection{Phantom Overview}
-\label{subsec:results-synthetic-overview}
+Two synthetic vessel models (\Cref{subsec:validation-synthetic}) were processed through the full pipeline to verify Block~2 quantification against analytical ground truth.
 
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.88\linewidth]{{Figures/2 Synthetic Samples/Figure 6. Synthetic Tubes with Centerline.pdf}}
-  \caption{Synthetic healthy and stenosis tube phantoms with extracted centerlines (\Cref{eq:synthetic-radius}).}
+  \caption{Synthetic healthy and diseased tube models with extracted centerlines (\Cref{eq:synthetic-radius}).}
   \label{fig:synthetic-tubes}
 \end{figure}
 
-\subsection{Synthetic\_1: Healthy Control}
-\label{subsec:results-synthetic-healthy}
-
 \begin{table}[H]
+  \caption{Synthetic validation outcomes ($W = 10$\,mm).}
+  \label{tab:synthetic-validation-outcomes}
+  \vspace{0.5em}
   \centering
-  \caption{Synthetic\_1 validation metrics ($W = 10$\,mm).}
-  \label{tab:synthetic1-metrics}
   \small
-  \begin{tabular}{@{}llrrrr@{}}
+  \renewcommand{\arraystretch}{1.35}
+  \setlength{\tabcolsep}{5pt}
+  \begin{tabular}{@{}llrrrrl@{}}
     \toprule
-    \textbf{Case} & \textbf{Metric} & \textbf{Theoretical} & \textbf{Predicted} & \textbf{Error} & \textbf{Unit} \\
+    \cellcolor{gray!12}\textbf{Model} &
+    \cellcolor{gray!12}\textbf{Metric} &
+    \cellcolor{gray!12}\textbf{Theoretical} &
+    \cellcolor{gray!12}\textbf{Predicted} &
+    \cellcolor{gray!12}\textbf{Error} &
+    \cellcolor{gray!12}\textbf{Unit} \\
     \midrule
-    Healthy tube & Max \%AS & 0.0 & 0.01 & 0.01 & \% \\
-    Healthy tube & Mean area & 314.16 & 316.50 & 2.34 & mm$^2$ \\
+    Healthy & Max \%AS & 0.0 & 0.01 & 0.01 & \% \\
+    Healthy & Mean area & 314.16 & 316.50 & 2.34 & mm$^2$ \\
+    Diseased & Max \%AS & 75.0 & 73.69 & 1.31 & \% \\
+    Diseased & Max area & 314.16 & 318.66 & 4.50 & mm$^2$ \\
+    Diseased & Min area & 78.54 & 82.55 & 4.01 & mm$^2$ \\
     \bottomrule
   \end{tabular}
 \end{table}
 
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=\linewidth]{{Figures/2 Synthetic Samples/Figure 7. Synthetic 1 Profiles.pdf}}
-  \caption{Longitudinal area and \%AS profiles along the healthy synthetic tube.}
-  \label{fig:synthetic1-profiles}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=\linewidth]{{Figures/2 Synthetic Samples/Figure 9. Synthetic 1 Area and Stenosis Tubes.pdf}}
-  \caption{Three-dimensional area and \%AS colormaps for the healthy synthetic tube.}
-  \label{fig:synthetic1-tubes}
-\end{figure}
-
-The healthy phantom yielded a maximum \%AS error of 0.01\% and a mean area error of 2.34\,mm$^2$, both within the good thresholds of \Cref{tab:validation-synthetic-thresholds}.
-
-\subsection{Synthetic\_2: Stenosis Control}
-\label{subsec:results-synthetic-stenosis}
-
-\begin{table}[H]
-  \centering
-  \caption{Synthetic\_2 validation metrics ($W = 10$\,mm).}
-  \label{tab:synthetic2-metrics}
-  \small
-  \begin{tabular}{@{}llrrrr@{}}
-    \toprule
-    \textbf{Case} & \textbf{Metric} & \textbf{Theoretical} & \textbf{Predicted} & \textbf{Error} & \textbf{Unit} \\
-    \midrule
-    Stenosis tube & Max \%AS & 75.0 & 73.69 & 1.31 & \% \\
-    Stenosis tube & Max area & 314.16 & 318.66 & 4.50 & mm$^2$ \\
-    Stenosis tube & Min area & 78.54 & 82.55 & 4.01 & mm$^2$ \\
-    \bottomrule
-  \end{tabular}
-\end{table}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=\linewidth]{{Figures/2 Synthetic Samples/Figure 8. Synthetic 2 Profiles.pdf}}
-  \caption{Longitudinal area and \%AS profiles along the stenosis synthetic tube.}
-  \label{fig:synthetic2-profiles}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=\linewidth]{{Figures/2 Synthetic Samples/Figure 10. Synthetic 2 Area and Stenosis Tubes.pdf}}
-  \caption{Three-dimensional area and \%AS colormaps for the stenosis synthetic tube.}
-  \label{fig:synthetic2-tubes}
-\end{figure}
-
-The stenosis phantom achieved a maximum \%AS error of 1.31\% (good: $<$5\%) and a minimum-area error of 4.01\,mm$^2$ at the lesion neck (good: $<$5\,mm$^2$). All synthetic errors fall within the good acceptance thresholds of \Cref{tab:validation-synthetic-thresholds}, supporting the internal consistency of the quantification algorithm independent of real-patient segmentation uncertainty.
+All reported errors fall within the \emph{good} thresholds of \Cref{tab:validation-synthetic-thresholds}, including a maximum \%AS error of 1.31\% and minimum-area error of 4.01\,mm$^2$ on the diseased model. Longitudinal area and \%AS profiles are provided in \Cref{app:synthetic-profiles}.
 
 \section{Coronary Artery Dashboard Visualization Output}
 \label{sec:results-dashboard}
 
-\Cref{fig:interface-1,fig:interface-2,fig:interface-3,fig:interface-4,fig:interface-5,fig:interface-6} present full-page screenshots of the Block~4 Streamlit dashboard for a representative diseased case, following the four-module layout of \Cref{fig:block4-interaction-flow}.
+The Block~4 dashboard integrates global three-dimensional coronary renderings with segment-level area and \%AS summaries for rapid clinical review (\Cref{fig:interface-global,fig:interface-segment}). The interface fulfills the visualization goals of Modules~1 and~3 by linking anatomical context, quantitative stenosis profiles, and CAD-RADS-oriented summaries in a single session. The complete module-by-module workflow, including clinical summary and branch-level inspection views, is shown in \Cref{app:extended-dashboard}.
 
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.92\linewidth]{{Figures/3 Interface Output/Figure 12. Interface 1.png}}
   \caption{Dashboard Module~1: interactive global RCA and LCA three-dimensional renderings with metric colormaps.}
-  \label{fig:interface-1}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.92\linewidth]{{Figures/3 Interface Output/Figure 13. Interface 2.png}}
-  \caption{Dashboard Module~2: patient clinical summary with automated CAD-RADS~2.0 category, SIS, and territory rationale.}
-  \label{fig:interface-2}
+  \label{fig:interface-global}
 \end{figure}
 
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.92\linewidth]{{Figures/3 Interface Output/Figure 14. Interface 3.png}}
-  \caption{Dashboard Module~3: segment-level three-dimensional map and synchronized two-dimensional area and \%AS bar plots.}
-  \label{fig:interface-3}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.92\linewidth]{{Figures/3 Interface Output/Figure 15. Interface 4.png}}
-  \caption{Dashboard Module~3 (continued): segment selection and annotated peak stenosis with reference markers.}
-  \label{fig:interface-4}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.92\linewidth]{{Figures/3 Interface Output/Figure 16. Interface 5.png}}
-  \caption{Dashboard Module~4: branch-level three-dimensional path highlighting and longitudinal metric profiles.}
-  \label{fig:interface-5}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.92\linewidth]{{Figures/3 Interface Output/Figure 17. Interface 6.png}}
-  \caption{Dashboard Module~4 (continued): full-branch area and \%AS profiles in proximal-to-distal order.}
-  \label{fig:interface-6}
+  \caption{Dashboard Module~3: segment-level three-dimensional map and synchronized area and \%AS bar plots.}
+  \label{fig:interface-segment}
 \end{figure}
 
 \section{User Experience and Interface Usability Evaluation}
 \label{sec:results-ux}
 
-Three medical experts completed the SUS questionnaire after a guided dashboard session (\Cref{subsec:validation-ux}). \Cref{fig:interface-1,fig:interface-2,fig:interface-3} show the interface evaluated.
+Three medical experts completed the SUS questionnaire after a guided dashboard session (\Cref{subsec:validation-ux}).
 
 \begin{table}[H]
+  \caption{SUS raw responses and score summary.}
+  \label{tab:sus-results}
+  \vspace{0.5em}
   \centering
-  \caption{Raw Likert responses (1 = strongly disagree, 5 = strongly agree) per SUS item.}
-  \label{tab:sus-raw}
   \small
-  \begin{tabular}{@{}lrrr@{}}
-    \toprule
-    \textbf{Item} & \textbf{P1} & \textbf{P2} & \textbf{P3} \\
-    \midrule
-    Q1 (frequent use) & 4 & 5 & 4 \\
-    Q2 (unnecessarily complex) & 1 & 3 & 1 \\
-    Q3 (easy to use) & 3 & 5 & 4 \\
-    Q4 (need technical support) & 3 & 3 & 1 \\
-    Q5 (well integrated) & 3 & 4 & 4 \\
-    Q6 (inconsistency) & 3 & 2 & 2 \\
-    Q7 (quick to learn) & 2 & 4 & 4 \\
-    Q8 (cumbersome) & 3 & 2 & 1 \\
-    Q9 (diagnostic confidence) & 3 & 3 & 4 \\
-    Q10 (learn a lot beforehand) & 3 & 2 & 1 \\
-    \bottomrule
-  \end{tabular}
+  \renewcommand{\arraystretch}{1.2}
+  \setlength{\tabcolsep}{4pt}
+  \begin{minipage}[t]{0.58\textwidth}
+    \centering
+    \textbf{Raw Likert responses (1--5)}\par\vspace{0.4em}
+    \begin{tabular}{@{}lrrr@{}}
+      \toprule
+      \cellcolor{gray!12}\textbf{Item} &
+      \cellcolor{gray!12}\textbf{P1} &
+      \cellcolor{gray!12}\textbf{P2} &
+      \cellcolor{gray!12}\textbf{P3} \\
+      \midrule
+      Q1 (frequent use) & 4 & 5 & 4 \\
+      Q2 (unnecessarily complex) & 1 & 3 & 1 \\
+      Q3 (easy to use) & 3 & 5 & 4 \\
+      Q4 (need technical support) & 3 & 3 & 1 \\
+      Q5 (well integrated) & 3 & 4 & 4 \\
+      Q6 (inconsistency) & 3 & 2 & 2 \\
+      Q7 (quick to learn) & 2 & 4 & 4 \\
+      Q8 (cumbersome) & 3 & 2 & 1 \\
+      Q9 (diagnostic confidence) & 3 & 3 & 4 \\
+      Q10 (learn a lot beforehand) & 3 & 2 & 1 \\
+      \bottomrule
+    \end{tabular}
+    \label{tab:sus-raw}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.36\textwidth}
+    \centering
+    \textbf{SUS score summary}\par\vspace{0.4em}
+    \begin{tabular}{@{}lr@{}}
+      \toprule
+      \cellcolor{gray!12}\textbf{Participant} &
+      \cellcolor{gray!12}\textbf{Score} \\
+      \midrule
+      Participant 1 & 55.0 \\
+      Participant 2 & 72.5 \\
+      Participant 3 & 85.0 \\
+      \midrule
+      Mean & 70.83 \\
+      Std.\ dev. & 15.07 \\
+      \bottomrule
+    \end{tabular}
+    \label{tab:sus-summary}
+  \end{minipage}
 \end{table}
 
-\begin{table}[H]
-  \centering
-  \caption{SUS score summary per participant and cohort statistics.}
-  \label{tab:sus-summary}
-  \small
-  \begin{tabular}{@{}lr@{}}
-    \toprule
-    \textbf{Participant} & \textbf{SUS score (0--100)} \\
-    \midrule
-    Participant 1 & 55.0 \\
-    Participant 2 & 72.5 \\
-    Participant 3 & 85.0 \\
-    \midrule
-    Mean & 70.83 \\
-    Std.\ dev.\ (sample) & 15.07 \\
-    \bottomrule
-  \end{tabular}
-\end{table}
+The mean SUS score was 70.83 (SD = 15.07), placing the dashboard in the \emph{Good} band ($\geq$68) of \Cref{tab:validation-sus-thresholds}.
 
-The mean SUS score was 70.83 (SD = 15.07), placing the dashboard in the \emph{Good} band ($\geq$68) of \Cref{tab:validation-sus-thresholds}~\cite{bangor2009}. All participants rated frequent clinical use highly (Q1: 4 or 5). Two of three participants rated the system easy to use and intuitive (Q3 $\geq$ 4), and two rated its functions well integrated (Q5 $\geq$ 4). Diagnostic confidence (Q9) was neutral for one participant and positive for two, consistent with a decision-support rather than autonomous diagnostic role. Qualitative feedback from the evaluation session is discussed in \Cref{sec:discussion-future}.
+% Restore default paragraph spacing for subsequent chapters
+\setlength{\parskip}{0pt plus 1pt}
+\setlength{\parindent}{15pt}
