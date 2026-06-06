@@ -1,10 +1,12 @@
 \chapter{Supporting Material}
 \label{app:supporting-material}
 
+This appendix collects supplementary material referenced from \Cref{ch:results}: the SUS questionnaire (\Cref{app:sus-questionnaire}), extended pipeline distribution charts (\Cref{app:extended-pipeline-metrics}), synthetic validation visualizations (\Cref{app:synthetic-profiles}), and Block~4 dashboard screenshots (\Cref{app:extended-dashboard}).
+
 \section{System Usability Scale Questionnaire}
 \label{app:sus-questionnaire}
 
-The following items were administered to medical expert participants after a guided session with the Block~4 dashboard (\Cref{subsec:validation-ux}). Each statement was rated on a five-point Likert scale (1 = strongly disagree, 5 = strongly agree). Item wording follows the standard SUS format~\cite{brooke1996}.
+\Cref{sec:results-ux} reports the raw Likert responses in \Cref{tab:sus-raw} and the computed scores in \Cref{tab:sus-summary}. The table rows labeled Question~1--Question~10 correspond to the ten standard SUS items listed below, administered after a guided Block~4 session (\Cref{subsec:validation-ux}). Each statement was rated on a five-point Likert scale (1 = strongly disagree, 5 = strongly agree). Item wording follows the standard SUS format~\cite{brooke1996}.
 
 \begin{enumerate}
   \item I think that I would like to use this coronary viewer frequently in clinical practice.
@@ -24,90 +26,107 @@ The following items were administered to medical expert participants after a gui
   Do you have any additional comments, suggestions for improvement, or features you would like to see in the future?
 \end{quote}
 
-Scores were computed using the standard SUS conversion described in \Cref{subsec:validation-ux}.
+Scores were computed using the standard SUS conversion described in \Cref{subsec:validation-ux} and interpreted with the bands in \Cref{tab:validation-sus-thresholds}.
 
 \section{Extended Pipeline Metrics}
 \label{app:extended-pipeline-metrics}
 
+\Cref{sec:results-pipeline} summarizes cohort outcomes in Tables~3.1--3.3 (endpoint counts, OISR/CESR, and mean runtimes). The two figures below provide the underlying distributions and grouped comparisons that complement those tables for the same 40-patient ASOCA and MACS-18 cohorts.
+
 \begin{figure}[H]
   \centering
   \includegraphics[width=\linewidth]{{Figures/1 Pipeline Execution ASOCA vs. MACS-18/Figure 3. Distribution Of Detected Endpoints ASOCA vs. MACS18.png}}
-  \caption{Distribution of detected endpoints per patient for ASOCA and MACS-18 cohorts.}
+  \caption{Per-patient distribution of detected endpoints for ASOCA and MACS-18. Extends the summary statistics in \Cref{tab:endpoint-summary}.}
   \label{fig:endpoint-distribution}
 \end{figure}
 
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.92\linewidth]{{Figures/1 Pipeline Execution ASOCA vs. MACS-18/Figure 4. Ostium Centerline Metrics.png}}
-  \caption{Grouped comparison of ostium accuracy and centerline precision between ASOCA and MACS-18.}
+  \caption{Grouped comparison of ostium accuracy (OISR) and centerline precision (CESR) between ASOCA and MACS-18. Visual counterpart to \Cref{tab:ostium-centerline-comparison}.}
   \label{fig:ostium-centerline-metrics}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=\linewidth]{{Figures/1 Pipeline Execution ASOCA vs. MACS-18/Figure 5. Runtimes ASPCA vs. MACS18.png}}
-  \caption{Per-block and total pipeline runtimes for ASOCA and MACS-18 cohorts.}
-  \label{fig:runtimes-comparison}
 \end{figure}
 
 \section{Synthetic Geometry Profiles}
 \label{app:synthetic-profiles}
 
+\Cref{sec:results-synthetic} reports quantitative Block~2 verification in \Cref{tab:synthetic-validation-outcomes} and shows the reconstructed tubes in \Cref{fig:synthetic-tubes}. The figures below provide the extended visual evidence for the same two models: \texttt{synthetic\_1} (healthy, uniform radius) and \texttt{synthetic\_2} (diseased, mid-vessel stenosis).
+
+Longitudinal area and \%AS profiles along each vessel axis:
+
 \begin{figure}[H]
   \centering
   \includegraphics[width=\linewidth]{{Figures/2 Synthetic Samples/Figure 7. Synthetic 1 Profiles.pdf}}
-  \caption{Longitudinal area and \%AS profiles along the healthy synthetic model.}
+  \caption{Longitudinal area and \%AS profiles along \texttt{synthetic\_1}.}
   \label{fig:synthetic1-profiles}
 \end{figure}
 
 \begin{figure}[H]
   \centering
   \includegraphics[width=\linewidth]{{Figures/2 Synthetic Samples/Figure 8. Synthetic 2 Profiles.pdf}}
-  \caption{Longitudinal area and \%AS profiles along the diseased synthetic model.}
+  \caption{Longitudinal area and \%AS profiles along \texttt{synthetic\_2}.}
   \label{fig:synthetic2-profiles}
 \end{figure}
+
+Three-dimensional area and \%AS colormaps on the reconstructed tube surfaces:
 
 \begin{figure}[H]
   \centering
   \includegraphics[width=\linewidth]{{Figures/2 Synthetic Samples/Figure 9. Synthetic 1 Area and Stenosis Tubes.pdf}}
-  \caption{Three-dimensional area and \%AS colormaps for the healthy synthetic model.}
+  \caption{Three-dimensional area and \%AS colormaps for \texttt{synthetic\_1}.}
   \label{fig:synthetic1-tubes}
 \end{figure}
 
 \begin{figure}[H]
   \centering
   \includegraphics[width=\linewidth]{{Figures/2 Synthetic Samples/Figure 10. Synthetic 2 Area and Stenosis Tubes.pdf}}
-  \caption{Three-dimensional area and \%AS colormaps for the diseased synthetic model.}
+  \caption{Three-dimensional area and \%AS colormaps for \texttt{synthetic\_2}.}
   \label{fig:synthetic2-tubes}
 \end{figure}
 
 \section{Extended Dashboard Interfaces}
 \label{app:extended-dashboard}
 
+\Cref{sec:results-dashboard} describes the Block~4 visualization output produced when validated pipeline results are loaded into the dashboard. The six screenshots below follow the clinical review workflow in module order (Modules~1--4), from global anatomy to branch-level metric inspection.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.92\linewidth]{{Figures/3 Interface Output/Figure 12. Interface 1.png}}
+  \caption{Module~1: interactive global RCA and LCA three-dimensional renderings with metric colormaps.}
+  \label{fig:interface-global}
+\end{figure}
+
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.92\linewidth]{{Figures/3 Interface Output/Figure 13. Interface 2.png}}
-  \caption{Dashboard Module~2: patient clinical summary with automated CAD-RADS~2.0 category, SIS, and territory rationale.}
+  \caption{Module~2: patient clinical summary with automated CAD-RADS~2.0 category, SIS, and territory rationale.}
   \label{fig:interface-clinical-summary}
 \end{figure}
 
 \begin{figure}[H]
   \centering
+  \includegraphics[width=0.92\linewidth]{{Figures/3 Interface Output/Figure 14. Interface 3.png}}
+  \caption{Module~3: segment-level three-dimensional map and synchronized area and \%AS bar plots.}
+  \label{fig:interface-segment}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
   \includegraphics[width=0.92\linewidth]{{Figures/3 Interface Output/Figure 15. Interface 4.png}}
-  \caption{Dashboard Module~3 (continued): segment selection and annotated peak stenosis with reference markers.}
+  \caption{Module~3 (continued): segment selection and annotated peak stenosis with reference markers.}
   \label{fig:interface-segment-detail}
 \end{figure}
 
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.92\linewidth]{{Figures/3 Interface Output/Figure 16. Interface 5.png}}
-  \caption{Dashboard Module~4: branch-level three-dimensional path highlighting and longitudinal metric profiles.}
+  \caption{Module~4: branch-level three-dimensional path highlighting and longitudinal metric profiles.}
   \label{fig:interface-branch}
 \end{figure}
 
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.92\linewidth]{{Figures/3 Interface Output/Figure 17. Interface 6.png}}
-  \caption{Dashboard Module~4 (continued): full-branch area and \%AS profiles in proximal-to-distal order.}
+  \caption{Module~4 (continued): full-branch area and \%AS profiles in proximal-to-distal order.}
   \label{fig:interface-branch-profiles}
 \end{figure}

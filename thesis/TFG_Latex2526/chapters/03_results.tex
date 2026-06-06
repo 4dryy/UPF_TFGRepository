@@ -25,10 +25,10 @@ On ASOCA masks, every sample completed Blocks~1--4 without fatal error (ESR = 10
 
 On MACS-18 masks, every sample completed Blocks~1--4 without fatal error (ESR = 100\%, \emph{good}). Mean endpoints per patient increased to 27.7, consistent with the richer distal branching in the refined masks. Ostium success was 73.75\% (OISR, \emph{poor}), and centerline extraction improved to 95.62\% (CESR, \emph{good}). Mean total runtime was 576.2\,s (\emph{neutral}).
 
-\Cref{tab:endpoint-summary,tab:ostium-centerline-comparison} summarize the aggregated pipeline metrics for the full 40-patient cohort, classified using the acceptance bands in \Cref{tab:validation-real-thresholds}. Extended distribution and runtime charts are provided in \Cref{app:extended-pipeline-metrics}.
+The next tables summarize endpoint counts (\Cref{tab:endpoint-summary}), ostium and centerline accuracy (\Cref{tab:ostium-centerline-comparison}), and mean Block~1--4 runtimes (\Cref{tab:runtime-comparison}) for the shared 40-patient ASOCA and MACS-18 cohorts. Extended distribution charts appear in \Cref{app:extended-pipeline-metrics}.
 
 \begin{table}[H]
-  \caption{Endpoint summary statistics per cohort and subgroup.}
+  \caption{Endpoint summary statistics per cohort and subgroup ($n$ = number of patients).}
   \label{tab:endpoint-summary}
   \vspace{0.5em}
   \centering
@@ -55,6 +55,7 @@ On MACS-18 masks, every sample completed Blocks~1--4 without fatal error (ESR = 
   \end{tabular}
 \end{table}
 
+\vspace{-0.75em}
 \begin{table}[H]
   \caption{Ostium accuracy (OISR) and centerline precision (CESR) by cohort and subgroup (\%).}
   \label{tab:ostium-centerline-comparison}
@@ -80,17 +81,43 @@ On MACS-18 masks, every sample completed Blocks~1--4 without fatal error (ESR = 
   \end{tabular}
 \end{table}
 
+\vspace{-0.75em}
+\begin{table}[H]
+  \caption{Mean pipeline runtimes by cohort and block (seconds).}
+  \label{tab:runtime-comparison}
+  \vspace{0.5em}
+  \centering
+  \small
+  \renewcommand{\arraystretch}{1.35}
+  \setlength{\tabcolsep}{6pt}
+  \begin{tabular}{@{}lrrrrr@{}}
+    \toprule
+    \cellcolor{gray!12}\textbf{Cohort} &
+    \cellcolor{gray!12}\textbf{Block 1} &
+    \cellcolor{gray!12}\textbf{Block 2} &
+    \cellcolor{gray!12}\textbf{Block 3} &
+    \cellcolor{gray!12}\textbf{Block 4} &
+    \cellcolor{gray!12}\textbf{Total} \\
+    \midrule
+    ASOCA & 145.8 & 164.6 & 35.2 & 0.16 & 346.9 \\
+    MACS-18 & 159.8 & 357.7 & 57.9 & 0.02 & 576.2 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
 \section{Geometric and Algorithmic Accuracy via Synthetic Data}
 \label{sec:results-synthetic}
 
-Two synthetic vessel models (\Cref{subsec:validation-synthetic}) were processed through the full pipeline to verify Block~2 quantification against analytical ground truth.
+Block~2 quantification was verified on the two synthetic vessel models defined in \Cref{subsec:validation-synthetic}. The analytical ground truth for lumen area and \%AS specified in that section isolates algorithmic error from the anatomical variability of the real cohorts in \Cref{sec:results-pipeline}. Both models were processed through the full pipeline; \Cref{fig:synthetic-tubes} shows the resulting tube reconstructions with extracted centerlines.
 
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.88\linewidth]{{Figures/2 Synthetic Samples/Figure 6. Synthetic Tubes with Centerline.pdf}}
-  \caption{Synthetic healthy and diseased tube models with extracted centerlines (\Cref{eq:synthetic-radius}).}
+  \caption{Extracted centerlines on the synthetic validation models. Left: \texttt{synthetic\_1} (healthy, uniform radius). Right: \texttt{synthetic\_2} (diseased, mid-vessel stenosis).}
   \label{fig:synthetic-tubes}
 \end{figure}
+
+As \Cref{tab:synthetic-validation-outcomes} below shows, pipeline execution on both synthetic models yields absolute errors that all fall within the \emph{good} acceptance bands of \Cref{tab:validation-synthetic-thresholds}. For each metric, the analytical ground truth defined in \Cref{subsec:validation-synthetic} is compared against the predicted Block~2 output; the largest deviations occur on \texttt{synthetic\_2}, with a maximum \%AS error of 1.31\% and a maximum area error of 4.50\,mm$^2$. Additional visualizations and information about these results, including longitudinal area and \%AS profiles, are provided in \Cref{app:synthetic-profiles}.
 
 \begin{table}[H]
   \caption{Synthetic validation outcomes ($W = 10$\,mm).}
@@ -118,43 +145,27 @@ Two synthetic vessel models (\Cref{subsec:validation-synthetic}) were processed 
   \end{tabular}
 \end{table}
 
-All reported errors fall within the \emph{good} thresholds of \Cref{tab:validation-synthetic-thresholds}, including a maximum \%AS error of 1.31\% and minimum-area error of 4.01\,mm$^2$ on the diseased model. Longitudinal area and \%AS profiles are provided in \Cref{app:synthetic-profiles}.
-
 \section{Coronary Artery Dashboard Visualization Output}
 \label{sec:results-dashboard}
 
-The Block~4 dashboard integrates global three-dimensional coronary renderings with segment-level area and \%AS summaries for rapid clinical review (\Cref{fig:interface-global,fig:interface-segment}). The interface fulfills the visualization goals of Modules~1 and~3 by linking anatomical context, quantitative stenosis profiles, and CAD-RADS-oriented summaries in a single session. The complete module-by-module workflow, including clinical summary and branch-level inspection views, is shown in \Cref{app:extended-dashboard}.
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.92\linewidth]{{Figures/3 Interface Output/Figure 12. Interface 1.png}}
-  \caption{Dashboard Module~1: interactive global RCA and LCA three-dimensional renderings with metric colormaps.}
-  \label{fig:interface-global}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.92\linewidth]{{Figures/3 Interface Output/Figure 14. Interface 3.png}}
-  \caption{Dashboard Module~3: segment-level three-dimensional map and synchronized area and \%AS bar plots.}
-  \label{fig:interface-segment}
-\end{figure}
+Running validated pipeline outputs through Block~4 produces the clinical visualization views described in \Cref{sec:methodology-block4}. For representative patient cases, these include global RCA and LCA renderings, the automated CAD-RADS~2.0 report with SIS, and synchronized segment- and branch-level area and \%AS profiles. Full module-by-module screenshots are collected in \Cref{app:extended-dashboard}.
 
 \section{User Experience and Interface Usability Evaluation}
 \label{sec:results-ux}
 
-Three medical experts completed the SUS questionnaire after a guided dashboard session (\Cref{subsec:validation-ux}).
+Following the medical expert evaluation in \Cref{subsec:validation-ux}, \Cref{tab:sus-raw,tab:sus-summary} report the raw Likert responses and computed SUS scores (questionnaire wording in \Cref{app:sus-questionnaire}).
 
-\begin{table}[H]
-  \caption{SUS raw responses and score summary.}
-  \label{tab:sus-results}
-  \vspace{0.5em}
-  \centering
-  \small
-  \renewcommand{\arraystretch}{1.2}
-  \setlength{\tabcolsep}{4pt}
-  \begin{minipage}[t]{0.58\textwidth}
+\vspace{-1.5em}
+\noindent
+\begin{minipage}[t]{0.52\textwidth}
+  \begin{table}[H]
+    \caption{SUS raw Likert responses (1--5).}
+    \label{tab:sus-raw}
+    \vspace{0.5em}
     \centering
-    \textbf{Raw Likert responses (1--5)}\par\vspace{0.4em}
+    \small
+    \renewcommand{\arraystretch}{1.2}
+    \setlength{\tabcolsep}{4pt}
     \begin{tabular}{@{}lrrr@{}}
       \toprule
       \cellcolor{gray!12}\textbf{Item} &
@@ -162,23 +173,29 @@ Three medical experts completed the SUS questionnaire after a guided dashboard s
       \cellcolor{gray!12}\textbf{P2} &
       \cellcolor{gray!12}\textbf{P3} \\
       \midrule
-      Q1 (frequent use) & 4 & 5 & 4 \\
-      Q2 (unnecessarily complex) & 1 & 3 & 1 \\
-      Q3 (easy to use) & 3 & 5 & 4 \\
-      Q4 (need technical support) & 3 & 3 & 1 \\
-      Q5 (well integrated) & 3 & 4 & 4 \\
-      Q6 (inconsistency) & 3 & 2 & 2 \\
-      Q7 (quick to learn) & 2 & 4 & 4 \\
-      Q8 (cumbersome) & 3 & 2 & 1 \\
-      Q9 (diagnostic confidence) & 3 & 3 & 4 \\
-      Q10 (learn a lot beforehand) & 3 & 2 & 1 \\
+      Question~1 & 4 & 5 & 4 \\
+      Question~2 & 1 & 3 & 1 \\
+      Question~3 & 3 & 5 & 4 \\
+      Question~4 & 3 & 3 & 1 \\
+      Question~5 & 3 & 4 & 4 \\
+      Question~6 & 3 & 2 & 2 \\
+      Question~7 & 2 & 4 & 4 \\
+      Question~8 & 3 & 2 & 1 \\
+      Question~9 & 3 & 3 & 4 \\
+      Question~10 & 3 & 2 & 1 \\
       \bottomrule
     \end{tabular}
-    \label{tab:sus-raw}
-  \end{minipage}\hfill
-  \begin{minipage}[t]{0.36\textwidth}
+  \end{table}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.42\textwidth}
+  \begin{table}[H]
+    \caption{SUS score summary by participant and metrics.}
+    \label{tab:sus-summary}
+    \vspace{0.5em}
     \centering
-    \textbf{SUS score summary}\par\vspace{0.4em}
+    \small
+    \renewcommand{\arraystretch}{1.2}
+    \setlength{\tabcolsep}{4pt}
     \begin{tabular}{@{}lr@{}}
       \toprule
       \cellcolor{gray!12}\textbf{Participant} &
@@ -192,10 +209,10 @@ Three medical experts completed the SUS questionnaire after a guided dashboard s
       Std.\ dev. & 15.07 \\
       \bottomrule
     \end{tabular}
-    \label{tab:sus-summary}
-  \end{minipage}
-\end{table}
+  \end{table}
+\end{minipage}
 
+\vspace{0.75em}
 The mean SUS score was 70.83 (SD = 15.07), placing the dashboard in the \emph{Good} band ($\geq$68) of \Cref{tab:validation-sus-thresholds}.
 
 % Restore default paragraph spacing for subsequent chapters

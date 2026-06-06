@@ -51,14 +51,14 @@
 \contentsline {section}{\numberline {3.1}Pipeline Execution: ASOCA vs.\ MACS-18}{23}{section.3.1}%
 \contentsline {section}{\numberline {3.2}Geometric and Algorithmic Accuracy via Synthetic Data}{24}{section.3.2}%
 \contentsline {section}{\numberline {3.3}Coronary Artery Dashboard Visualization Output}{25}{section.3.3}%
-\contentsline {section}{\numberline {3.4}User Experience and Interface Usability Evaluation}{26}{section.3.4}%
-\contentsline {chapter}{\numberline {4}{\MakeUppercase []{ Discussion}}}{27}{chapter.4}%
-\contentsline {section}{\numberline {4.1}Analysis of the Results}{27}{section.4.1}%
-\contentsline {section}{\numberline {4.2}Technical and Anatomical Limitations}{27}{section.4.2}%
-\contentsline {section}{\numberline {4.3}Future Work}{27}{section.4.3}%
-\contentsline {chapter}{\numberline {5}{\MakeUppercase []{ Conclusions}}}{28}{chapter.5}%
-\contentsline {chapter}{\numberline {A}{\MakeUppercase []{ Supporting Material}}}{32}{appendix.Alph1}%
-\contentsline {section}{\numberline {A.1}System Usability Scale Questionnaire}{32}{section.Alph1.1}%
-\contentsline {section}{\numberline {A.2}Extended Pipeline Metrics}{33}{section.Alph1.2}%
-\contentsline {section}{\numberline {A.3}Synthetic Geometry Profiles}{35}{section.Alph1.3}%
-\contentsline {section}{\numberline {A.4}Extended Dashboard Interfaces}{37}{section.Alph1.4}%
+\contentsline {section}{\numberline {3.4}User Experience and Interface Usability Evaluation}{25}{section.3.4}%
+\contentsline {chapter}{\numberline {4}{\MakeUppercase []{ Discussion}}}{26}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Analysis of the Results}{26}{section.4.1}%
+\contentsline {section}{\numberline {4.2}Technical and Anatomical Limitations}{26}{section.4.2}%
+\contentsline {section}{\numberline {4.3}Future Work}{26}{section.4.3}%
+\contentsline {chapter}{\numberline {5}{\MakeUppercase []{ Conclusions}}}{27}{chapter.5}%
+\contentsline {chapter}{\numberline {A}{\MakeUppercase []{ Supporting Material}}}{31}{appendix.Alph1}%
+\contentsline {section}{\numberline {A.1}System Usability Scale Questionnaire}{31}{section.Alph1.1}%
+\contentsline {section}{\numberline {A.2}Extended Pipeline Metrics}{32}{section.Alph1.2}%
+\contentsline {section}{\numberline {A.3}Synthetic Geometry Profiles}{33}{section.Alph1.3}%
+\contentsline {section}{\numberline {A.4}Extended Dashboard Interfaces}{36}{section.Alph1.4}%
