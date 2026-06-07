@@ -1,44 +1,16 @@
 \chapter{Discussion}
 \label{ch:discussion}
-
-% ---------------------------------------------------------------------------
-% CHAPTER 4 WRITING OUTLINE (draft prose in a later iteration)
-% ---------------------------------------------------------------------------
-%
-% sec:discussion-analysis — Analysis of the Results
-%   • MACS-18 vs ASOCA: CESR improvement (95.62% vs 83.19%) validates H1;
-%     richer topology explains higher MPE and lower OISR (H2).
-%   • Runtime increase on MACS-18 (9.60 min vs 5.78 min) confirms H3;
-%     still within good band vs manual 30–120 min review.
-%   • ESR 100% on both cohorts: pipeline operational reliability.
-%   • Synthetic validation: max %AS error 1.31% (<5% inter-observer band);
-%     confirms Block 2 logic is sound when ground truth is known.
-%   • SUS mean 70.83 (Good band): pilot usability acceptance; n=3 limits
-%     generalizability; Q9 neutral/confident split supports decision-support role.
-%
-% sec:discussion-limitations — Technical and Anatomical Limitations
-%   • CRITICAL: systematic stenosis overestimation on real patients
-%     (fixed W=10 mm, bifurcations, partial-volume, segmentation artifacts).
-%   • No clinical stenosis/CAD-RADS ground truth evaluated — by design.
-%   • Ostium detection degrades on MACS-18 despite better centerlines.
-%   • Manual visual audit for OISR/CESR/EISR — subjective, not fully blinded.
-%   • Single-center, small SUS sample; no longitudinal clinical outcome data.
-%
-% sec:discussion-future — Future Work (from cardiologist feedback, Results v2 §4.2)
-%   4.2.1 Algorithmic and metric refinements:
-%     • Dynamic clinician-adjustable proximal/distal reference windows.
-%     • Adaptive centerline resolution (~2 mm default; finer in diseased zones).
-%     • Plaque quantification alongside stenosis (clinical priority).
-%   4.2.2 Visualization and interface enhancements:
-%     • Continuous lumen cross-sectional visualization along centerline.
-%     • CMPR and raw CCTA overlay for ground-truth validation in dashboard.
-%     • Aggregated affected-zone highlighting (e.g. regions ≥50% stenosis).
-%     • Interactive threshold adjustment and explainability features.
-%   4.2.3 Clinical workflow integration:
-%     • Deeper integration with patient prioritization system (ferrer2024).
-%     • Pop-up rapid-assessment within prioritized patient lists at HSP.
-%     • Scale SUS study to larger cardiologist cohort; structured UX follow-up.
-% ---------------------------------------------------------------------------
+% Readable paragraph spacing (matches Introduction and Methodology)
+\setlength{\parskip}{0.65em plus 0.15em minus 0.05em}
+\setlength{\parindent}{0pt}
+% Short introductory paragraph for Discussion
+This chapter summarizes and interprets the results presented in
+Chapter~\ref{ch:results}, integrating evidence from the ASOCA and MACS-18
+cohorts, the synthetic validations, and the pilot SUS study. It evaluates the
+pipeline's operational reliability, geometric accuracy, and suitability as a
+clinical decision-support tool based on the experimental findings. The
+discussion ends by documenting the main limitations and by proposing a
+prioritized set of directions for future improvement.
 
 \section{Analysis of the Results}
 \label{sec:discussion-analysis}
@@ -54,3 +26,7 @@
 \label{sec:discussion-future}
 
 % Content to be written in a later iteration.
+
+% Restore default paragraph spacing for subsequent chapters
+\setlength{\parskip}{0pt plus 1pt}
+\setlength{\parindent}{15pt}
