@@ -54,11 +54,14 @@
 \contentsline {section}{\numberline {3.4}User Experience and Interface Usability Evaluation}{25}{section.3.4}%
 \contentsline {chapter}{\numberline {4}{\MakeUppercase []{ Discussion}}}{26}{chapter.4}%
 \contentsline {section}{\numberline {4.1}Analysis of the Results}{26}{section.4.1}%
-\contentsline {section}{\numberline {4.2}Technical and Anatomical Limitations}{26}{section.4.2}%
-\contentsline {section}{\numberline {4.3}Future Work}{26}{section.4.3}%
-\contentsline {chapter}{\numberline {5}{\MakeUppercase []{ Conclusions}}}{27}{chapter.5}%
-\contentsline {chapter}{\numberline {A}{\MakeUppercase []{ Supporting Material}}}{31}{appendix.Alph1}%
-\contentsline {section}{\numberline {A.1}System Usability Scale Questionnaire}{31}{section.Alph1.1}%
-\contentsline {section}{\numberline {A.2}Extended Pipeline Metrics}{32}{section.Alph1.2}%
-\contentsline {section}{\numberline {A.3}Synthetic Geometry Profiles}{33}{section.Alph1.3}%
-\contentsline {section}{\numberline {A.4}Extended Dashboard Interfaces}{36}{section.Alph1.4}%
+\contentsline {section}{\numberline {4.2}Technical and Anatomical Limitations}{28}{section.4.2}%
+\contentsline {section}{\numberline {4.3}Future Work}{30}{section.4.3}%
+\contentsline {subsection}{\numberline {4.3.1}Algorithmic and Pipeline Enhancements}{30}{subsection.4.3.1}%
+\contentsline {subsection}{\numberline {4.3.2}Clinical Workflow Integration}{31}{subsection.4.3.2}%
+\contentsline {subsection}{\numberline {4.3.3}Addressing Anatomical Limitations: Expert Clinical Proposals}{31}{subsection.4.3.3}%
+\contentsline {chapter}{\numberline {5}{\MakeUppercase []{ Conclusions}}}{33}{chapter.5}%
+\contentsline {chapter}{\numberline {A}{\MakeUppercase []{ Supporting Material}}}{37}{appendix.Alph1}%
+\contentsline {section}{\numberline {A.1}System Usability Scale Questionnaire}{37}{section.Alph1.1}%
+\contentsline {section}{\numberline {A.2}Extended Pipeline Metrics}{38}{section.Alph1.2}%
+\contentsline {section}{\numberline {A.3}Synthetic Geometry Profiles}{39}{section.Alph1.3}%
+\contentsline {section}{\numberline {A.4}Extended Dashboard Interfaces}{42}{section.Alph1.4}%

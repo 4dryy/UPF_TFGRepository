@@ -1,31 +1,144 @@
 \chapter{Discussion}
 \label{ch:discussion}
+
 % Readable paragraph spacing (matches Introduction and Methodology)
 \setlength{\parskip}{0.65em plus 0.15em minus 0.05em}
 \setlength{\parindent}{0pt}
-% Short introductory paragraph for Discussion
-This chapter summarizes and interprets the results presented in
-Chapter~\ref{ch:results}, integrating evidence from the ASOCA and MACS-18
-cohorts, the synthetic validations, and the pilot SUS study. It evaluates the
-pipeline's operational reliability, geometric accuracy, and suitability as a
-clinical decision-support tool based on the experimental findings. The
-discussion ends by documenting the main limitations and by proposing a
-prioritized set of directions for future improvement.
+
+This chapter interprets the validation results from \Cref{ch:results} to evaluate the pipeline's operational reliability, geometric accuracy, and clinical usability. It then discusses the primary technical and anatomical limitations of the current automated stenosis quantification, concluding with a prioritized future work agenda driven by expert feedback from clinical experts at Hospital de la Santa Creu i Sant Pau.
 
 \section{Analysis of the Results}
 \label{sec:discussion-analysis}
 
-% Content to be written in a later iteration.
+\noindent\textbf{The Topological Trade-Off in MACS-18}\par
+\vspace{0.4em}
+\noindent
+When processing the 40 patients, the pipeline remained stable for both the ASOCA and MACS-18 cohorts, achieving an Execution Success Rate of 100\%. The richer anatomical fidelity of MACS-18 clearly improves the topology recovery in Block~1. As shown in \Cref{tab:endpoint-summary}, the mean detected endpoints increased from 17.1 to 27.7 per patient, and the Centerline Extraction Success Rate improved from 83.19\% to 95.62\% (\Cref{tab:ostium-centerline-comparison}). These gains suggest that MACS-18 better preserves distal continuity and lumen details, allowing the pathfinding algorithm to traverse segments that were previously disconnected or lost (\Cref{fig:centerlines-surfaces-comparison}).
+
+However, observing the results, it seems that this same anatomical richness negatively affects ostium identification. The Ostium Identification Success Rate fell from 85.0\% on ASOCA to 73.75\% on MACS-18 (\Cref{tab:ostium-centerline-comparison}). This decrease could be explained by the higher complexity of the vessel skeleton. Because MACS-18 captures more distal branches, the skeleton contains more junctions and complex structures near the root. Consequently, the automated detection method might misclassify a proximal branch junction as the true ostium candidate.
+
+Overall, while the MACS-18 masks provide a much more precise geometry that improves centerline extraction, our current ostium selection technique struggles with this increased structural density. This suggests that, rather than the detailed masks being a problem, our ostium detection method should be optimized to handle them properly. By improving this specific step, a potential upgrade that will be discussed further in \Cref{sec:discussion-future}, the pipeline could fully leverage the high geometric precision of datasets like MACS-18.
+
+\vspace{0.75em}
+\noindent\textbf{Computational Efficiency and Runtime Discrepancies}\par
+\vspace{0.4em}
+\noindent
+As reported in \Cref{tab:runtime-comparison}, the mean total pipeline runtime increased from 346.9 seconds on ASOCA to 576.2 seconds on MACS-18. The main cause of this difference is Block~2, responsible for the geometric quantification, which rose from 164.6 seconds to 357.7 seconds. This increase is a logical result of the system design. At each centerline point, the pipeline calculates a cross-sectional area by slicing the 3D surface mesh. Therefore, the total time depends directly on the amount of data processed. Because MACS-18 captures more branches and longer distal paths (\Cref{tab:endpoint-summary}), the algorithm simply has more valid geometry to analyze, multiplying the total area calculations required. The remaining blocks only showed minor time increases due to handling slightly larger files.
+
+Consequently, the reported runtimes are compatible with a background processing workflow rather than with on-demand computation during a live session. In the intended hospital use case, the pipeline can be executed after segmentation is available and before the clinical expert opens the dashboard, storing the quantification outputs for each prioritized patient. When the doctor later requests the pop-up review, the interface can load precomputed results directly, without repeating the full Blocks~1--3 chain. Even under this model, the higher computational cost of MACS-18 remains relevant: as segmentation quality improves, quantification efficiency should be optimized in parallel to keep background processing practical at scale.
+
+\vspace{0.75em}
+\noindent\textbf{Algorithmic Verification via Synthetic Models}\par
+\vspace{0.4em}
+\noindent
+The primary objective of the synthetic experiments (\Cref{sec:results-synthetic}) is to verify the mathematical correctness of our quantification formulas without the interference of anatomical noise or complex bifurcations that could bias the results. As shown in \Cref{tab:synthetic-validation-outcomes}, this verification provides clear evidence that the Block~2 logic is consistent. All calculated errors for both synthetic models fall well within the \emph{good} acceptance bands defined previously in \Cref{tab:validation-synthetic-thresholds}. Even on the diseased model, the maximum percentage area stenosis error is only 1.31\%, and the maximum area error is just 4.50\,mm$^2$.
+
+Furthermore, the extended longitudinal profiles provided in \Cref{app:synthetic-profiles} clearly visualize the artificial narrowing generated in the vessel. In this controlled scenario, the selected window size successfully captures healthy reference points, ensuring a realistic and accurate comparison. Therefore, the tiny residual errors observed should not be seen as a flaw in the stenosis equations themselves. Instead, this small deviation is caused by the internal VMTK functions used to extract the cross-sectional area at each point. The process of converting analytically defined shapes into voxelized surfaces, smoothing the mesh, and calculating discrete slices along the centerline introduces minor numerical noise. This slightly impacts the area measurement and naturally carries over to the final stenosis percentage calculation.
+
+Ultimately, these synthetic tests verify the fidelity of the implementation. They confirm that the software can reproduce known geometries with almost zero deviation. By proving that the core formula works perfectly in an ideal environment, it becomes clear that any inaccuracies encountered in real patient data are not due to mathematical errors. Instead, they arise from the challenge of applying a fixed reference window to complex human anatomy and the inherent difficulty of automatically locating true healthy reference points in a diseased vessel. These specific structural limitations will be analyzed in detail in \Cref{sec:discussion-limitations}.
+
+\vspace{0.75em}
+\noindent\textbf{Clinical Usability and Acceptance}\par
+\vspace{0.4em}
+\noindent
+The pilot SUS evaluation detailed in \Cref{sec:results-ux} yielded a mean score of 70.83, placing the dashboard in the \emph{Good} acceptability band of \Cref{tab:validation-sus-thresholds}. Because this interface represents a first iteration, it was expected that the tool would not be flawless. The primary goal was to establish a functional baseline that effectively communicated the core concept of the pipeline, with the intention of refining it over time. This experimental nature helps explain the diverse opinions and the spread in acceptance observed among the three clinical experts, whose individual scores ranged from 55.0 to 85.0 (\Cref{tab:sus-summary}). A closer look at the item-level responses (\Cref{tab:sus-raw}) provides deeper insight into this variation.
+
+Rather than merely summarizing the numerical results, it is important to interpret what they mean for the dashboard's design. The most positive signals relate to the system's perceived clinical utility and visual integration. Strong ratings on the intent for frequent use (Question~1) and the integration of 3D meshes with 2D plots (Question~5) indicate that the core concept resonates well with clinical needs. Conversely, responses regarding diagnostic confidence (Question~9) and the need for technical support (Question~4) were more mixed. Referencing the full questionnaire provided in \Cref{app:sus-questionnaire}, these varied answers suggest that while the visual layout is highly appreciated, the tool requires further refinement before clinicians can feel completely autonomous and confident using it without prior training.
+
+Beyond the scores, the session sparked valuable debate among the cardiologists and surfaced concrete ideas to improve future visualization iterations, developed in \Cref{sec:discussion-future}. Physicians' overall impressions were highly positive, affirming substantial practical utility within the clinical ecosystem of Hospital de la Santa Creu i Sant Pau.
 
 \section{Technical and Anatomical Limitations}
 \label{sec:discussion-limitations}
 
-% Content to be written in a later iteration.
+\noindent\textbf{Anatomical Confounders, Tapering, and Area Overestimation}\par
+\vspace{0.4em}
+\noindent
+The core limitation of this thesis is not operational failure, but geometric sensitivity when processing complex real coronary anatomy. In Block~2, stenosis is estimated by comparing each point's local cross-sectional area with a bilateral healthy reference derived from adjacent points along the branch vessel. While this approach works perfectly on ideal synthetic tubes (\Cref{sec:results-synthetic}), it struggles with natural anatomical variations: coronary arteries taper from proximal to distal, and bifurcations create zones where the vessel naturally widens. Because the reference window is recomputed continuously at every centerline point, overestimation arises when a point's proximal or distal window falls inside one of these wider morphological regions or along a highly tapered segment.
+
+Geometrically, the cross-sectional area is calculated using a plane perpendicular to the centerline's tangent. At bifurcations, where the centerline curves to redirect into a new branch, this perpendicular slice can capture an artificially elongated section. If the algorithm selects one of these controversially large, non-representative points as the ``healthy'' baseline, the reference area becomes heavily inflated. Consequently, when the algorithm evaluates the points immediately downstream, it falsely interprets them as pathologically narrow, leading to a drastic overestimation of the percentage area stenosis.
+
+\Cref{fig:bifurcation_limitation} illustrates this phenomenon. As observed in the bar plots, the percentage area stenosis (orange bars) spikes significantly for the points located just after the bifurcation.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.88\linewidth]{{Figure 11. Bifurcation Stenosis v2.pdf}}
+  \caption{Area overestimation near a coronary bifurcation. The 3D model maps percentage area stenosis (green colormap); the inset marks the maximum stenosis point (purple diamond) and automatic proximal/distal references (green circles). Bar plots show cross-sectional area (blue) and percentage area stenosis (orange), including the artificial spike after the bifurcation.}
+  \label{fig:bifurcation_limitation}
+\end{figure}
+
+However, after a certain distance, this overestimation disappears and the values abruptly drop back to a normal baseline. This stabilization occurs because the proximal reference window has finally moved completely out of the large main vessel and into the smaller sub-vessel, finding a truly representative healthy reference. A similar measurement distortion can happen when the vessel remodels in a non-circular shape due to plaque. Since the cross-sectional area reduces complex, irregular, or eccentric shapes into a single numerical value, it can sometimes fail to reflect the true anatomical reality of the lumen.
+
+Because the final CAD-RADS scoring relies strictly on the maximum stenosis values found across the vessels, this localized overestimation directly infects the final summary block. Consequently, the pipeline produces non-representative CAD-RADS categories that are driven by normal vessel geometry rather than true pathological severity. For this reason, in terms of CAD-RADS classification, the current version of the tool lacks autonomous predictive value and cannot independently represent the patient's actual condition. However, this is a highly fixable issue. By optimizing the quantification block and exploring alternative mathematical methods to identify truly healthy reference values, this problem can be resolved. In \Cref{sec:discussion-future}, we will present a specific, mathematically robust proposal discussed with clinical professionals at Hospital de la Santa Creu i Sant Pau to address this exact limitation in future iterations.
+
+\vspace{0.75em}
+\noindent\textbf{Rigidity of the Baseline Reference Window}\par
+\vspace{0.4em}
+\noindent
+Closely tied to the anatomical confounders discussed previously is the algorithmic rigidity used to locate these reference areas. In our current quantification method (Block~2), the reference window size ($W$) is one of the most critical parameters. Throughout this thesis, we utilized a fixed reference half-window of $W = 10$\,mm, as defined and justified in \Cref{sec:methodology-block2}. This value is an empirically motivated constant, chosen as a pragmatic compromise to enable reproducible batch processing and closed-form reference estimation. However, its rigidity is precisely what triggers the overestimation problems at bifurcations and tapered vessels. Because the algorithm strictly looks 10\,mm upstream and downstream, it is entirely blind to the local context. It cannot distinguish whether those specific distances land on healthy tissue, diffuse disease, calcification, or a morphological branch expansion.
+
+In routine clinical practice at Hospital de la Santa Creu i Sant Pau, cardiologists avoid this issue through visual judgment. They manually select reference sites within the same vessel segment, deliberately avoiding bifurcation areas, ostial zones, and lesion shoulders to find a truly healthy baseline. Replicating this expert human judgment automatically is substantially harder. A fixed 10\,mm window cannot adapt to varying lesion lengths or branch calibers. For example, short side branches might not have enough length to satisfy the 10\,mm search, while extensively diseased segments might force the window to sample pathological tissue instead of a healthy baseline. In both scenarios, the reference area becomes biased, leading to inaccurate stenosis percentages.
+
+Because the algorithm currently lacks the context-awareness to dynamically adjust this window, the stenosis outputs on real cohorts should be interpreted as exploratory quantitative maps rather than definitive diagnostic metrics. Fortunately, after evaluating these results with clinical experts at Hospital de la Santa Creu i Sant Pau, we established a clear path forward. We have outlined a specific proposal to replace this rigid parameter with adaptive methods for finding true healthy reference values, which will be discussed in detail in \Cref{sec:discussion-future}.
+
+\vspace{0.75em}
+\noindent\textbf{Challenges in Automated Ostium Identification}\par
+\vspace{0.4em}
+\noindent
+Moving beyond the geometric limitations of area quantification, another structural challenge lies at the very beginning of the vessel: the ostium. As detailed in \Cref{sec:methodology-block1}, our current automated heuristic identifies the ostium to define the complete vascular paths from the aortic root down to each endpoint. Overall, the metrics obtained for this step are actually quite positive, achieving an Ostium Identification Success Rate of 85.0\% on ASOCA and 73.75\% on MACS-18 (\Cref{tab:ostium-centerline-comparison}). However, as these results indicate, the current technique does not always detect the exact anatomical root perfectly, occasionally struggling when faced with highly complex vessel structures.
+
+It is important to clarify that an imprecise ostium placement does not break the execution logic of the pipeline. The geometric quantification in Block~2 can still successfully calculate cross-sectional areas and local stenosis percentages along whatever centerline path it receives. Nevertheless, because the system organizes the downstream branches starting from this anchor point, a misplaced ostium does influence the final reporting. An incorrect starting point might cause the omission of a proximal segment or slightly alter the way branches are grouped.
+
+During the development of this thesis, the priority was to build a fully functional, end-to-end pipeline rather than exclusively optimizing this single detection step. Therefore, while the current success rates are solid, they do not represent the ceiling of what the algorithm can achieve. To ensure that the topological anchoring matches the high quality of the downstream quantification, we will propose strong alternative solutions and improved rules for identifying the ostium in \Cref{sec:discussion-future}.
+
+\vspace{0.75em}
+\noindent\textbf{Usability Study Sample Size}\par
+\vspace{0.4em}
+\noindent
+Finally, the clinical evaluation must be interpreted within its methodological limits. With only three clinical experts from a single institution participating (\Cref{subsec:validation-ux,sec:results-ux}), the System Usability Scale evaluation is strictly an exploratory pilot. Consequently, the resulting scores cannot support broad statistical inference.
+
+Nevertheless, this sample size was perfectly appropriate for the scoped objectives of this bachelor thesis. Prioritizing deep qualitative feedback from specialized cardiologists provided immense value. The resulting clinical consensus on key areas like transparency, manual reference control, and validation grounded in medical imaging proved much more informative for future designs than expanding the cohort simply to achieve statistical significance.
 
 \section{Future Work}
 \label{sec:discussion-future}
 
-% Content to be written in a later iteration.
+Building upon the limitations identified in the previous section, the following directions outline the next steps for refining the pipeline. These proposed improvements stem from two main sources: the need to directly address the specific geometric and technical constraints discovered during development, and the valuable practical feedback gathered from cardiologists at Hospital de la Santa Creu i Sant Pau during the evaluation sessions.
+
+\subsection{Algorithmic and Pipeline Enhancements}
+\label{subsec:future-algorithmic}
+
+The next development cycle should treat the pipeline as a modular product rather than a monolithic script. Refactoring Blocks~1--4 into independently testable services would simplify regression testing when segmentation inputs evolve from ASOCA to MACS-18 and future hospital-specific masks. Performance engineering should target Block~2 first, because cross-sectional area extraction dominates runtime (\Cref{tab:runtime-comparison}). Candidate optimizations include caching smoothed meshes, parallelizing branch-wise quantification, and early termination on anatomically invalid paths.
+
+\textbf{Centerline resolution optimization.} Clinical experts noted that sub-millimeter sampling density is often unnecessary for routine triage. The current extraction granularity ($< 0.1$\,mm on short branches and $< 0.2$\,mm on long branches) yields rich plots but inflates VMTK call counts. A adaptive resampling policy with a $\sim 2$\,mm default spacing---while preserving fine sampling only around suspected lesions---could reduce Block~2 cost without sacrificing clinical readability. This aligns with the hospital feedback that coarse longitudinal profiles are sufficient for initial assessment, provided peak stenosis locations remain accurate.
+
+\textbf{Plaque versus stenosis quantification.} Cardiologists emphasized a distinction that the present pipeline does not yet model: plaque burden does not equal hemodynamically significant stenosis. Calcium or soft plaque may be present before luminal narrowing becomes flow-limiting. Future work should therefore add plaque compartment metrics (e.g., calcified vs.\ non-calcified burden) alongside luminal \%AS, enabling side-by-side reporting of morphological disease presence and functional narrowing. Such dual reporting would better mirror clinical reasoning and reduce over-interpretation of lumen-only maps.
+
+\textbf{Ostium and reference robustness.} Algorithmic alternatives for ostium detection---including label-guided root priors, learning-based ostium regression, and interactive clinician correction---should be benchmarked with the same OISR/CESR framework used in \Cref{sec:results-pipeline}. In parallel, reference estimation should evolve from fixed-window means toward segment-aware, anomaly-screened selectors that reject bifurcation neighborhoods before computing $A_{\mathrm{ref}}$.
+
+\subsection{Clinical Workflow Integration}
+\label{subsec:future-workflow}
+
+The highest translational value of this project lies in embedding the dashboard inside the hospital's existing AI-enabled CAD pathway at Hospital de la Santa Creu i Sant Pau~\cite{acebes2024}. Two upstream components are especially relevant: automatic coronary segmentations and labels developed by Clapers Colet~\cite{clapers2025}, and the patient prioritization framework by Ferrer Beltran~\cite{ferrer2024}. An integrated deployment would pass prioritized cases---already segmented and risk-ranked---directly into this quantification and visualization stack.
+
+In practice, a cardiologist reviewing a prioritized worklist could open the Block~4 dashboard as a rapid first-pass pop-up: inspect global anatomy, CAD-RADS-oriented summaries, and aggregated high-burden zones, then decide whether the case requires immediate deep review in advanced reading software or can defer. This matches the intended role described in \Cref{sec:methodology-block4} and preserves clinician authority while reducing idle time on low-yield manual navigation. End-to-end integration would also standardize provenance: segmentation version, quantification parameters, and CAD-RADS rationale could be logged per case for auditability, a requirement difficult to achieve with external black-box commercial viewers~\cite{cleerly2024}.
+
+\subsection{Addressing Anatomical Limitations: Expert Clinical Proposals}
+\label{subsec:future-clinical-proposals}
+
+Hospital experts proposed a paradigm shift away from local 10\,mm relative windows toward an \emph{expected healthy vessel model}. The motivation is explicit: reference contamination from diffuse disease, tapering, bifurcations, and remodeling makes adjacent-sample baselines unreliable. The proposed methodology proceeds in four stages.
+
+\textbf{Comprehensive feature extraction.} For each centerline point, the system should record not only luminal area but also effective diameter, geodesic distance from the ostium, local curvature, and proximity to bifurcations. This feature vector enables downstream classifiers to label whether a neighborhood is anatomically eligible as reference tissue.
+
+\textbf{Exclusion of unreliable zones.} Before any baseline fit, the algorithm must remove segments with evident stenosis, carinas, ostial transitions, severe calcification artifacts, or abrupt non-physiological diameter drops. This step formalizes the manual practice of avoiding bifurcation shoulders during visual reference selection.
+
+\textbf{Robust reference curve fitting.} Rather than averaging two adjacent samples, the experts recommend fitting a smooth reference caliber function along each valid branch---using robust spline regression, LOESS, or hierarchical Bayesian smoothing---to represent physiological tapering from proximal to distal segments. Stenosis would then be computed against the expected area at each coordinate:
+\begin{equation}
+  \%AS = 100 \times \left(1 - \frac{A_{\mathrm{observed}}}{A_{\mathrm{expected}}}\right).
+  \label{eq:expected-healthy-stenosis}
+\end{equation}
+
+\textbf{Population-based priors.} To stabilize patient-specific fits, the reference curve should be constrained by priors learned from healthy coronary cohorts, conditioned on territory (RCA, LAD, LCX), segment nomenclature, dominance pattern, sex, body size, and myocardial volume. This would reduce overfitting on short branches and prevent distal segments from collapsing toward unrealistic calibers.
+
+\textbf{Interactive dashboard extensions.} Near-term UI improvements can partially mitigate current limitations before full expected-healthy modeling is available. Clinicians requested manual adjustment of proximal and distal reference points directly in the dashboard, continuous lumen profiles instead of isolated samples, and aggregated stenosis zones (e.g., contiguous regions with $\geq 50\%$ \%AS) to accelerate reading. They also stressed that explainability requires direct visual access to raw CCTA evidence through curved multi-planar reformation (CMPR) and true cross-sectional views, enabling side-by-side comparison between algorithmic outputs and anatomical ground truth on the source scan. Integrating CMPR would move the interface closer to trusted commercial benchmarks while retaining the open, inspectable architecture that motivated this in-house framework.
 
 % Restore default paragraph spacing for subsequent chapters
 \setlength{\parskip}{0pt plus 1pt}
