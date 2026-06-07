@@ -106,39 +106,63 @@ Building upon the limitations identified in the previous section, the following 
 \subsection{Algorithmic and Pipeline Enhancements}
 \label{subsec:future-algorithmic}
 
-The next development cycle should treat the pipeline as a modular product rather than a monolithic script. Refactoring Blocks~1--4 into independently testable services would simplify regression testing when segmentation inputs evolve from ASOCA to MACS-18 and future hospital-specific masks. Performance engineering should target Block~2 first, because cross-sectional area extraction dominates runtime (\Cref{tab:runtime-comparison}). Candidate optimizations include caching smoothed meshes, parallelizing branch-wise quantification, and early termination on anatomically invalid paths.
+As previously discussed, the current version of the pipeline represents a first iteration designed to successfully integrate multiple processing blocks into a single functional tool. Moving forward, future work must focus on the individual optimization of each specific block. Refining these steps independently will yield much higher precision across the entire system and provide the necessary mechanisms to overcome the geometric and technical limitations mentioned in the previous sections.
 
-\textbf{Centerline resolution optimization.} Clinical experts noted that sub-millimeter sampling density is often unnecessary for routine triage. The current extraction granularity ($< 0.1$\,mm on short branches and $< 0.2$\,mm on long branches) yields rich plots but inflates VMTK call counts. A adaptive resampling policy with a $\sim 2$\,mm default spacing---while preserving fine sampling only around suspected lesions---could reduce Block~2 cost without sacrificing clinical readability. This aligns with the hospital feedback that coarse longitudinal profiles are sufficient for initial assessment, provided peak stenosis locations remain accurate.
+\vspace{0.75em}
+\noindent\textbf{Centerline Resolution Optimization}\par
+\vspace{0.4em}
+\noindent
+Clinical experts noted that extremely dense sampling is often unnecessary for routine triage. The current extraction granularity of 0.1\,mm yields rich plots but significantly increases the computational cost of the algorithm. An adaptive resampling policy with a 2\,mm default spacing, preserving fine sampling exclusively around suspected lesions, could drastically reduce processing times without sacrificing clinical readability.
 
-\textbf{Plaque versus stenosis quantification.} Cardiologists emphasized a distinction that the present pipeline does not yet model: plaque burden does not equal hemodynamically significant stenosis. Calcium or soft plaque may be present before luminal narrowing becomes flow-limiting. Future work should therefore add plaque compartment metrics (e.g., calcified vs.\ non-calcified burden) alongside luminal \%AS, enabling side-by-side reporting of morphological disease presence and functional narrowing. Such dual reporting would better mirror clinical reasoning and reduce over-interpretation of lumen-only maps.
+\vspace{0.75em}
+\noindent\textbf{Plaque Versus Stenosis Quantification}\par
+\vspace{0.4em}
+\noindent
+Clinical experts emphasized a crucial medical distinction that the present pipeline does not yet model. From a clinical perspective, doctors first look for the presence of plaque and then evaluate if that plaque is actively causing a stenosis. Plaque is simply the physical accumulation of calcium or cholesterol, whereas stenosis is the actual narrowing of the vessel. Importantly, a patient can have plaque accumulations that do not result in any significant narrowing. Because specialists inherently search for detected plaque zones to assess if they cause a relevant obstruction, integrating automated plaque detection and visualization would be exceptionally useful. Adding this feature alongside the current percentage area metrics would better mirror natural clinical reasoning.
 
-\textbf{Ostium and reference robustness.} Algorithmic alternatives for ostium detection---including label-guided root priors, learning-based ostium regression, and interactive clinician correction---should be benchmarked with the same OISR/CESR framework used in \Cref{sec:results-pipeline}. In parallel, reference estimation should evolve from fixed-window means toward segment-aware, anomaly-screened selectors that reject bifurcation neighborhoods before computing $A_{\mathrm{ref}}$.
+\vspace{0.75em}
+\noindent\textbf{Ostium Identification And Adaptive Reference Selection}\par
+\vspace{0.4em}
+\noindent
+To address the root anchoring challenges, the current heuristic rules for ostium detection should be upgraded. One highly promising alternative is implementing Artificial Intelligence models, since the aorta is a massive and visually distinct structure that a trained network can easily recognize. Another option is developing advanced mechanisms to directly analyze the initial segmentation and identify exactly which endpoint connects to the aortic root. Alongside these ostium improvements, the algorithm must update how it selects healthy reference areas. The system currently relies on a fixed distance window. A much better alternative would be to identify the healthy reference purely within the boundaries of the same vessel segment, exactly mimicking how human specialists operate. Furthermore, future iterations of the interface should allow the clinical expert to manually place or adjust this reference point, ensuring complete control over the final stenosis calculation.
 
 \subsection{Clinical Workflow Integration}
 \label{subsec:future-workflow}
 
-The highest translational value of this project lies in embedding the dashboard inside the hospital's existing AI-enabled CAD pathway at Hospital de la Santa Creu i Sant Pau~\cite{acebes2024}. Two upstream components are especially relevant: automatic coronary segmentations and labels developed by Clapers Colet~\cite{clapers2025}, and the patient prioritization framework by Ferrer Beltran~\cite{ferrer2024}. An integrated deployment would pass prioritized cases---already segmented and risk-ranked---directly into this quantification and visualization stack.
+The highest translational value of this project lies in embedding the dashboard inside the existing Artificial Intelligence clinical pathway at Hospital de la Santa Creu i Sant Pau~\cite{acebes2024}. However, before deploying the product for routine commercial use within the hospital environment, it is absolutely critical to resolve all the geometric and technical limitations mentioned earlier. Fortunately, these challenges can be overcome through targeted iterative work on the current pipeline. Once optimized, uniting this quantification tool with other existing projects would generate immense clinical value. Specifically, integrating the automatic coronary segmentations developed by Clapers Colet~\cite{clapers2025} and the patient prioritization framework by Ferrer Beltran~\cite{ferrer2024} would create a highly robust system. A complete deployment would pass cases that are already segmented and ranked by risk directly into this visualization stack.
 
-In practice, a cardiologist reviewing a prioritized worklist could open the Block~4 dashboard as a rapid first-pass pop-up: inspect global anatomy, CAD-RADS-oriented summaries, and aggregated high-burden zones, then decide whether the case requires immediate deep review in advanced reading software or can defer. This matches the intended role described in \Cref{sec:methodology-block4} and preserves clinician authority while reducing idle time on low-yield manual navigation. End-to-end integration would also standardize provenance: segmentation version, quantification parameters, and CAD-RADS rationale could be logged per case for auditability, a requirement difficult to achieve with external black-box commercial viewers~\cite{cleerly2024}.
+In practical terms, a cardiologist reviewing a prioritized list of patients could open the dashboard for a rapid initial assessment. They could easily inspect the global anatomy, review summaries oriented towards CAD-RADS categories, and locate zones with a high plaque burden. The doctor can then decide whether the case requires an immediate deep review or if it can be deferred. This workflow preserves the authority of the clinician while drastically reducing time spent on manual navigation. To guide the evolution of this interface, commercial platforms like Cleerly represent an ideal technical ceiling. Analyzing such advanced visualization tools provides an excellent reference for the specific features and interactive elements that cardiologists need to streamline their daily workflow~\cite{cleerly2024}.
 
-\subsection{Addressing Anatomical Limitations: Expert Clinical Proposals}
+\subsection{Expert Clinical Proposals: Reference Modeling and Dashboard Extensions}
 \label{subsec:future-clinical-proposals}
 
-Hospital experts proposed a paradigm shift away from local 10\,mm relative windows toward an \emph{expected healthy vessel model}. The motivation is explicit: reference contamination from diffuse disease, tapering, bifurcations, and remodeling makes adjacent-sample baselines unreliable. The proposed methodology proceeds in four stages.
+To directly address the geometric overestimation and rigid reference window limitations discussed in \Cref{sec:discussion-limitations}, clinical experts at Hospital de la Santa Creu i Sant Pau proposed moving beyond the fixed 10\,mm bilateral window toward an expected healthy vessel model. Rather than trusting adjacent samples that may fall inside bifurcations, tapering zones, or diffuse disease, this approach first characterizes each centerline neighborhood and then estimates what the lumen caliber should be under healthy physiology. The proposed methodology can be summarized as follows:
 
-\textbf{Comprehensive feature extraction.} For each centerline point, the system should record not only luminal area but also effective diameter, geodesic distance from the ostium, local curvature, and proximity to bifurcations. This feature vector enables downstream classifiers to label whether a neighborhood is anatomically eligible as reference tissue.
+\begin{itemize}
+  \item \textbf{Comprehensive Feature Extraction}\\
+  Clinical experts noted that a robust reference model cannot rely on luminal area alone. For each centerline point, the system should record complementary geometric descriptors such as effective diameter, geodesic distance from the ostium, local curvature, and proximity to bifurcations. Together, these features help the algorithm decide whether a neighborhood is anatomically eligible to serve as healthy reference tissue.
 
-\textbf{Exclusion of unreliable zones.} Before any baseline fit, the algorithm must remove segments with evident stenosis, carinas, ostial transitions, severe calcification artifacts, or abrupt non-physiological diameter drops. This step formalizes the manual practice of avoiding bifurcation shoulders during visual reference selection.
+  \item \textbf{Exclusion Of Unreliable Zones}\\
+  Before estimating any expected healthy caliber, the algorithm must explicitly exclude zones that specialists already avoid during manual reading. This includes segments with evident stenosis, bifurcation areas, ostial transitions, severe calcification artifacts, or abrupt non-physiological diameter drops. Formalizing this exclusion step reproduces the clinical habit of staying away from morphologically unstable regions.
 
-\textbf{Robust reference curve fitting.} Rather than averaging two adjacent samples, the experts recommend fitting a smooth reference caliber function along each valid branch---using robust spline regression, LOESS, or hierarchical Bayesian smoothing---to represent physiological tapering from proximal to distal segments. Stenosis would then be computed against the expected area at each coordinate:
-\begin{equation}
-  \%AS = 100 \times \left(1 - \frac{A_{\mathrm{observed}}}{A_{\mathrm{expected}}}\right).
-  \label{eq:expected-healthy-stenosis}
-\end{equation}
+  \item \textbf{Robust Reference Curve Fitting}\\
+  Rather than averaging neighboring samples, clinical experts recommended fitting a smooth reference caliber function along each valid branch segment. Methods such as robust spline regression, LOESS, or hierarchical Bayesian smoothing could represent physiological tapering from proximal to distal anatomy. Stenosis would then be computed against the expected area at each exact coordinate:
+  \begin{equation}
+    \%AS = 100 \times \left(1 - \frac{A_{\mathrm{observed}}}{A_{\mathrm{expected}}}\right)
+    \label{eq:expected-healthy-stenosis}
+  \end{equation}
 
-\textbf{Population-based priors.} To stabilize patient-specific fits, the reference curve should be constrained by priors learned from healthy coronary cohorts, conditioned on territory (RCA, LAD, LCX), segment nomenclature, dominance pattern, sex, body size, and myocardial volume. This would reduce overfitting on short branches and prevent distal segments from collapsing toward unrealistic calibers.
+  \item \textbf{Priors Derived From Populations}\\
+  To prevent patient-specific fits from becoming unstable on short branches or noisy distal segments, the expected healthy curve should be constrained by priors learned from anatomically normal coronary cohorts. These priors could be conditioned on territory, segment nomenclature, dominance pattern, sex, body size, and myocardial volume. This reduces overfitting and keeps distal calibers physiologically plausible.
+\end{itemize}
 
-\textbf{Interactive dashboard extensions.} Near-term UI improvements can partially mitigate current limitations before full expected-healthy modeling is available. Clinicians requested manual adjustment of proximal and distal reference points directly in the dashboard, continuous lumen profiles instead of isolated samples, and aggregated stenosis zones (e.g., contiguous regions with $\geq 50\%$ \%AS) to accelerate reading. They also stressed that explainability requires direct visual access to raw CCTA evidence through curved multi-planar reformation (CMPR) and true cross-sectional views, enabling side-by-side comparison between algorithmic outputs and anatomical ground truth on the source scan. Integrating CMPR would move the interface closer to trusted commercial benchmarks while retaining the open, inspectable architecture that motivated this in-house framework.
+Beyond this mathematical proposal for reference estimation, the evaluation sessions highlighted specific interface improvements that could be implemented much sooner.
+
+\vspace{0.75em}
+\noindent\textbf{Interactive Dashboard Extensions}\par
+\vspace{0.4em}
+\noindent
+The previous proposal focuses on improving reference estimation through an expected healthy vessel model, but its full implementation remains future work. Furthermore, several interface enhancements could already mitigate current limitations. Cardiologists requested manual adjustment of proximal and distal reference points, continuous lumen profiles instead of isolated samples, and aggregated stenosis zones to accelerate routine reading. They also noted that clinicians should be able to open the original scan alongside the automated results, so they can check whether a reported stenosis reflects true disease or a geometric artifact. Curved multi-planar reformation and true transverse cross-sections would support this direct comparison with the real anatomy.
 
 % Restore default paragraph spacing for subsequent chapters
 \setlength{\parskip}{0pt plus 1pt}
