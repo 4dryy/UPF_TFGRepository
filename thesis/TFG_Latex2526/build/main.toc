@@ -4,8 +4,8 @@
 \babel@toc {catalan}{}\relax 
 \babel@toc {spanish}{}\relax 
 \babel@toc {english}{}\relax 
-\contentsline {chapter}{List of Figures}{\es@scroman {ix}}{chapter*.2}%
-\contentsline {chapter}{List of Tables}{\es@scroman {x}}{chapter*.3}%
+\contentsline {chapter}{List of Figures}{\es@scroman {xii}}{chapter*.2}%
+\contentsline {chapter}{List of Tables}{\es@scroman {xiii}}{chapter*.3}%
 \babel@toc {english}{}\relax 
 \contentsline {chapter}{\numberline {1}{\MakeUppercase []{ Introduction}}}{1}{chapter.1}%
 \contentsline {section}{\numberline {1.1}Clinical Context and Motivation}{1}{section.1.1}%

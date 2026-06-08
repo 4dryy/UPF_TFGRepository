@@ -210,27 +210,42 @@
   \let\footnotesize\small
   \let\footnoterule\relax
   \let \footnote \thanks
-  \vspace*{2cm}
-  \begin{center}
-    {\sffamily\fontsize{18}{23}\selectfont\linespread{1.25}\selectfont \@title\par}
+  \null\vfil
+%  \vskip 60\p@
+  \begin{flushleft}%
+  \begin{center}   {\LARGE \sffamily \@title \par}% 
+  \end{center} 
+    \vspace*{2cm}
+    \begin{center}   {\Large \sffamily \@subtitle \par}
+     \end{center}
+    \vskip 4cm%
+   \begin{center} {\Large TREBALL DE FI DE GRAU DE} \par \end{center} 
+    {\Large
+     \lineskip .75em}%
+      \begin{center} 
+      \begin{tabular}[t]{c}%
+       {\LARGE  \@author}
+      \end{tabular}\par%
+   \end{center} 
+      %\rule{\linewidth}{1mm} \par
+      \vskip 1cm%
+   % {\normalsize Director}\par
+     \begin{center} 
+    {\large \@supervisor}\par
+      \end{center} 
+  %  {\large \@department} \par
+  \begin{center} 
+  {\large \@grau} \par
   \end{center}
-  \vspace{5cm}
-  \begin{center}
-    {\LARGE BACHELOR'S THESIS BY}\par
-    \vspace{2.5em}
-    {\huge \@author}\par
-    \vspace{3.5em}
-    {\Large\linespread{1.2}\selectfont \@supervisor}\par
-    \vspace{2.5em}
-    {\Large \@grau}\par
-    \vspace{2em}
-    {\Large \@thyear}\par
-  \end{center}
-  \vfill
-  \begin{center}
-    \includegraphics[width=0.94\textwidth]{{Cover Logos.pdf}}
-  \end{center}
-  \vspace{0.6cm}
+ \begin{center} 
+	{\large \@thyear} \par
+\end{center}
+    \vspace{3cm}
+   \centering  
+    \includegraphics[scale=0.4]{logo_upf.png}
+   \end{flushleft}\par
+%  \@thanks
+% \vfil\null
   \end{titlepage}%
   \setcounter{footnote}{0}%
   \global\let\thanks\relax

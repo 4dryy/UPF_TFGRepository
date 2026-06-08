@@ -3,9 +3,6 @@
 % Methodology workflow figures are exported as PDF~1.7; raise output cap so pdflatex can include them.
 \pdfminorversion=7
 
-% Avoid blank verso pages (twoside + template \cleardoublepage inserts empty sheets)
-\let\cleardoublepage\clearpage
-
 % Languages
 \usepackage[catalan,english,spanish]{babel}
 
@@ -26,6 +23,8 @@
 \usepackage{float}
 % Figures and tables: one subfolder per thesis section (see ``figures and tables/'')
 \graphicspath{%
+  {figures and tables/}%
+  {TFG Template LaTeX/}%
   {figures and tables/1_Introduction/}%
   {figures and tables/2_Methodology/}%
   {figures and tables/3_Results/}%
@@ -60,7 +59,9 @@
 % Plain page style (no headings)
 \pagestyle{plain}
 
-% Bibliography: numeric in-text citations [n]; alphabetical reference list
+% Bibliography: plain.bst sorts the reference list alphabetically by author.
+% Each in-text [n] is that entry's position in the sorted list; BibTeX keeps
+% \cite{key} linked to the correct \bibitem{key} after every full compile.
 \usepackage[numbers,sort&compress]{natbib}
 \bibliographystyle{plain}
 
@@ -83,6 +84,14 @@
   \noindent{\Large\sffamily\bfseries #1}\par\vspace{0.5em}%
 }
 
+% Blank separator page after front-matter sections (dedication, acknowledgements, etc.)
+\newcommand{\frontmatterblankpage}{%
+  \clearpage
+  \thispagestyle{empty}%
+  \null
+  \clearpage
+}
+
 % Contents, List of Figures, and List of Tables share the same \chapter* heading style
 \addto\captionsenglish{%
   \renewcommand{\contentsname}{Contents}%
@@ -93,47 +102,56 @@
 % --- Thesis metadata (also used if \maketitle is needed) ---
 \title{Automated 3D Stenosis Quantification and Visualization Workflow for Coronary Artery Disease Clinical Decision Support}
 \author{Adri\`{a} Cort\'{e}s Cugat}
-\thyear{Curs 2025--2026}
-\supervisor{Pr.~Oscar Camara Rey (director)\\ C\'{e}sar Acebes Pinilla (supervisor t\`{e}cnic)}
-\grau{Grau en Enginyeria Matem\`{a}tica en Ci\`{e}ncia de Dades}
+\thyear{Academic Year 2025--2026}
+\supervisor{UPF Tutor: Pr.~Oscar Camara Rey\\[1.2em] Supervisor: C\'{e}sar Acebes Pinilla}
+\grau{Bachelor's degree in Mathematical Engineering in Data Science}
 
 \begin{document}
 
-\frontmatter
+\pagestyle{empty}
 
-% Custom cover page (author-designed PDF)
-\includepdf[pages=-]{planning files/TFG Cover.pdf}
-
+% Design cover + official metadata cover + blank separator (unnumbered)
+\includepdf[pages=-,pagecommand={\thispagestyle{empty}}]{planning files/TFG Cover.pdf}
+\maketitle
+\clearpage
+\thispagestyle{empty}
+\null
 \clearpage
 
-% Dedicatory
+% Roman page numbering begins on the dedicatory (page I)
+\makeatletter
+\@mainmatterfalse
+\makeatother
+\pagenumbering{roman}
+\pagestyle{plain}
+
+% Dedicatory (12 pt, italic, right-aligned)
 \input{frontmatter/dedication}
-\clearpage
+\frontmatterblankpage
 
 % Acknowledgements
 \input{frontmatter/acknowledgements}
-\clearpage
+\frontmatterblankpage
 
 % Abstracts (English, Catalan, Spanish)
 \input{frontmatter/abstracts}
-\clearpage
+\frontmatterblankpage
 
 % Preface (includes AI usage declaration per UPF policy)
 \input{frontmatter/preface}
-\clearpage
+\frontmatterblankpage
 
 % Table of contents
 \tableofcontents
-\clearpage
 
 % List of figures
 \listoffigures
 \addcontentsline{toc}{chapter}{List of Figures}
 
-% List of tables (kept for when tables are added)
+% List of tables
 \listoftables
 \addcontentsline{toc}{chapter}{List of Tables}
-\clearpage
+\cleardoublepage
 
 % Main body — introduction and subsequent chapters are in English
 \mainmatter

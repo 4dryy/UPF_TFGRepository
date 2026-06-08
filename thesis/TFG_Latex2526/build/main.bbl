@@ -13,14 +13,6 @@ C.~Acebes~Pinilla et~al.
   regional labeling.
 \newblock Work in progress, Hospital de la Santa Creu i Sant Pau, 2026.
 
-\bibitem{antiga2008}
-L.~Antiga, M.~Piccinelli, L.~Botti, B.~Ene-Iordache, A.~Remuzzi, and D.~A.
-  Steinman.
-\newblock An image-based modeling framework for patient-specific computational
-  hemodynamics.
-\newblock {\em Medical \& Biological Engineering \& Computing},
-  46(11):1097--1112, 2008.
-
 \bibitem{artrya2024}
 {Artrya Ltd.}
 \newblock Artrya salix coronary anatomy ({SCA}) -- {AI}-driven detection of
@@ -127,6 +119,12 @@ Y.~Hong, F.~Commandeur, S.~Cadet, M.~Goeller, M.~K. Doris, X.~Chen, et~al.
   angiography.
 \newblock In {\em Proceedings of {SPIE}}, volume 10949, page 109492I, 2019.
 
+\bibitem{izzo2018}
+R.~Izzo, D.~Steinman, S.~Manini, and L.~Antiga.
+\newblock The {Vascular Modeling Toolkit}: A {Python} library for the analysis
+  of tubular structures in medical images.
+\newblock {\em Journal of Open Source Software}, 3(25):745, 2018.
+
 \bibitem{kaiser_atherosclerosis}
 {Kaiser Permanente}.
 \newblock Cardiology -- artery with atherosclerosis -- {TPMG}.
@@ -166,6 +164,18 @@ P.~A. McCullough.
 \newblock Coronary artery disease.
 \newblock {\em Clinical Journal of the American Society of Nephrology},
   2(3):611--616, 2007.
+
+\bibitem{piccinelli2009}
+M.~Piccinelli, A.~Veneziani, D.~A. Steinman, A.~Remuzzi, and L.~Antiga.
+\newblock A framework for geometric analysis of vascular structures:
+  Application to cerebral aneurysms.
+\newblock {\em IEEE Transactions on Medical Imaging}, 28(8):1141--1155, 2009.
+
+\bibitem{plank2016}
+F.~Plank, P.~Burghard, G.~Friedrich, W.~Dichtl, A.~Mayr, A.~Klauser, et~al.
+\newblock Quantitative coronary {CT} angiography: absolute lumen sizing rather
+  than {\%}stenosis predicts hemodynamically relevant stenosis.
+\newblock {\em European Radiology}, 26(11):3781--3789, 2016.
 
 \bibitem{sanchez2022}
 C.~Sanchez~Gomez.
