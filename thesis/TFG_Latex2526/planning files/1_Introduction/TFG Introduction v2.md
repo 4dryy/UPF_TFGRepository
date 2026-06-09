@@ -105,7 +105,7 @@ To address the clinical challenges outlined in Section 1.2, and to overcome the 
 
 Therefore, the scope of this bachelor's thesis focuses on automating the geometric quantification of coronary stenosis, predicting the associated CAD-RADS score, and integrating these findings into an interactive clinical dashboard.
 
-Figure 5 provides a high-level overview of where this project sits within the pipeline, while the detailed technical workflow is reserved for the Methodology. 
+Figure 5 provides a high-level overview of where this project sits within the pipeline, while the detailed technical workflow is reserved for the Methods chapter. 
 
 **Figure 5\.** Contextual overview of the proposed automated diagnostic framework at Hospital de la Santa Creu i Sant Pau. The contributions of this thesis (green dashed box) bridge the gap between existing hospital data systems (blue) and the final clinical report. Adapted from Acebes Pinilla \[9\]. 
 

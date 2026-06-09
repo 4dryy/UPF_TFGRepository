@@ -1,5 +1,5 @@
-\chapter{Methodology}
-\label{ch:methodology}
+\chapter{Methods}
+\label{ch:methods}
 
 % Readable paragraph spacing (matches Introduction)
 \setlength{\parskip}{0.65em plus 0.15em minus 0.05em}
@@ -46,9 +46,9 @@ The workflow comprises four automated blocks (\crefrange{sec:methodology-block1}
     Centerline and surface representations from Block~1 &
     Cross-sectional area profiles, percentage area stenosis (\%AS), and merged branch-level data \\
     \midrule
-    \textbf{3} Labeling \& CAD-RADS &
+    \textbf{3} Labeling \& CAD-RADS 2.0 &
     Geometric and stenosis tables &
-    Segment stenosis summary and patient CAD-RADS report \\
+    Segment stenosis summary and patient CAD-RADS~2.0 report \\
     \midrule
     \textbf{4} Visualization &
     Aggregated metrics and geometry from Blocks~1--3 &
@@ -62,7 +62,7 @@ To ensure explainability, the system retains intermediate mesh and tabular repre
 \section{ASOCA and MACS-18: Coronary Segmentation and Labeling Data}
 \label{sec:methodology-datasets}
 
-In medical image analysis, \emph{segmentation} denotes the partition of a three-dimensional scan into meaningful regions. For each voxel in the volume, an expert or algorithm decides whether it belongs to a structure of interest, such as the blood-filled interior (\emph{lumen}) of the coronary arteries, rather than to background tissue, myocardium, or surrounding anatomy. The result is not a single measurement but a spatial map that localizes the vessel tree within the patient-specific CCTA grid. The ASOCA and MACS-18 resources provide this map, together with companion anatomical label volumes, for a shared cohort of 40 CCTA cases (20 normal and 20 diseased anatomy). These data served as the reference on which Blocks~1--4 were designed and implemented. Once the pipeline was operational, the full cohort was processed to assess end-to-end behavior. The experimental protocol and result analysis are reported in \Cref{sec:methodology-validation}.
+In medical image analysis, \emph{segmentation} denotes the partition of a three-dimensional scan into meaningful regions. For each voxel in the volume, an expert or algorithm decides whether it belongs to a structure of interest, such as the blood-filled interior (\emph{lumen}) of the coronary arteries, rather than to background tissue, myocardium, or surrounding anatomy. The result is not a single measurement but a spatial map that localizes the vessel tree within the patient-specific CCTA grid. The ASOCA and MACS-18 resources provide this map, together with companion anatomical label volumes for a shared cohort of 40 CCTA cases (20 normal and 20 diseased anatomy), which are detailed further in \Cref{subsec:datasets-asoca-macs}. These data served as the reference on which Blocks~1--4 were designed and implemented. Once the pipeline was operational, the full cohort was processed to assess end-to-end behavior. The experimental protocol and result analysis are reported in \Cref{sec:methodology-validation}.
 
 \subsection{Segmentation and Label Volumes}
 \label{subsec:dataset-formats}
@@ -191,18 +191,18 @@ Block~3 translates the quantitative stenosis metrics produced in Block~2 into a 
   \label{fig:block3-workflow}
 \end{figure}
 
-As illustrated in \Cref{fig:block3-workflow}, this block ingests the merged patient-level stenosis table from Block~2 together with the anatomical segment labels inherited from Block~1. The pipeline first summarizes the stenosis severity at the individual segment level. These segments are subsequently grouped into the primary coronary territories (RCA, LM, LAD, and LCx), establishing the essential anatomical framework required for the CAD-RADS~2.0 evaluation. Finally, the system applies rule-based logic to derive the overall patient-level CAD-RADS category and calculates the Segment Involvement Score (SIS), structuring these findings into the definitive outputs consumed by Block~4.
+As illustrated in \Cref{fig:block3-workflow}, this block ingests the merged patient-level stenosis table from Block~2 together with the anatomical segment labels inherited from Block~1. The pipeline first summarizes the stenosis severity at the individual segment level. These segments are subsequently grouped into the primary coronary territories (RCA, LM, LAD, and LCx), establishing the essential anatomical framework required for the CAD-RADS~2.0 evaluation. Finally, the system applies rule-based logic to derive the overall patient-level CAD-RADS~2.0 category and calculates the Segment Involvement Score (SIS), structuring these findings into the definitive outputs consumed by Block~4.
 
 \subsection{Anatomical Context: AHA 17-Segment Model}
 \label{subsec:block3-aha}
 
-Reliable CAD-RADS assignment requires mapping each evaluated centerline point to a recognized coronary territory. The pipeline adopts the 17-segment American Heart Association (AHA) model, a widely used reporting standard for regional coronary anatomy~\cite{austen1975}. This choice is not only clinically established but also technically aligned with the voxel labeling scheme of the primary cohorts used in this thesis: integer labels in the ASOCA annotation volumes~\cite{gharleghi2022asoca} are consumed directly as segment~ID values without intermediate remapping. This direct compatibility preserves pipeline robustness and keeps segment-level aggregation consistent across patients.
+Reliable CAD-RADS~2.0 assignment requires mapping each evaluated centerline point to a recognized coronary territory. The pipeline adopts the 17-segment American Heart Association (AHA) model, a widely used reporting standard for regional coronary anatomy~\cite{austen1975}. This choice is not only clinically established but also technically aligned with the voxel labeling scheme of the primary cohorts used in this thesis: integer labels in the ASOCA annotation volumes~\cite{gharleghi2022asoca} are consumed directly as segment~ID values without intermediate remapping. This direct compatibility preserves pipeline robustness and keeps segment-level aggregation consistent across patients.
 
 Beyond individual anatomical segments, this model maps every branch into one of four primary coronary territories: the Right Coronary Artery (RCA), Left Main (LM), Left Anterior Descending (LAD), and Left Circumflex (LCX). This territorial grouping is a fundamental requirement of the CAD-RADS~2.0 scoring framework, which assigns the patient-level category from the most severe stenosis observed across these vessels~\cite{cury2022}. \Cref{tab:aha_17_segment} summarizes the complete segment-to-territory dictionary used throughout Block~3 and the clinical dashboard. Background voxels are encoded as segment~0 and are subsequently excluded from stenosis aggregation.
 
 \begin{table}[H]
   \centering
-  \caption{AHA 17-segment dictionary used for anatomical labeling and CAD-RADS territory grouping. Adapted from Austen et al.~\cite{austen1975}.}
+  \caption{AHA 17-segment dictionary used for anatomical labeling and CAD-RADS~2.0 territory grouping. Adapted from Austen et al.~\cite{austen1975}.}
   \label{tab:aha_17_segment}
   \vspace{0.5em}
   \footnotesize
@@ -239,7 +239,7 @@ Beyond individual anatomical segments, this model maps every branch into one of 
 \subsection{Segment-Level Stenosis Aggregation}
 \label{subsec:block3-segment-aggregation}
 
-For each patient, all centerline rows in the Block~2 merged table that carry a valid \texttt{Segment\_ID} are grouped by segment identifier using tabular aggregation. Within each segment, the algorithm retains the absolute maximum \%AS, ensuring that focal lesions are not underestimated when multiple samples exist along the same anatomical region. Each segment is then assigned a discrete stenosis severity grade aligned with the CAD-RADS luminal stenosis bins (see \Cref{tab:cad-rads-stenosis}).
+For each patient, all centerline rows in the Block~2 merged table that carry a valid \texttt{Segment\_ID} are grouped by segment identifier using tabular aggregation. Within each segment, the algorithm retains the absolute maximum \%AS, ensuring that focal lesions are not underestimated when multiple samples exist along the same anatomical region. Each segment is then assigned a discrete stenosis severity grade aligned with the CAD-RADS~2.0 luminal stenosis bins (see \Cref{tab:cad-rads-stenosis}).
 
 Any \texttt{Segment\_ID} present in the input data but outside the 1--17 dictionary (for example, labels introduced by extended annotation schemes) is flagged as \emph{unmapped}. These rows may still appear in exploratory outputs, but they are excluded from the standard territory groupings used for CAD-RADS~2.0 triage, preventing execution failure while making non-standard labels explicit.
 
@@ -248,7 +248,7 @@ Any \texttt{Segment\_ID} present in the input data but outside the 1--17 diction
 
 Patient-level scoring follows the CAD-RADS~2.0 decision principles~\cite{cury2022}. The algorithm first determines the highest segment-level stenosis grade from the aggregated table. This grade is derived from the maximum \%AS observed across all evaluated segments and subsequently classified into the standard luminal categories detailed in \Cref{tab:cad-rads-stenosis}. Total coronary occlusion (category~5) is assigned when any segment reaches 100\% \%AS.
 
-Categories~4A and~4B distinguish high-risk patterns among severe stenoses. As established by the CAD-RADS~2.0 framework~\cite{cury2022}, category~4B is assigned when either (i)~left-main (segment~5) stenosis is at least 50\% \%AS, or (ii)~obstructive disease ($\geq 70\%$ \%AS) is present in each of the three major territories (RCA, LAD, and LCX) defined in \Cref{tab:cad-rads-territories}. If severe stenosis is present but neither of these criteria is met, the patient is classified as CAD-RADS~4A. Categories~0--3 are assigned directly from the highest segment grade when no category~4 or~5 rule overrides the result.
+Categories~4A and~4B distinguish high-risk patterns among severe stenoses. As established by the CAD-RADS~2.0 framework~\cite{cury2022}, category~4B is assigned when either (i)~left-main (segment~5) stenosis is at least 50\% \%AS, or (ii)~obstructive disease ($\geq 70\%$ \%AS) is present in each of the three major territories (RCA, LAD, and LCX) defined in \Cref{tab:cad-rads-territories}. If severe stenosis is present but neither of these criteria is met, the patient is classified as CAD-RADS~2.0 category~4A. Categories~0--3 are assigned directly from the highest segment grade when no category~4 or~5 rule overrides the result.
 
 \begin{table}[H]
   \centering
@@ -268,7 +268,7 @@ Categories~4A and~4B distinguish high-risk patterns among severe stenoses. As es
     1 & 1--24\% & Minimal stenosis \\
     2 & 25--49\% & Mild stenosis \\
     3 & 50--69\% & Moderate stenosis \\
-    4A & 70--99\% & Severe stenosis without CAD-RADS~4B criteria \\
+    4A & 70--99\% & Severe stenosis without CAD-RADS~2.0 category~4B criteria \\
     4B & 70--99\% (territory pattern) or LM $\geq 50\%$ & High-risk severe disease pattern \\
     5 & 100\% & Total coronary occlusion \\
     \bottomrule
@@ -292,7 +292,7 @@ Categories~4A and~4B distinguish high-risk patterns among severe stenoses. As es
     RCA & 1, 2, 3, 4 &
     Obstructive/severe flags per vessel; contributes to three-vessel 4B rule \\
     LM & 5 &
-    Left-main $\geq 50\%$ \%AS triggers CAD-RADS~4B \\
+    Left-main $\geq 50\%$ \%AS triggers CAD-RADS~2.0 category~4B \\
     LAD & 6, 7, 8, 9, 10 &
     Obstructive/severe flags per vessel; contributes to three-vessel 4B rule \\
     LCX & 11, 12, 13, 14, 15, 16, 17 &
@@ -301,7 +301,7 @@ Categories~4A and~4B distinguish high-risk patterns among severe stenoses. As es
   \end{tabular}
 \end{table}
 
-Finally, the system calculates the Segment Involvement Score (SIS), defined as the absolute number of assessable coronary segments exhibiting any measurable atherosclerotic plaque~\cite{cury2022}. Block~3 concludes by exporting a comprehensive set of structured outputs: a segment-level stenosis summary, a patient-level CAD-RADS report (detailing the assigned category, classification rationale, highest lesion location, territory flags, and SIS), and the geometrically enriched branch tables. All these generated metrics and records are specifically formatted to serve as the direct quantitative input for the interactive clinical visualization dashboard detailed in Block~4.
+Finally, the system calculates the Segment Involvement Score (SIS), defined as the absolute number of assessable coronary segments exhibiting any measurable atherosclerotic plaque~\cite{cury2022}. Block~3 concludes by exporting a comprehensive set of structured outputs: a segment-level stenosis summary, a patient-level CAD-RADS~2.0 report (detailing the assigned category, classification rationale, highest lesion location, territory flags, and SIS), and the geometrically enriched branch tables. All these generated metrics and records are specifically formatted to serve as the direct quantitative input for the interactive clinical visualization dashboard detailed in Block~4.
 
 \section{Block 4: Patient Visualization Dashboard}
 \label{sec:methodology-block4}
@@ -441,7 +441,7 @@ The identical pipeline was re-executed on the expert-refined MACS-18 lumen masks
 \subsection{Geometry and Quantification Verification: Synthetic Data}
 \label{subsec:validation-synthetic}
 
-Clinically, stenosis quantification would typically be evaluated by comparing algorithmic CAD-RADS scores against expert radiological reports or by assessing the maximum stenosis within specific arterial segments. However, as previously noted, natural anatomical irregularities cause the pipeline's current area-based formula~\cite{burrull2023,hideo_kajita2019} to overestimate stenosis severity, limiting its direct clinical predictive value on real patient cohorts.
+Clinically, stenosis quantification would typically be evaluated by comparing algorithmic CAD-RADS~2.0 categories against expert radiological reports or by assessing the maximum stenosis within specific arterial segments. However, as previously noted, natural anatomical irregularities cause the pipeline's current area-based formula~\cite{burrull2023,hideo_kajita2019} to overestimate stenosis severity, limiting its direct clinical predictive value on real patient cohorts.
 
 Following consultation with clinical supervisors at Hospital de la Santa Creu i Sant Pau, verification was instead conducted in a controlled setting using two programmatically generated vessel models (healthy and diseased). These idealized shapes isolate the formula from anatomical confounders and were processed through the full pipeline with the same 10\,mm reference half-window applied to the clinical cohorts.
 

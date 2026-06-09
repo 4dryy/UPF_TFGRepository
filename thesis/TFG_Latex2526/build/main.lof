@@ -18,22 +18,22 @@
 \contentsline {figure}{\numberline {2.4}{\ignorespaces Block~3 workflow: segment aggregation based on the AHA 17-segment model and automated CAD-RADS~2.0 scoring.}}{15}{figure.2.4}%
 \contentsline {figure}{\numberline {2.5}{\ignorespaces Block~4 user interface layout and interaction flow: from global 3D anatomy and clinical summary to segment-level and branch-level metric validation.}}{18}{figure.2.5}%
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {3.1}{\ignorespaces Block~1 outputs for Normal\_8 in four side-by-side panels. Left pair (ASOCA, then MACS-18): centerline paths with red ostium points and blue branch endpoints. Right pair (ASOCA, then MACS-18): smoothed lumen surfaces with light-red LCA and light-blue RCA.}}{23}{figure.3.1}%
-\contentsline {figure}{\numberline {3.2}{\ignorespaces Extracted centerlines on the synthetic validation models. Left: \texttt {synthetic\_1} (healthy, uniform radius). Right: \texttt {synthetic\_2} (diseased, mid-vessel stenosis).}}{24}{figure.3.2}%
+\contentsline {figure}{\numberline {3.1}{\ignorespaces Block~1 outputs for Normal\_8 in four side-by-side panels. Left pair (ASOCA, then MACS-18): centerline paths with red ostium points and blue branch endpoints. Right pair (ASOCA, then MACS-18): smoothed lumen surfaces with light-red LCA and light-blue RCA.}}{24}{figure.3.1}%
+\contentsline {figure}{\numberline {3.2}{\ignorespaces Extracted centerlines on the synthetic validation models. Left: \texttt {synthetic\_1} (healthy, uniform radius). Right: \texttt {synthetic\_2} (diseased, mid-vessel stenosis).}}{25}{figure.3.2}%
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {4.1}{\ignorespaces Area overestimation near a coronary bifurcation. The 3D model maps percentage area stenosis (green colormap); the inset marks the maximum stenosis point (purple diamond) and automatic proximal/distal references (green circles). Bar plots show cross-sectional area (blue) and percentage area stenosis (orange), including the artificial spike after the bifurcation.}}{28}{figure.4.1}%
+\contentsline {figure}{\numberline {4.1}{\ignorespaces Area overestimation near a coronary bifurcation. The 3D model maps percentage area stenosis (green colormap); the inset marks the maximum stenosis point (purple diamond) and automatic proximal/distal references (green circles). Bar plots show cross-sectional area (blue) and percentage area stenosis (orange), including the artificial spike after the bifurcation.}}{29}{figure.4.1}%
 \addvspace {10\p@ }
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {A.1}{\ignorespaces Per-patient distribution of detected endpoints for ASOCA and MACS-18. Extends the summary statistics in \Cref {tab:endpoint-summary}.}}{38}{figure.Alph1.1}%
-\contentsline {figure}{\numberline {A.2}{\ignorespaces Grouped comparison of ostium accuracy (OISR) and centerline precision (CESR) between ASOCA and MACS-18. Visual counterpart to \Cref {tab:ostium-centerline-comparison}.}}{39}{figure.Alph1.2}%
-\contentsline {figure}{\numberline {A.3}{\ignorespaces Longitudinal area and \%AS profiles along \texttt {synthetic\_1}.}}{40}{figure.Alph1.3}%
-\contentsline {figure}{\numberline {A.4}{\ignorespaces Longitudinal area and \%AS profiles along \texttt {synthetic\_2}.}}{40}{figure.Alph1.4}%
-\contentsline {figure}{\numberline {A.5}{\ignorespaces Three-dimensional area and \%AS colormaps for \texttt {synthetic\_1}.}}{41}{figure.Alph1.5}%
-\contentsline {figure}{\numberline {A.6}{\ignorespaces Three-dimensional area and \%AS colormaps for \texttt {synthetic\_2}.}}{42}{figure.Alph1.6}%
-\contentsline {figure}{\numberline {A.7}{\ignorespaces Module~1: interactive global RCA and LCA three-dimensional renderings with metric colormaps.}}{42}{figure.Alph1.7}%
-\contentsline {figure}{\numberline {A.8}{\ignorespaces Module~2: patient clinical summary with automated CAD-RADS~2.0 category, SIS, and territory rationale.}}{43}{figure.Alph1.8}%
-\contentsline {figure}{\numberline {A.9}{\ignorespaces Module~3: segment-level three-dimensional map and synchronized area and \%AS bar plots.}}{43}{figure.Alph1.9}%
-\contentsline {figure}{\numberline {A.10}{\ignorespaces Module~3 (continued): segment selection and annotated peak stenosis with reference markers.}}{44}{figure.Alph1.10}%
-\contentsline {figure}{\numberline {A.11}{\ignorespaces Module~4: branch-level three-dimensional path highlighting and longitudinal metric profiles.}}{44}{figure.Alph1.11}%
-\contentsline {figure}{\numberline {A.12}{\ignorespaces Module~4 (continued): full-branch area and \%AS profiles in proximal-to-distal order.}}{45}{figure.Alph1.12}%
+\contentsline {figure}{\numberline {A.1}{\ignorespaces Per-patient distribution of detected endpoints for ASOCA and MACS-18. Extends the summary statistics in \Cref {tab:endpoint-summary}.}}{39}{figure.Alph1.1}%
+\contentsline {figure}{\numberline {A.2}{\ignorespaces Grouped comparison of ostium accuracy (OISR) and centerline precision (CESR) between ASOCA and MACS-18. Visual counterpart to \Cref {tab:ostium-centerline-comparison}.}}{40}{figure.Alph1.2}%
+\contentsline {figure}{\numberline {A.3}{\ignorespaces Longitudinal area and \%AS profiles along \texttt {synthetic\_1}.}}{41}{figure.Alph1.3}%
+\contentsline {figure}{\numberline {A.4}{\ignorespaces Longitudinal area and \%AS profiles along \texttt {synthetic\_2}.}}{41}{figure.Alph1.4}%
+\contentsline {figure}{\numberline {A.5}{\ignorespaces Three-dimensional area and \%AS colormaps for \texttt {synthetic\_1}.}}{42}{figure.Alph1.5}%
+\contentsline {figure}{\numberline {A.6}{\ignorespaces Three-dimensional area and \%AS colormaps for \texttt {synthetic\_2}.}}{43}{figure.Alph1.6}%
+\contentsline {figure}{\numberline {A.7}{\ignorespaces Module~1: interactive global RCA and LCA three-dimensional renderings with metric colormaps.}}{43}{figure.Alph1.7}%
+\contentsline {figure}{\numberline {A.8}{\ignorespaces Module~2: patient clinical summary with automated CAD-RADS~2.0 category, SIS, and territory rationale.}}{44}{figure.Alph1.8}%
+\contentsline {figure}{\numberline {A.9}{\ignorespaces Module~3: segment-level three-dimensional map and synchronized area and \%AS bar plots.}}{44}{figure.Alph1.9}%
+\contentsline {figure}{\numberline {A.10}{\ignorespaces Module~3 (continued): segment selection and annotated peak stenosis with reference markers.}}{45}{figure.Alph1.10}%
+\contentsline {figure}{\numberline {A.11}{\ignorespaces Module~4: branch-level three-dimensional path highlighting and longitudinal metric profiles.}}{45}{figure.Alph1.11}%
+\contentsline {figure}{\numberline {A.12}{\ignorespaces Module~4 (continued): full-branch area and \%AS profiles in proximal-to-distal order.}}{46}{figure.Alph1.12}%
 \addvspace {10\p@ }

@@ -1,7 +1,7 @@
 \chapter{Results}
 \label{ch:results}
 
-% Readable paragraph spacing (matches Introduction and Methodology)
+% Readable paragraph spacing (matches Introduction and Methods)
 \setlength{\parskip}{0.65em plus 0.15em minus 0.05em}
 \setlength{\parindent}{0pt}
 
@@ -117,7 +117,7 @@ Block~2 quantification was verified on the two synthetic vessel models defined i
   \label{fig:synthetic-tubes}
 \end{figure}
 
-As \Cref{tab:synthetic-validation-outcomes} below shows, pipeline execution on both synthetic models yields absolute errors that all fall within the \emph{good} acceptance bands of \Cref{tab:validation-synthetic-thresholds}. For each metric, the analytical ground truth defined in \Cref{subsec:validation-synthetic} is compared against the predicted Block~2 output; the largest deviations occur on \texttt{synthetic\_2}, with a maximum \%AS error of 1.31\% and a maximum area error of 4.50\,mm$^2$. Additional visualizations and information about these results, including longitudinal area and \%AS profiles, are provided in \Cref{app:synthetic-profiles}.
+As \Cref{tab:synthetic-validation-outcomes} below shows, pipeline execution on both synthetic models yields absolute errors that all fall within the \emph{good} acceptance bands of \Cref{tab:validation-synthetic-thresholds}. For each metric, the analytical ground truth defined in \Cref{subsec:validation-synthetic} is compared against the computed Block~2 output; the largest deviations occur on \texttt{synthetic\_2}, with a maximum \%AS error of 1.31\% and a maximum area error of 4.50\,mm$^2$. Additional visualizations and information about these results, including longitudinal area and \%AS profiles, are provided in \Cref{app:synthetic-profiles}.
 
 \begin{table}[H]
   \caption{Synthetic validation outcomes ($W = 10$\,mm).}
@@ -132,7 +132,7 @@ As \Cref{tab:synthetic-validation-outcomes} below shows, pipeline execution on b
     \cellcolor{gray!12}\textbf{Model} &
     \cellcolor{gray!12}\textbf{Metric} &
     \cellcolor{gray!12}\textbf{Theoretical} &
-    \cellcolor{gray!12}\textbf{Predicted} &
+    \cellcolor{gray!12}\textbf{Computed} &
     \cellcolor{gray!12}\textbf{Error} &
     \cellcolor{gray!12}\textbf{Unit} \\
     \midrule

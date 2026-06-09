@@ -31,7 +31,7 @@ Academic Year 2025 \- 2026
    3. State of The Art: Automation of CAD Diagnosis & Visualization  
    4. Project Scope and Contributions   
    5. Objectives  
-2. **Methodology**   
+2. **Methods**   
    1. System Overview and Core Automated Workflow  
    2. Dataset: ASOCA and MACS-18 Annotations  
    3. Block 1: 3D Artery Anatomy Extraction   
