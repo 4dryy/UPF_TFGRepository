@@ -23,8 +23,8 @@
 \contentsline {section}{\numberline {2.1}System Overview and Core Automated Workflow}{8}{section.2.1}%
 \contentsline {subsection}{\numberline {2.1.1}End-to-End Data Flow}{8}{subsection.2.1.1}%
 \contentsline {section}{\numberline {2.2}ASOCA and MACS-18: Coronary Segmentation and Labeling Data}{9}{section.2.2}%
-\contentsline {subsection}{\numberline {2.2.1}Segmentation and Label Volumes}{9}{subsection.2.2.1}%
-\contentsline {subsection}{\numberline {2.2.2}Datasets: ASOCA and MACS-18}{10}{subsection.2.2.2}%
+\contentsline {subsection}{\numberline {2.2.1}Datasets: ASOCA and MACS-18}{9}{subsection.2.2.1}%
+\contentsline {subsection}{\numberline {2.2.2}Segmentation and Label Volumes}{10}{subsection.2.2.2}%
 \contentsline {section}{\numberline {2.3}Block 1: 3D Artery Anatomy Extraction}{10}{section.2.3}%
 \contentsline {paragraph}{Phase 1: Spatial RCA/LCA Separation}{11}{section*.4}%
 \contentsline {paragraph}{Phase 2: Per-Artery Surface Reconstruction and Automated Seeding}{11}{section*.5}%

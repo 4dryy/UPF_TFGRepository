@@ -64,21 +64,21 @@ To ensure explainability, the system retains intermediate mesh and tabular repre
 
 In medical image analysis, \emph{segmentation} denotes the partition of a three-dimensional scan into meaningful regions. For each voxel in the volume, an expert or algorithm decides whether it belongs to a structure of interest, such as the blood-filled interior (\emph{lumen}) of the coronary arteries, rather than to background tissue, myocardium, or surrounding anatomy. The result is not a single measurement but a spatial map that localizes the vessel tree within the patient-specific CCTA grid. The ASOCA and MACS-18 resources provide this map, together with companion anatomical label volumes for a shared cohort of 40 CCTA cases (20 normal and 20 diseased anatomy), which are detailed further in \Cref{subsec:datasets-asoca-macs}. These data served as the reference on which Blocks~1--4 were designed and implemented. Once the pipeline was operational, the full cohort was processed to assess end-to-end behavior. The experimental protocol and result analysis are reported in \Cref{sec:methodology-validation}.
 
-\subsection{Segmentation and Label Volumes}
-\label{subsec:dataset-formats}
-
-For each patient case, two aligned three-dimensional grids are provided, both registered to the physical coordinate system of the source CCTA so that scale and orientation are preserved.
-
-The \emph{segmentation annotation} is stored as a voxel grid in NRRD format. Each voxel indicates whether it belongs to the coronary lumen or to background tissue. The pipeline treats this volume as a binary mask.
-
-The \emph{segment label volume} is a separate grid, stored as a compressed NIfTI file, aligned with the segmentation. Instead of a binary lumen flag, each foreground voxel stores an integer class identifier that maps to a standardized coronary segment under the AHA 17-segment model~\cite{austen1975}. Background voxels are assigned zero.
-
 \subsection{Datasets: ASOCA and MACS-18}
 \label{subsec:datasets-asoca-macs}
 
 The ASOCA (\emph{Automated Segmentation of Coronary Arteries}) challenge established one of the first large, standardized benchmarks for fully automatic segmentation of complete normal and diseased coronary trees from CCTA~\cite{gharleghi2022asoca}. The resource addresses the difficulty of imaging small, moving vessels. ASOCA is publicly available and provided the original lumen masks for the 40-patient cohort. In this project, those masks served as the working reference during pipeline development and remain the default segmentation supplied to Block~1.
 
-MACS-18 (\emph{Multiclass Anatomical Coronary Segmentation}) is a re-segmentation of the same 40 ASOCA patient volumes, currently in development at Hospital de la Santa Creu i Sant Pau and supervised by C\'{e}sar Acebes Pinilla~\cite{acebes_macs18_wip,acebes2024}. Unlike ASOCA, this resource is not yet publicly available. Widely used public datasets have helped train automatic segmentation methods, but their lumen masks are often evaluated mainly by how well voxels match a reference, not by whether the vessel tree forms a continuous, anatomically plausible path~\cite{acebes_macs18_wip}. When the lumen mask contains breaks or fails to follow the full length of the branches, extracting reliable centerlines and quantifying vessel geometry in Blocks~1 and~2 becomes more difficult. Expert manual refinements in MACS-18 target continuous lumen connectivity from the aortic root to the most distal visible branches, yielding more anatomically faithful masks without altering the underlying imaging data, patient identity, or labeling scheme. In this project, the same AHA segment label volumes are used for both ASOCA and MACS-18 cases; only the lumen mask differs between the two sources. The pipeline implementation is otherwise identical for both datasets.
+MACS-18 (\emph{Multiclass Anatomical Coronary Segmentation}) is a re-segmentation of the same 40 ASOCA patient volumes, currently in development at Hospital de la Santa Creu i Sant Pau and supervised by C\'{e}sar Acebes Pinilla~\cite{acebes_macs18_wip,acebes2024}. Unlike ASOCA, this resource is not yet publicly available. Widely used public datasets have helped train automatic segmentation methods, but their lumen masks are often evaluated mainly by how well voxels match a reference, not by whether the vessel tree forms a continuous, anatomically plausible path~\cite{acebes_macs18_wip}. When the lumen mask contains breaks or fails to follow the full length of the branches, extracting reliable centerlines and quantifying vessel geometry in Blocks~1 and~2 becomes more difficult. Expert manual refinements in MACS-18 target continuous lumen connectivity from the aortic root to the most distal visible branches, yielding more anatomically faithful masks without altering the underlying imaging data, patient identity, or labeling scheme. In this project, the same AHA segment label volumes are used for both ASOCA and MACS-18 cases.
+
+\subsection{Segmentation and Label Volumes}
+\label{subsec:dataset-formats}
+
+The previously described clinical datasets (ASOCA and MACS-18) provide two aligned 3D grids for each patient, derived from the source CCTA images. These grids are spatially registered to the CCTA coordinate system, ensuring that physical scale and anatomical orientation are preserved.
+
+The \emph{segmentation annotation} is stored as a voxel grid in NRRD format. Each voxel indicates whether it belongs to the coronary lumen or to background tissue. The pipeline treats this volume as a binary mask.
+
+The \emph{segment label volume} is a separate grid, stored as a compressed NIfTI file, aligned with the segmentation. Instead of a binary lumen flag, each foreground voxel stores an integer class identifier that maps to a standardized coronary segment under the AHA 17-segment model~\cite{austen1975}. Background voxels are assigned zero.
 
 \section{Block 1: 3D Artery Anatomy Extraction}
 \label{sec:methodology-block1}
