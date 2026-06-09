@@ -7,21 +7,21 @@
 \babel@toc {english}{}\relax 
 \addvspace {10\p@ }
 \addvspace {10\p@ }
-\contentsline {table}{\numberline {2.1}{\ignorespaces Overview of the four pipeline blocks: processing role, primary inputs, and principal outputs per patient case.}}{9}{table.2.1}%
-\contentsline {table}{\numberline {2.2}{\ignorespaces AHA 17-segment dictionary used for anatomical labeling and CAD-RADS~2.0 territory grouping. Adapted from Austen et al.~\cite {austen1975}.}}{16}{table.2.2}%
+\contentsline {table}{\numberline {2.1}{\ignorespaces Overview of the four pipeline blocks: processing role, primary inputs, and principal outputs per patient case. Block~2 yields \%AS profiles; Block~3 produces the CAD-RADS~2.0 report.}}{9}{table.2.1}%
+\contentsline {table}{\numberline {2.2}{\ignorespaces AHA 17-segment dictionary used for anatomical labeling and CAD-RADS~2.0 territory grouping across RCA, LCA, left anterior descending (LAD), left circumflex (LCx), and left main (LM) territories. Adapted from Austen et al.~\cite {austen1975}.}}{16}{table.2.2}%
 \contentsline {table}{\numberline {2.3}{\ignorespaces CAD-RADS~2.0 luminal stenosis categories applied to maximum segment-level \%AS. Adapted from Cury et al.~\cite {cury2022}.}}{17}{table.2.3}%
-\contentsline {table}{\numberline {2.4}{\ignorespaces Major coronary territories used for CAD-RADS~2.0 triage rules in this pipeline (segment IDs follow the AHA 17-segment model). Adapted from Austen et al.\ and Cury et al.~\cite {austen1975,cury2022}.}}{17}{table.2.4}%
+\contentsline {table}{\numberline {2.4}{\ignorespaces CAD-RADS~2.0 triage territories per AHA 17-segment model. Adapted from Austen et al.\ and Cury et al.~\cite {austen1975,cury2022}.}}{17}{table.2.4}%
 \contentsline {table}{\numberline {2.5}{\ignorespaces Real-data evaluation metrics used in \Cref {subsec:validation-asoca,subsec:validation-macs}.}}{20}{table.2.5}%
-\contentsline {table}{\numberline {2.6}{\ignorespaces Acceptance bands for real-data pipeline metrics.}}{21}{table.2.6}%
+\contentsline {table}{\numberline {2.6}{\ignorespaces Acceptance bands for real-data pipeline metrics (ESR, OISR, CESR, and EISR as defined in \Cref {tab:validation-real-metrics}).}}{20}{table.2.6}%
 \contentsline {table}{\numberline {2.7}{\ignorespaces Acceptance thresholds for synthetic model verification.}}{22}{table.2.7}%
-\contentsline {table}{\numberline {2.8}{\ignorespaces SUS score interpretation bands. Adapted from Bangor et al.\ and Brooke~\cite {bangor2009,brooke1996}.}}{23}{table.2.8}%
+\contentsline {table}{\numberline {2.8}{\ignorespaces SUS score interpretation bands. Adapted from Bangor et al.\ and Brooke~\cite {bangor2009,brooke1996}.}}{22}{table.2.8}%
 \addvspace {10\p@ }
-\contentsline {table}{\numberline {3.1}{\ignorespaces Endpoint summary statistics per cohort and subgroup ($n$ = number of patients).}}{25}{table.3.1}%
-\contentsline {table}{\numberline {3.2}{\ignorespaces Ostium accuracy (OISR) and centerline precision (CESR) by cohort and subgroup (\%).}}{25}{table.3.2}%
-\contentsline {table}{\numberline {3.3}{\ignorespaces Mean pipeline runtimes by cohort and block (seconds).}}{25}{table.3.3}%
-\contentsline {table}{\numberline {3.4}{\ignorespaces Synthetic validation outcomes ($W = 10$\,mm).}}{26}{table.3.4}%
-\contentsline {table}{\numberline {3.5}{\ignorespaces SUS raw Likert responses (1--5).}}{26}{table.3.5}%
-\contentsline {table}{\numberline {3.6}{\ignorespaces SUS score summary by participant and metrics.}}{26}{table.3.6}%
+\contentsline {table}{\numberline {3.1}{\ignorespaces Endpoint summary statistics by cohort and subgroup.}}{24}{table.3.1}%
+\contentsline {table}{\numberline {3.2}{\ignorespaces OISR and CESR by ASOCA and MACS-18 cohort and subgroup (\%).}}{24}{table.3.2}%
+\contentsline {table}{\numberline {3.3}{\ignorespaces Mean pipeline runtimes for ASOCA and MACS-18 by block (seconds).}}{24}{table.3.3}%
+\contentsline {table}{\numberline {3.4}{\ignorespaces Synthetic validation outcomes ($W = 10$\,mm reference half-window). \%AS and cross-sectional area errors versus analytical ground truth.}}{25}{table.3.4}%
+\contentsline {table}{\numberline {3.5}{\ignorespaces SUS raw Likert responses (1--5). P1--P3 denote participants 1--3.}}{25}{table.3.5}%
+\contentsline {table}{\numberline {3.6}{\ignorespaces SUS score summary by participant and metrics.}}{25}{table.3.6}%
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }

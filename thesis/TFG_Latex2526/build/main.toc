@@ -47,22 +47,22 @@
 \contentsline {subsection}{\numberline {2.7.3}Workflow Validation on Real Datasets: MACS-18}{21}{subsection.2.7.3}%
 \contentsline {subsection}{\numberline {2.7.4}Geometry and Quantification Verification: Synthetic Data}{21}{subsection.2.7.4}%
 \contentsline {subsection}{\numberline {2.7.5}User Experience and Interface Usability Evaluation}{22}{subsection.2.7.5}%
-\contentsline {chapter}{\numberline {3}{\MakeUppercase []{ Results}}}{24}{chapter.3}%
-\contentsline {section}{\numberline {3.1}Pipeline Execution: ASOCA vs.\ MACS-18}{24}{section.3.1}%
-\contentsline {section}{\numberline {3.2}Geometric and Algorithmic Accuracy via Synthetic Data}{25}{section.3.2}%
-\contentsline {section}{\numberline {3.3}Coronary Artery Dashboard Visualization Output}{26}{section.3.3}%
-\contentsline {section}{\numberline {3.4}User Experience and Interface Usability Evaluation}{26}{section.3.4}%
-\contentsline {chapter}{\numberline {4}{\MakeUppercase []{ Discussion}}}{27}{chapter.4}%
-\contentsline {section}{\numberline {4.1}Analysis of the Results}{27}{section.4.1}%
-\contentsline {section}{\numberline {4.2}Technical and Anatomical Limitations}{29}{section.4.2}%
-\contentsline {section}{\numberline {4.3}Future Work}{31}{section.4.3}%
-\contentsline {subsection}{\numberline {4.3.1}Algorithmic and Pipeline Enhancements}{31}{subsection.4.3.1}%
-\contentsline {subsection}{\numberline {4.3.2}Clinical Workflow Integration}{32}{subsection.4.3.2}%
-\contentsline {subsection}{\numberline {4.3.3}Expert Clinical Proposals: Reference Modeling and Dashboard Extensions}{33}{subsection.4.3.3}%
-\contentsline {chapter}{\numberline {5}{\MakeUppercase []{ Conclusions}}}{34}{chapter.5}%
-\contentsline {chapter}{\numberline {A}{\MakeUppercase []{ Supporting Material}}}{38}{appendix.Alph1}%
-\contentsline {section}{\numberline {A.1}System Usability Scale Questionnaire}{38}{section.Alph1.1}%
-\contentsline {section}{\numberline {A.2}Extended Pipeline Metrics}{39}{section.Alph1.2}%
-\contentsline {section}{\numberline {A.3}Synthetic Geometry Profiles}{40}{section.Alph1.3}%
-\contentsline {section}{\numberline {A.4}Extended Dashboard Interfaces}{43}{section.Alph1.4}%
-\contentsline {chapter}{\numberline {B}{\MakeUppercase []{ Source Code Access}}}{47}{appendix.Alph2}%
+\contentsline {chapter}{\numberline {3}{\MakeUppercase []{ Results}}}{23}{chapter.3}%
+\contentsline {section}{\numberline {3.1}Pipeline Execution: ASOCA vs.\ MACS-18}{23}{section.3.1}%
+\contentsline {section}{\numberline {3.2}Geometric and Algorithmic Accuracy via Synthetic Data}{24}{section.3.2}%
+\contentsline {section}{\numberline {3.3}Coronary Artery Dashboard Visualization Output}{25}{section.3.3}%
+\contentsline {section}{\numberline {3.4}User Experience and Interface Usability Evaluation}{25}{section.3.4}%
+\contentsline {chapter}{\numberline {4}{\MakeUppercase []{ Discussion}}}{26}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Analysis of the Results}{26}{section.4.1}%
+\contentsline {section}{\numberline {4.2}Technical and Anatomical Limitations}{28}{section.4.2}%
+\contentsline {section}{\numberline {4.3}Future Work}{30}{section.4.3}%
+\contentsline {subsection}{\numberline {4.3.1}Algorithmic and Pipeline Enhancements}{30}{subsection.4.3.1}%
+\contentsline {subsection}{\numberline {4.3.2}Clinical Workflow Integration}{31}{subsection.4.3.2}%
+\contentsline {subsection}{\numberline {4.3.3}Expert Clinical Proposals: Reference Modeling and Dashboard Extensions}{32}{subsection.4.3.3}%
+\contentsline {chapter}{\numberline {5}{\MakeUppercase []{ Conclusions}}}{33}{chapter.5}%
+\contentsline {chapter}{\numberline {A}{\MakeUppercase []{ Supporting Material}}}{37}{appendix.Alph1}%
+\contentsline {section}{\numberline {A.1}System Usability Scale Questionnaire}{37}{section.Alph1.1}%
+\contentsline {section}{\numberline {A.2}Extended Pipeline Metrics}{38}{section.Alph1.2}%
+\contentsline {section}{\numberline {A.3}Synthetic Geometry Profiles}{39}{section.Alph1.3}%
+\contentsline {section}{\numberline {A.4}Extended Dashboard Interfaces}{42}{section.Alph1.4}%
+\contentsline {chapter}{\numberline {B}{\MakeUppercase []{ Source Code Access}}}{46}{appendix.Alph2}%

@@ -18,7 +18,7 @@ The workflow comprises four automated blocks (\crefrange{sec:methodology-block1}
 \begin{figure}[H]
   \centering
   \includegraphics[width=\linewidth]{{Figure 1. E2E Workflow Diagram.pdf}}
-  \caption{End-to-end automated workflow for a single patient case. Each block constitutes a self-contained processing stage; arrows indicate mandatory sequential dependencies and the principal data passed between stages.}
+  \caption{End-to-end automated workflow per patient case: lumen-mask processing, percentage area stenosis (\%AS) quantification, and CAD-RADS~2.0 reporting. Each block is a self-contained stage; arrows denote mandatory sequential dependencies and principal data passed between stages.}
   \label{fig:e2e-workflow}
 \end{figure}
 
@@ -26,7 +26,7 @@ The workflow comprises four automated blocks (\crefrange{sec:methodology-block1}
 
 \begin{table}[H]
   \centering
-  \caption{Overview of the four pipeline blocks: processing role, primary inputs, and principal outputs per patient case.}
+  \caption{Overview of the four pipeline blocks: processing role, primary inputs, and principal outputs per patient case. Block~2 yields \%AS profiles; Block~3 produces the CAD-RADS~2.0 report.}
   \label{tab:pipeline-blocks-overview}
   \vspace{0.65em}
   \small
@@ -88,7 +88,7 @@ Block~1 converts the binary lumen mask into 3D vessel surfaces and centerlines, 
 \begin{figure}[H]
   \centering
   \includegraphics[width=\linewidth]{{Figure 2. Block 1 Workflow Diagram.pdf}}
-  \caption{Block~1 hybrid workflow: spatial separation of the right and left coronary trees, automated seed placement on each tree, and extraction of centerline geometry with branch packaging.}
+  \caption{Block~1 hybrid workflow: separation of right coronary artery (RCA) and left coronary artery (LCA) trees; automated per-tree seed placement; centerline geometry extraction; branch packaging.}
   \label{fig:block1-workflow}
 \end{figure}
 
@@ -175,9 +175,9 @@ For each qualifying centerline point, the pipeline quantifies stenosis severity.
   \label{eq:pct-as}
 \end{equation}
 
-Next, the separate branch tables are merged into a unified patient record. Since all extracted branches trace continuously from the ostium to a distal endpoint, they inherently share identical coordinates along common arterial trunks. When these tables are combined, spatial deduplication is applied based on rounded $(P_x, P_y, P_z)$ tuples. If multiple overlapping points exist at the same coordinate, the algorithm strictly retains the row with the highest \%AS value. This conservative rule ensures that no maximum stenosis is hidden, preventing clinical underestimation of lesion severity where anatomical paths overlap.
+Next, the separate branch tables are merged into a unified patient record. Since all extracted branches trace continuously from the ostium to a distal endpoint, they inherently share identical coordinates along common arterial trunks. When these tables are combined, the system merges overlapping branch data based on rounded $(P_x, P_y, P_z)$ tuples. If multiple entries exist for the same spatial coordinate, the algorithm strictly retains the row with the highest \%AS value. This conservative rule ensures that no maximum stenosis is hidden, preventing clinical underestimation of lesion severity where anatomical paths overlap.
 
-Ultimately, Block~2 yields two structured outputs: the enriched individual branch datasets (containing $g_d$, $A_{\mathrm{prox}}$, $A_{\mathrm{dist}}$, $A_{\mathrm{ref}}$, and \%AS, among others) and the deduplicated global coronary tree dataset. These comprehensive tables constitute the definitive quantitative input consumed by Block~3.
+Ultimately, Block~2 yields two structured outputs: the enriched individual branch datasets (containing $g_d$, $A_{\mathrm{prox}}$, $A_{\mathrm{dist}}$, $A_{\mathrm{ref}}$, and \%AS, among others) and the merged global coronary tree dataset. These comprehensive tables constitute the definitive quantitative input consumed by Block~3.
 
 \section{Block 3: Artery Labeling and CAD-RADS 2.0 Scoring}
 \label{sec:methodology-block3}
@@ -187,7 +187,7 @@ Block~3 translates the quantitative stenosis metrics produced in Block~2 into a 
 \begin{figure}[H]
   \centering
   \includegraphics[width=\linewidth]{{Figure 4. Block 3 Workflow Diagram.pdf}}
-  \caption{Block~3 workflow: segment aggregation based on the AHA 17-segment model and automated CAD-RADS~2.0 scoring.}
+  \caption{Block~3 workflow: segment aggregation based on the American Heart Association (AHA) 17-segment model and automated CAD-RADS~2.0 scoring.}
   \label{fig:block3-workflow}
 \end{figure}
 
@@ -202,7 +202,7 @@ Beyond individual anatomical segments, this model maps every branch into one of 
 
 \begin{table}[H]
   \centering
-  \caption{AHA 17-segment dictionary used for anatomical labeling and CAD-RADS~2.0 territory grouping. Adapted from Austen et al.~\cite{austen1975}.}
+  \caption{AHA 17-segment dictionary used for anatomical labeling and CAD-RADS~2.0 territory grouping across RCA, LCA, left anterior descending (LAD), left circumflex (LCx), and left main (LM) territories. Adapted from Austen et al.~\cite{austen1975}.}
   \label{tab:aha_17_segment}
   \vspace{0.5em}
   \footnotesize
@@ -277,7 +277,7 @@ Categories~4A and~4B distinguish high-risk patterns among severe stenoses. As es
 
 \begin{table}[H]
   \centering
-  \caption{Major coronary territories used for CAD-RADS~2.0 triage rules in this pipeline (segment IDs follow the AHA 17-segment model). Adapted from Austen et al.\ and Cury et al.~\cite{austen1975,cury2022}.}
+  \caption{CAD-RADS~2.0 triage territories per AHA 17-segment model. Adapted from Austen et al.\ and Cury et al.~\cite{austen1975,cury2022}.}
   \label{tab:cad-rads-territories}
   \vspace{0.5em}
   \small
@@ -308,7 +308,7 @@ Finally, the system calculates the Segment Involvement Score (SIS), defined as t
 
 Block~4 constitutes the final user-facing layer of the automated workflow, functioning as an interactive clinical decision-support interface built with the Streamlit framework~\cite{streamlit}. Whereas the preceding blocks operate as fully automated processing stages, this final block translates their geometric meshes and tabular records into an explorable visual environment. Specifically, the dashboard ingests the extracted centerline coordinates, cross-sectional areas, percentage area stenosis profiles, AHA segment labels, segment-level summaries, and the patient-level CAD-RADS~2.0 report.
 
-Conceived as a rapid evaluation pop-up rather than a standalone diagnostic system, the interface synthesizes these artifacts into a single navigable session. The design attempts to avoid ``black-box'' behavior, recognizing that medical professionals highly value the transparency and explainability of automated tools. Consequently, every displayed score remains directly traceable to the underlying geometric measurements.
+Conceived as a rapid evaluation pop-up rather than a standalone diagnostic system, the interface synthesizes these artifacts into a single exploration session. The design attempts to avoid ``black-box'' behavior, recognizing that medical professionals highly value the transparency and explainability of automated tools. Consequently, every displayed score remains directly traceable to the underlying geometric measurements.
 
 Within the clinical workflow of Hospital de la Santa Creu i Sant Pau, this dashboard is designed to integrate seamlessly with the recently developed patient prioritization system~\cite{ferrer2024}. By accessing this interface for prioritized cases, cardiologists can obtain a rapid, detailed overview to efficiently rule out low-risk patients or decide if a deeper inspection of the raw coronary computed tomography angiography (CCTA) scans is required.
 
@@ -341,7 +341,7 @@ Within the clinical workflow of Hospital de la Santa Creu i Sant Pau, this dashb
     \draw[arr] (step2) -- (step3);
     \draw[arr] (step3) -- (step4);
   \end{tikzpicture}
-  \caption{Block~4 user interface layout and interaction flow: from global 3D anatomy and clinical summary to segment-level and branch-level metric validation.}
+  \caption{Block~4 user interface layout and interaction flow: from global RCA and LCA anatomy with \%AS colormaps, through CAD-RADS~2.0 and segment involvement score (SIS) summary, to segment-level and branch-level metric validation.}
   \label{fig:block4-interaction-flow}
 \end{figure}
 
@@ -368,8 +368,6 @@ Instead, this thesis adopts a three-tier validation framework: \textbf{(i)}~oper
 \label{subsec:validation-real-metrics}
 
 The first validation tier applies a shared 40-patient cohort (20 normal and 20 diseased anatomy) defined in \Cref{sec:methodology-datasets}. The real-data metrics in \Cref{tab:validation-real-metrics} were defined to evaluate pipeline reliability, geometric extraction quality, and runtime scalability on ASOCA and MACS-18. They measure whether the workflow runs successfully, whether Block~1 recovers plausible coronary topology, and whether automated processing remains practical at cohort scale.
-
-Runtime is reported strictly as a computational performance baseline. It is not directly comparable to the full manual CCTA review times described in \Cref{sec:clinical-context}, because this system functions as a decision-support framework rather than a standalone diagnostic tool. Clinicians are still expected to perform visual assessments; therefore, the dashboard aims to reduce the overall review burden and facilitate faster, better-informed triage when determining which patients require deeper inspection.
 
 \begin{table}[H]
   \caption{Real-data evaluation metrics used in \Cref{subsec:validation-asoca,subsec:validation-macs}.}
@@ -398,7 +396,7 @@ Runtime is reported strictly as a computational performance baseline. It is not 
 \Cref{tab:validation-real-thresholds} assigns each real-data metric a \emph{good}, \emph{neutral}, or \emph{poor} band to simplify interpretation of the Chapter~3 results: \emph{good} meets the expected level for this thesis, \emph{neutral} denotes an acceptable but imperfect outcome, and \emph{poor} marks a clear limitation. The thresholds were proposed by the author in consultation with clinical supervisors at Hospital de la Santa Creu i Sant Pau and should be treated as practical project benchmarks rather than official medical guidelines.
 
 \begin{table}[H]
-  \caption{Acceptance bands for real-data pipeline metrics.}
+  \caption{Acceptance bands for real-data pipeline metrics (ESR, OISR, CESR, and EISR as defined in \Cref{tab:validation-real-metrics}).}
   \label{tab:validation-real-thresholds}
   \vspace{0.5em}
   \centering

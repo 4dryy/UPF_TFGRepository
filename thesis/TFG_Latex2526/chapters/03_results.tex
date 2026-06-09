@@ -15,7 +15,7 @@ This chapter reports the three-tier validation outcomes (\Cref{sec:methodology-v
 \begin{figure}[H]
   \centering
   \includegraphics[width=\linewidth]{{Figures/1 Pipeline Execution ASOCA vs. MACS-18/Figure 1 and 2 Merged.pdf}}
-  \caption{Block~1 outputs for Normal\_8 in four side-by-side panels. Left pair (ASOCA, then MACS-18): centerline paths with red ostium points and blue branch endpoints. Right pair (ASOCA, then MACS-18): smoothed lumen surfaces with light-red LCA and light-blue RCA.}
+  \caption{Block~1 outputs for Normal\_8 in four side-by-side panels. Left pair (ASOCA [Automated Segmentation of Coronary Arteries], then MACS-18 [Multiclass Anatomical Coronary Segmentation]): centerline paths with red ostium points and blue branch endpoints. Right pair (ASOCA, then MACS-18): smoothed lumen surfaces with light-red LCA and light-blue RCA.}
   \label{fig:centerlines-surfaces-comparison}
 \end{figure}
 
@@ -28,7 +28,7 @@ On MACS-18 masks, every sample completed Blocks~1--4 without fatal error (ESR = 
 The next tables summarize endpoint counts (\Cref{tab:endpoint-summary}), ostium and centerline accuracy (\Cref{tab:ostium-centerline-comparison}), and mean Block~1--4 runtimes (\Cref{tab:runtime-comparison}) for the shared 40-patient ASOCA and MACS-18 cohorts. Extended distribution charts appear in \Cref{app:extended-pipeline-metrics}.
 
 \begin{table}[H]
-  \caption{Endpoint summary statistics per cohort and subgroup ($n$ = number of patients).}
+  \caption{Endpoint summary statistics by cohort and subgroup.}
   \label{tab:endpoint-summary}
   \vspace{0.5em}
   \centering
@@ -57,7 +57,7 @@ The next tables summarize endpoint counts (\Cref{tab:endpoint-summary}), ostium 
 
 \vspace{-0.75em}
 \begin{table}[H]
-  \caption{Ostium accuracy (OISR) and centerline precision (CESR) by cohort and subgroup (\%).}
+  \caption{OISR and CESR by ASOCA and MACS-18 cohort and subgroup (\%).}
   \label{tab:ostium-centerline-comparison}
   \vspace{0.5em}
   \centering
@@ -83,7 +83,7 @@ The next tables summarize endpoint counts (\Cref{tab:endpoint-summary}), ostium 
 
 \vspace{-0.75em}
 \begin{table}[H]
-  \caption{Mean pipeline runtimes by cohort and block (seconds).}
+  \caption{Mean pipeline runtimes for ASOCA and MACS-18 by block (seconds).}
   \label{tab:runtime-comparison}
   \vspace{0.5em}
   \centering
@@ -120,7 +120,7 @@ Block~2 quantification was verified on the two synthetic vessel models defined i
 As \Cref{tab:synthetic-validation-outcomes} below shows, pipeline execution on both synthetic models yields absolute errors that all fall within the \emph{good} acceptance bands of \Cref{tab:validation-synthetic-thresholds}. For each metric, the analytical ground truth defined in \Cref{subsec:validation-synthetic} is compared against the computed Block~2 output; the largest deviations occur on \texttt{synthetic\_2}, with a maximum \%AS error of 1.31\% and a maximum area error of 4.50\,mm$^2$. Additional visualizations and information about these results, including longitudinal area and \%AS profiles, are provided in \Cref{app:synthetic-profiles}.
 
 \begin{table}[H]
-  \caption{Synthetic validation outcomes ($W = 10$\,mm).}
+  \caption{Synthetic validation outcomes ($W = 10$\,mm reference half-window). \%AS and cross-sectional area errors versus analytical ground truth.}
   \label{tab:synthetic-validation-outcomes}
   \vspace{0.5em}
   \centering
@@ -159,7 +159,7 @@ Following the medical expert evaluation in \Cref{subsec:validation-ux}, \Cref{ta
 \noindent
 \begin{minipage}[t]{0.52\textwidth}
   \begin{table}[H]
-    \caption{SUS raw Likert responses (1--5).}
+    \caption{SUS raw Likert responses (1--5). P1--P3 denote participants 1--3.}
     \label{tab:sus-raw}
     \vspace{0.5em}
     \centering

@@ -17,7 +17,7 @@ The human heart is the central organ of the cardiovascular system and requires a
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.62\linewidth]{{Figure 1. Coronary Arteries.png}}
-  \caption{Anterior view of the human coronary tree. Coronary arteries are highlighted in red, and other cardiac structures in blue. Adapted from Lynch et al.~\cite{lynch2010_coronary}.}
+  \caption{Anterior view of the human coronary tree; right coronary artery (RCA) and left coronary artery (LCA) are highlighted in red, with other cardiac structures in blue. Adapted from Lynch et al.~\cite{lynch2010_coronary}.}
   \label{fig:coronary-anatomy}
 \end{figure}
 
@@ -35,7 +35,7 @@ Coronary artery disease (CAD) remains one of the leading causes of morbidity and
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.62\linewidth]{{Figure 2. Coronary Artery Disease.png}}
-  \caption{Coronary arteries narrowed by atherosclerotic plaque. Adapted from Kaiser Permanente~\cite{kaiser_atherosclerosis}.}
+  \caption{Coronary arteries narrowed by atherosclerotic plaque in coronary artery disease (CAD). Adapted from Kaiser Permanente~\cite{kaiser_atherosclerosis}.}
   \label{fig:cad-plaque}
 \end{figure}
 
@@ -74,7 +74,7 @@ The current diagnostic workflow for Coronary Artery Disease (CAD) at Hospital de
 \begin{figure}[H]
   \centering
   \includegraphics[width=\linewidth]{{Figure 3. Current CAD Diagnostic Workflow HSP (2).pdf}}
-  \caption{Current CAD diagnostic workflow at Hospital de Sant Pau. The primary operational bottleneck (image assessment and reporting) is highlighted in red. Adapted from Ferrer Beltran~\cite{ferrer2024}.}
+  \caption{Current CAD diagnostic workflow at Hospital de Sant Pau, spanning coronary computed tomography angiography (CCTA) acquisition, picture archiving and communication system (PACS) storage, and radiology information system (RIS) reporting. The primary operational bottleneck (image assessment and reporting) is highlighted in red. Adapted from Ferrer Beltran~\cite{ferrer2024}.}
   \label{fig:cad-workflow-hsp}
 \end{figure}
 
@@ -90,7 +90,7 @@ Once the visual assessment is complete, the extracted metrics are manually enter
 \begin{figure}[H]
   \centering
   \includegraphics[width=\linewidth]{{Figure 4. Current Image Analysis and Reporting Workflow HSP (2).pdf}}
-  \caption{Detailed representation of the image analysis and reporting workflow at Hospital de Sant Pau. Adapted from Acebes Pinilla~\cite{acebes2024}.}
+  \caption{Detailed representation of the CCTA image analysis and reporting workflow at Hospital de Sant Pau. Adapted from Acebes Pinilla~\cite{acebes2024}.}
   \label{fig:reporting-workflow-hsp}
 \end{figure}
 
@@ -121,11 +121,11 @@ Therefore, the scope of this bachelor's thesis focuses on automating the geometr
 \begin{figure}[H]
   \centering
   \includegraphics[width=\linewidth]{{Figure 5. Proposed Image Analysis and Reporting Workflow HSP (2).pdf}}
-  \caption{Contextual overview of the proposed automated diagnostic framework at Hospital de la Santa Creu i Sant Pau. The contributions of this thesis (green dashed box) bridge the gap between existing hospital data systems (blue) and the final clinical report. Adapted from Acebes Pinilla~\cite{acebes2024}.}
+  \caption{Contextual overview of the proposed automated CAD diagnostic framework at Hospital de la Santa Creu i Sant Pau, integrating CCTA-based analysis and Coronary Artery Disease Reporting and Data System (CAD-RADS~2.0) scoring. The contributions of this thesis (green dashed box) bridge the gap between existing hospital data systems (blue) and the final clinical report. Adapted from Acebes Pinilla~\cite{acebes2024}.}
   \label{fig:proposed-workflow}
 \end{figure}
 
-By seamlessly connecting raw image analysis with the hospital's reporting systems, this project aims to mitigate operational bottlenecks and reduce overall diagnostic times. However, it is crucial to emphasize that the solution developed in this project is intended solely as a clinical decision-support tool, not as a replacement for medical expertise. In the highly sensitive healthcare sector, human oversight is crucial. Rather than replacing detailed diagnostic software, this visualization tool is designed to act as a rapid initial assessment interface. By presenting an immediate, high-level overview of the patient's critical metrics, it assists specialists in quickly evaluating prioritized patient lists, helping them decide which cases require immediate, in-depth analysis. Thus, the automated findings are designed to streamline the workflow, ensuring that the final diagnostic decisions and clinical validations always remain firmly in the hands of the medical professionals.
+By seamlessly connecting raw image analysis with the hospital's reporting systems, this project aims to mitigate operational bottlenecks and reduce overall diagnostic times. However, the solution is intended solely as a clinical decision-support tool, not as a replacement for medical expertise or detailed diagnostic software. Designed as a rapid initial assessment interface, it presents an immediate, high-level overview of each patient's critical metrics to help specialists evaluate prioritized patient lists and identify cases requiring in-depth analysis. In this way, the automated outputs speed up the workflow, but doctors always retain responsibility for the final diagnosis and clinical validation.
 
 \section{Objectives}
 \label{sec:objectives}
