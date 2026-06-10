@@ -50,14 +50,14 @@ Scores were computed using the standard SUS conversion described in \Cref{subsec
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=\linewidth]{{Figures/1 Pipeline Execution ASOCA vs. MACS-18/Figure 3. Distribution Of Detected Endpoints ASOCA vs. MACS18.png}}
+  \includegraphics[width=0.75\linewidth]{{Figures/1 Pipeline Execution ASOCA vs. MACS-18/Figure 3. Distribution Of Detected Endpoints ASOCA vs. MACS18.png}}
   \caption{Per-patient distribution of detected endpoints for ASOCA and MACS-18 cohorts. Extends the summary statistics in \Cref{tab:endpoint-summary}.}
   \label{fig:endpoint-distribution}
 \end{figure}
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.92\linewidth]{{Figures/1 Pipeline Execution ASOCA vs. MACS-18/Figure 4. Ostium Centerline Metrics.png}}
+  \includegraphics[width=0.75\linewidth]{{Figures/1 Pipeline Execution ASOCA vs. MACS-18/Figure 4. Ostium Centerline Metrics.png}}
   \caption{Grouped comparison of OISR and CESR between ASOCA and MACS-18. Visual counterpart to \Cref{tab:ostium-centerline-comparison}.}
   \label{fig:ostium-centerline-metrics}
 \end{figure}
@@ -83,18 +83,19 @@ Longitudinal area and \%AS profiles along each vessel axis:
   \label{fig:synthetic2-profiles}
 \end{figure}
 
+\clearpage
 Three-dimensional area and \%AS colormaps on the reconstructed tube surfaces:
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=\linewidth]{{Figures/2 Synthetic Samples/Figure 9. Synthetic 1 Area and Stenosis Tubes.pdf}}
+  \includegraphics[width=0.75\linewidth]{{Figures/2 Synthetic Samples/Figure 9. Synthetic 1 Area and Stenosis Tubes.pdf}}
   \caption{Three-dimensional area and \%AS colormaps for \texttt{synthetic\_1}.}
   \label{fig:synthetic1-tubes}
 \end{figure}
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=\linewidth]{{Figures/2 Synthetic Samples/Figure 10. Synthetic 2 Area and Stenosis Tubes.pdf}}
+  \includegraphics[width=0.75\linewidth]{{Figures/2 Synthetic Samples/Figure 10. Synthetic 2 Area and Stenosis Tubes.pdf}}
   \caption{Three-dimensional area and \%AS colormaps for \texttt{synthetic\_2}.}
   \label{fig:synthetic2-tubes}
 \end{figure}
@@ -102,46 +103,46 @@ Three-dimensional area and \%AS colormaps on the reconstructed tube surfaces:
 \section{Extended Dashboard Interfaces}
 \label{app:extended-dashboard}
 
-\Cref{sec:results-dashboard} describes the Block~4 visualization output produced when validated pipeline results are loaded into the dashboard. The six screenshots below follow the clinical review workflow in module order (Modules~1--4), from global anatomy to branch-level metric inspection.
+\Cref{sec:results-dashboard} describes the Block~4 visualization output produced when validated pipeline results are loaded into the dashboard. The six screenshots below follow the clinical review workflow from the landing view through Modules~1--4, from global anatomy to branch-level metric inspection.
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.92\linewidth]{{Figures/3 Interface Output/Figure 12. Interface 1.png}}
-  \caption{Module~1: interactive global RCA and LCA three-dimensional renderings with metric colormaps.}
+  \includegraphics[width=0.80\linewidth]{{Figures/3 Interface Output/Figure 12. Interface 1.png}}
+  \caption{Block~4 landing view showing the dashboard title, a brief description of the tool, and the patient identifier currently under review.}
   \label{fig:interface-global}
 \end{figure}
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.92\linewidth]{{Figures/3 Interface Output/Figure 13. Interface 2.png}}
-  \caption{Module~2: patient clinical summary with automated CAD-RADS~2.0 category, SIS, and territory rationale.}
+  \includegraphics[width=0.80\linewidth]{{Figures/3 Interface Output/Figure 13. Interface 2.png}}
+  \caption{Module~1: interactive global RCA and LCA three-dimensional renderings with metric colormaps.}
   \label{fig:interface-clinical-summary}
 \end{figure}
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.92\linewidth]{{Figures/3 Interface Output/Figure 14. Interface 3.png}}
-  \caption{Module~3: segment-level three-dimensional map and synchronized area and \%AS bar plots.}
+  \includegraphics[width=0.80\linewidth]{{Figures/3 Interface Output/Figure 14. Interface 3.png}}
+  \caption{Modules~2 and~3 (initial view). Module~2 reports the automated patient clinical summary, including the CAD-RADS~2.0 category, segment involvement score (SIS), and territory rationale. Module~3 adds the selected segment label, artery-level context, and interactive segment-selection buttons; the three-dimensional artery view is colored by AHA segment, with each segment color matching its corresponding button. A table summarizes key segment metrics: maximum \%AS, area at the peak stenosis, proximal and distal reference areas, and the reference half-window $W$ used for quantification.}
   \label{fig:interface-segment}
 \end{figure}
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.92\linewidth]{{Figures/3 Interface Output/Figure 15. Interface 4.png}}
-  \caption{Module~3 (continued): segment selection and annotated peak stenosis with reference markers.}
+  \includegraphics[width=0.80\linewidth]{{Figures/3 Interface Output/Figure 15. Interface 4.png}}
+  \caption{Module~3: segment-level three-dimensional anatomy with synchronized longitudinal profiles. The artery is rendered with a \%AS colormap and annotated in three dimensions with indicator points for the maximum stenosis location within the selected segment and for the proximal and distal reference points. The blue bar plot shows cross-sectional area and the orange bar plot shows \%AS along the selected segment; peak stenosis and reference markers are also marked in the profiles. A color legend identifies each visualization component.}
   \label{fig:interface-segment-detail}
 \end{figure}
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.92\linewidth]{{Figures/3 Interface Output/Figure 16. Interface 5.png}}
-  \caption{Module~4: branch-level three-dimensional path highlighting and longitudinal metric profiles.}
+  \includegraphics[width=0.80\linewidth]{{Figures/3 Interface Output/Figure 16. Interface 5.png}}
+  \caption{Module~4: reference half-window $W$ and interactive controls to select the artery and branch under review, together with branch-level three-dimensional path highlighting and longitudinal metric profiles. A color legend identifies each visualization component.}
   \label{fig:interface-branch}
 \end{figure}
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.92\linewidth]{{Figures/3 Interface Output/Figure 17. Interface 6.png}}
-  \caption{Module~4 (continued): full-branch area and \%AS profiles in proximal-to-distal order.}
+  \includegraphics[width=0.80\linewidth]{{Figures/3 Interface Output/Figure 17. Interface 6.png}}
+  \caption{Module~4 (continued): full-branch area and \%AS profiles displayed in proximal-to-distal order, with a summary of branch-level metrics (maximum \%AS, area at the peak stenosis, and proximal and distal reference areas).}
   \label{fig:interface-branch-profiles}
 \end{figure}

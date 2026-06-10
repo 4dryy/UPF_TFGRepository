@@ -65,5 +65,5 @@
 \contentsline {section}{\numberline {A.2}System Usability Scale Questionnaire}{38}{section.Alph1.2}%
 \contentsline {section}{\numberline {A.3}Extended Pipeline Metrics}{39}{section.Alph1.3}%
 \contentsline {section}{\numberline {A.4}Synthetic Geometry Profiles}{40}{section.Alph1.4}%
-\contentsline {section}{\numberline {A.5}Extended Dashboard Interfaces}{43}{section.Alph1.5}%
-\contentsline {chapter}{\numberline {B}{\MakeUppercase []{ Source Code Access}}}{47}{appendix.Alph2}%
+\contentsline {section}{\numberline {A.5}Extended Dashboard Interfaces}{42}{section.Alph1.5}%
+\contentsline {chapter}{\numberline {B}{\MakeUppercase []{ Source Code Access}}}{45}{appendix.Alph2}%

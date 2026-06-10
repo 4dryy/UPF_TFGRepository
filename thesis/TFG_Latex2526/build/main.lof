@@ -25,15 +25,15 @@
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \contentsline {figure}{\numberline {A.1}{\ignorespaces Per-patient distribution of detected endpoints for ASOCA and MACS-18 cohorts. Extends the summary statistics in \Cref {tab:endpoint-summary}.}}{39}{figure.Alph1.1}%
-\contentsline {figure}{\numberline {A.2}{\ignorespaces Grouped comparison of OISR and CESR between ASOCA and MACS-18. Visual counterpart to \Cref {tab:ostium-centerline-comparison}.}}{40}{figure.Alph1.2}%
-\contentsline {figure}{\numberline {A.3}{\ignorespaces Longitudinal area and \%AS profiles along \texttt {synthetic\_1}.}}{41}{figure.Alph1.3}%
-\contentsline {figure}{\numberline {A.4}{\ignorespaces Longitudinal area and \%AS profiles along \texttt {synthetic\_2}.}}{41}{figure.Alph1.4}%
-\contentsline {figure}{\numberline {A.5}{\ignorespaces Three-dimensional area and \%AS colormaps for \texttt {synthetic\_1}.}}{42}{figure.Alph1.5}%
-\contentsline {figure}{\numberline {A.6}{\ignorespaces Three-dimensional area and \%AS colormaps for \texttt {synthetic\_2}.}}{43}{figure.Alph1.6}%
-\contentsline {figure}{\numberline {A.7}{\ignorespaces Module~1: interactive global RCA and LCA three-dimensional renderings with metric colormaps.}}{43}{figure.Alph1.7}%
-\contentsline {figure}{\numberline {A.8}{\ignorespaces Module~2: patient clinical summary with automated CAD-RADS~2.0 category, SIS, and territory rationale.}}{44}{figure.Alph1.8}%
-\contentsline {figure}{\numberline {A.9}{\ignorespaces Module~3: segment-level three-dimensional map and synchronized area and \%AS bar plots.}}{44}{figure.Alph1.9}%
-\contentsline {figure}{\numberline {A.10}{\ignorespaces Module~3 (continued): segment selection and annotated peak stenosis with reference markers.}}{45}{figure.Alph1.10}%
-\contentsline {figure}{\numberline {A.11}{\ignorespaces Module~4: branch-level three-dimensional path highlighting and longitudinal metric profiles.}}{45}{figure.Alph1.11}%
-\contentsline {figure}{\numberline {A.12}{\ignorespaces Module~4 (continued): full-branch area and \%AS profiles in proximal-to-distal order.}}{46}{figure.Alph1.12}%
+\contentsline {figure}{\numberline {A.2}{\ignorespaces Grouped comparison of OISR and CESR between ASOCA and MACS-18. Visual counterpart to \Cref {tab:ostium-centerline-comparison}.}}{39}{figure.Alph1.2}%
+\contentsline {figure}{\numberline {A.3}{\ignorespaces Longitudinal area and \%AS profiles along \texttt {synthetic\_1}.}}{40}{figure.Alph1.3}%
+\contentsline {figure}{\numberline {A.4}{\ignorespaces Longitudinal area and \%AS profiles along \texttt {synthetic\_2}.}}{40}{figure.Alph1.4}%
+\contentsline {figure}{\numberline {A.5}{\ignorespaces Three-dimensional area and \%AS colormaps for \texttt {synthetic\_1}.}}{41}{figure.Alph1.5}%
+\contentsline {figure}{\numberline {A.6}{\ignorespaces Three-dimensional area and \%AS colormaps for \texttt {synthetic\_2}.}}{41}{figure.Alph1.6}%
+\contentsline {figure}{\numberline {A.7}{\ignorespaces Block~4 landing view showing the dashboard title, a brief description of the tool, and the patient identifier currently under review.}}{42}{figure.Alph1.7}%
+\contentsline {figure}{\numberline {A.8}{\ignorespaces Module~1: interactive global RCA and LCA three-dimensional renderings with metric colormaps.}}{42}{figure.Alph1.8}%
+\contentsline {figure}{\numberline {A.9}{\ignorespaces Modules~2 and~3 (initial view). Module~2 reports the automated patient clinical summary, including the CAD-RADS~2.0 category, segment involvement score (SIS), and territory rationale. Module~3 adds the selected segment label, artery-level context, and interactive segment-selection buttons; the three-dimensional artery view is colored by AHA segment, with each segment color matching its corresponding button. A table summarizes key segment metrics: maximum \%AS, area at the peak stenosis, proximal and distal reference areas, and the reference half-window $W$ used for quantification.}}{43}{figure.Alph1.9}%
+\contentsline {figure}{\numberline {A.10}{\ignorespaces Module~3: segment-level three-dimensional anatomy with synchronized longitudinal profiles. The artery is rendered with a \%AS colormap and annotated in three dimensions with indicator points for the maximum stenosis location within the selected segment and for the proximal and distal reference points. The blue bar plot shows cross-sectional area and the orange bar plot shows \%AS along the selected segment; peak stenosis and reference markers are also marked in the profiles. A color legend identifies each visualization component.}}{43}{figure.Alph1.10}%
+\contentsline {figure}{\numberline {A.11}{\ignorespaces Module~4: reference half-window $W$ and interactive controls to select the artery and branch under review, together with branch-level three-dimensional path highlighting and longitudinal metric profiles. A color legend identifies each visualization component.}}{44}{figure.Alph1.11}%
+\contentsline {figure}{\numberline {A.12}{\ignorespaces Module~4 (continued): full-branch area and \%AS profiles displayed in proximal-to-distal order, with a summary of branch-level metrics (maximum \%AS, area at the peak stenosis, and proximal and distal reference areas).}}{44}{figure.Alph1.12}%
 \addvspace {10\p@ }
