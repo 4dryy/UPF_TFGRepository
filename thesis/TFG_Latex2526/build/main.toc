@@ -61,8 +61,9 @@
 \contentsline {subsection}{\numberline {4.3.3}Expert Clinical Proposals: Reference Modeling and Dashboard Extensions}{32}{subsection.4.3.3}%
 \contentsline {chapter}{\numberline {5}{\MakeUppercase []{ Conclusions}}}{33}{chapter.5}%
 \contentsline {chapter}{\numberline {A}{\MakeUppercase []{ Supporting Material}}}{37}{appendix.Alph1}%
-\contentsline {section}{\numberline {A.1}System Usability Scale Questionnaire}{37}{section.Alph1.1}%
-\contentsline {section}{\numberline {A.2}Extended Pipeline Metrics}{38}{section.Alph1.2}%
-\contentsline {section}{\numberline {A.3}Synthetic Geometry Profiles}{39}{section.Alph1.3}%
-\contentsline {section}{\numberline {A.4}Extended Dashboard Interfaces}{42}{section.Alph1.4}%
-\contentsline {chapter}{\numberline {B}{\MakeUppercase []{ Source Code Access}}}{46}{appendix.Alph2}%
+\contentsline {section}{\numberline {A.1}VMTK Centerline Extraction}{37}{section.Alph1.1}%
+\contentsline {section}{\numberline {A.2}System Usability Scale Questionnaire}{38}{section.Alph1.2}%
+\contentsline {section}{\numberline {A.3}Extended Pipeline Metrics}{39}{section.Alph1.3}%
+\contentsline {section}{\numberline {A.4}Synthetic Geometry Profiles}{40}{section.Alph1.4}%
+\contentsline {section}{\numberline {A.5}Extended Dashboard Interfaces}{43}{section.Alph1.5}%
+\contentsline {chapter}{\numberline {B}{\MakeUppercase []{ Source Code Access}}}{47}{appendix.Alph2}%

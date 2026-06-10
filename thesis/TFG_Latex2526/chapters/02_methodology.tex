@@ -17,8 +17,8 @@ The workflow comprises four automated blocks (\crefrange{sec:methodology-block1}
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=\linewidth]{{Figure 1. E2E Workflow Diagram.pdf}}
-  \caption{End-to-end automated workflow per patient case: lumen-mask processing, percentage area stenosis (\%AS) quantification, and CAD-RADS~2.0 reporting. Each block is a self-contained stage; arrows denote mandatory sequential dependencies and principal data passed between stages.}
+  \includegraphics[width=0.98\linewidth]{{Figure 1. E2E Workflow Diagram.pdf}}
+  \caption{End-to-end per-patient workflow: lumen mask, percentage area stenosis (\%AS), and CAD-RADS~2.0 reporting. Green boxes denote workflow blocks; blue boxes denote input data; arrows show sequential data flow.}
   \label{fig:e2e-workflow}
 \end{figure}
 
@@ -74,7 +74,7 @@ MACS-18 (\emph{Multiclass Anatomical Coronary Segmentation}) is a re-segmentatio
 \subsection{Segmentation and Label Volumes}
 \label{subsec:dataset-formats}
 
-The previously described clinical datasets (ASOCA and MACS-18) provide two aligned 3D grids for each patient, derived from the source CCTA images. These grids are spatially registered to the CCTA coordinate system, ensuring that physical scale and anatomical orientation are preserved.
+The previously described clinical datasets (ASOCA and MACS-18) provide two aligned 3D grids per patient derived from source CCTA images; extracting those segmentations is outside this project's scope, so the pipeline relies on pre-segmented inputs. These grids are spatially registered to the CCTA coordinate system, preserving physical scale and anatomical orientation.
 
 The \emph{segmentation annotation} is stored as a voxel grid in NRRD format. Each voxel indicates whether it belongs to the coronary lumen or to background tissue. The pipeline treats this volume as a binary mask.
 
@@ -87,7 +87,7 @@ Block~1 converts the binary lumen mask into 3D vessel surfaces and centerlines, 
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=\linewidth]{{Figure 2. Block 1 Workflow Diagram.pdf}}
+  \includegraphics[width=0.98\linewidth]{{Figure 2. Block 1 Workflow Diagram.pdf}}
   \caption{Block~1 hybrid workflow: separation of right coronary artery (RCA) and left coronary artery (LCA) trees; automated per-tree seed placement; centerline geometry extraction; branch packaging.}
   \label{fig:block1-workflow}
 \end{figure}
@@ -112,13 +112,11 @@ All remaining endpoints are designated as distal targets. Because these endpoint
 Once mapped, these physical coordinates are projected onto the nearest vertex of the smoothed mesh to ensure the seed points lie exactly on the mathematical manifold.
 
 \paragraph{Phase 3: Centerline Extraction, Topology Labeling, and Branch Packaging}\mbox{}\par\vspace{0.5em}
-With the seed points mapped onto the mathematical manifold, \texttt{vmtkCenterlines}~\cite{izzo2018,piccinelli2009} is executed on the smoothed surface mesh. By providing the identified ostium as the source and the distal targets as the endpoints, the algorithm extracts the centerlines for each component of the coronary tree. These centerlines are 1D mathematical curves tracing exactly through the middle of the 3D vessels, creating a connected network that accurately maps the complex branching structure of the arteries. At every discrete point along these curves, the algorithm also calculates the \texttt{MaximumInscribedSphereRadius}, providing an initial estimation of the local vessel width.
+With the ostium and distal seeds fixed on the smoothed surface mesh, \texttt{vmtkCenterlines}~\cite{izzo2018,piccinelli2009} is executed to trace the coronary centerlines. For each ostium-to-distal pair, the function extracts the most centered route through the vessel medial axis and resamples it into a regular ordered sequence of 3D points. These 1D curves map the branching coronary structure. At every resampled point, VMTK records the maximum inscribed sphere radius under \texttt{MaximumInscribedSphereRadius} as an initial estimate of local vessel width. The VMTK centerline geometry algorithm underlying this step is described in greater detail in \Cref{app:vmtk-centerlines}.
 
-Once the centerlines are generated, a labeling step assigns a specific topological point type to every coordinate based on its structural position. To guarantee anatomical validity for downstream stenosis quantification, the centerlines are partitioned into continuous branch paths running directly from the ostium to each distal endpoint. Geometrical artifacts are then removed by applying a strict filtering logic: paths containing fewer than 20 points, originating more than 4\,mm from the true ostium, or failing to terminate at a valid endpoint are automatically discarded.
+Once the centerlines are generated, a labeling step assigns a specific topological point type to every coordinate based on its structural position. To guarantee anatomical validity for downstream stenosis quantification, the centerlines are partitioned into continuous branch paths running directly from the ostium to each distal endpoint. Geometrical artifacts (unintended or anomalous extraction traces) are filtered out by discarding short branches with fewer than 20 points or paths that fail to terminate at a valid distal endpoint. The 20-point minimum was set empirically during pipeline development to remove spurious short traces while retaining the main coronary branches.
 
 Finally, the extracted data is packaged into a structured format. The spatial coordinates ($P_x$, $P_y$, $P_z$), local radius, assigned point type, and corresponding AHA segment identifiers are stored as ordered tables for both the individual branches and the global coronary tree. The generated surface and centerline meshes are also saved in \texttt{.vtp} format for visual rendering. Concluding Block~1, the RCA and LCA tables are concatenated into a unified patient record, providing the exact geometric dataset required for Block~2.
-
-% APPENDIX CANDIDATE: Full ostium-score weights, z-score terms, RCA/LCA top-$k$ pairing objective, and inward seed-snapping geometry — omit here for page budget unless you want them in the main text.
 
 \section{Block 2: Geometric Stenosis Quantification}
 \label{sec:methodology-block2}

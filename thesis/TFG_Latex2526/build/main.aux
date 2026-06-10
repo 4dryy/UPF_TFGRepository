@@ -140,8 +140,8 @@
 \@writefile{toc}{\contentsline {subsection}{\numberline {2.1.1}End-to-End Data Flow}{8}{subsection.2.1.1}\protected@file@percent }
 \newlabel{subsec:pipeline-dataflow}{{2.1.1}{8}{End-to-End Data Flow}{subsection.2.1.1}{}}
 \newlabel{subsec:pipeline-dataflow@cref}{{[subsection][1][2,1]2.1.1}{[1][8][]8}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {2.1}{\ignorespaces End-to-end automated workflow per patient case: lumen-mask processing, percentage area stenosis (\%AS) quantification, and CAD-RADS~2.0 reporting. Each block is a self-contained stage; arrows denote mandatory sequential dependencies and principal data passed between stages.}}{8}{figure.2.1}\protected@file@percent }
-\newlabel{fig:e2e-workflow}{{2.1}{8}{End-to-end automated workflow per patient case: lumen-mask processing, percentage area stenosis (\%AS) quantification, and CAD-RADS~2.0 reporting. Each block is a self-contained stage; arrows denote mandatory sequential dependencies and principal data passed between stages}{figure.2.1}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2.1}{\ignorespaces End-to-end per-patient workflow: lumen mask, percentage area stenosis (\%AS), and CAD-RADS~2.0 reporting. Green boxes denote workflow blocks; blue boxes denote input data; arrows show sequential data flow.}}{8}{figure.2.1}\protected@file@percent }
+\newlabel{fig:e2e-workflow}{{2.1}{8}{End-to-end per-patient workflow: lumen mask, percentage area stenosis (\%AS), and CAD-RADS~2.0 reporting. Green boxes denote workflow blocks; blue boxes denote input data; arrows show sequential data flow}{figure.2.1}{}}
 \newlabel{fig:e2e-workflow@cref}{{[figure][1][2]2.1}{[1][8][]8}{}{}{}}
 \citation{gharleghi2022asoca}
 \citation{acebes_macs18_wip,acebes2024}
@@ -401,64 +401,68 @@
 \bibcite{wu2024}{{34}{}{{}}{{}}}
 \bibcite{yang2020}{{35}{}{{}}{{}}}
 \bibcite{zhang2024}{{36}{}{{}}{{}}}
-\citation{brooke1996}
+\citation{izzo2018,piccinelli2009}
 \@writefile{toc}{\contentsline {chapter}{\numberline {A}{\MakeUppercase    []{ Supporting Material}}}{37}{appendix.Alph1}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
 \newlabel{app:supporting-material}{{A}{37}{Supporting Material}{appendix.Alph1}{}}
 \newlabel{app:supporting-material@cref}{{[chapter][1][]A}{[1][37][]37}{}{}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {A.1}System Usability Scale Questionnaire}{37}{section.Alph1.1}\protected@file@percent }
-\newlabel{app:sus-questionnaire}{{A.1}{37}{System Usability Scale Questionnaire}{section.Alph1.1}{}}
-\newlabel{app:sus-questionnaire@cref}{{[section][1][1]A.1}{[1][37][]37}{}{}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {A.2}Extended Pipeline Metrics}{38}{section.Alph1.2}\protected@file@percent }
-\newlabel{app:extended-pipeline-metrics}{{A.2}{38}{Extended Pipeline Metrics}{section.Alph1.2}{}}
-\newlabel{app:extended-pipeline-metrics@cref}{{[section][2][1]A.2}{[1][38][]38}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {A.1}{\ignorespaces Per-patient distribution of detected endpoints for ASOCA and MACS-18 cohorts. Extends the summary statistics in \Cref  {tab:endpoint-summary}.}}{38}{figure.Alph1.1}\protected@file@percent }
-\newlabel{fig:endpoint-distribution}{{A.1}{38}{Per-patient distribution of detected endpoints for ASOCA and MACS-18 cohorts. Extends the summary statistics in \Cref {tab:endpoint-summary}}{figure.Alph1.1}{}}
-\newlabel{fig:endpoint-distribution@cref}{{[figure][1][1]A.1}{[1][38][]38}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {A.2}{\ignorespaces Grouped comparison of OISR and CESR between ASOCA and MACS-18. Visual counterpart to \Cref  {tab:ostium-centerline-comparison}.}}{39}{figure.Alph1.2}\protected@file@percent }
-\newlabel{fig:ostium-centerline-metrics}{{A.2}{39}{Grouped comparison of OISR and CESR between ASOCA and MACS-18. Visual counterpart to \Cref {tab:ostium-centerline-comparison}}{figure.Alph1.2}{}}
-\newlabel{fig:ostium-centerline-metrics@cref}{{[figure][2][1]A.2}{[1][38][]39}{}{}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {A.3}Synthetic Geometry Profiles}{39}{section.Alph1.3}\protected@file@percent }
-\newlabel{app:synthetic-profiles}{{A.3}{39}{Synthetic Geometry Profiles}{section.Alph1.3}{}}
-\newlabel{app:synthetic-profiles@cref}{{[section][3][1]A.3}{[1][39][]39}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {A.3}{\ignorespaces Longitudinal area and \%AS profiles along \texttt  {synthetic\_1}.}}{40}{figure.Alph1.3}\protected@file@percent }
-\newlabel{fig:synthetic1-profiles}{{A.3}{40}{Longitudinal area and \%AS profiles along \texttt {synthetic\_1}}{figure.Alph1.3}{}}
-\newlabel{fig:synthetic1-profiles@cref}{{[figure][3][1]A.3}{[1][39][]40}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {A.4}{\ignorespaces Longitudinal area and \%AS profiles along \texttt  {synthetic\_2}.}}{40}{figure.Alph1.4}\protected@file@percent }
-\newlabel{fig:synthetic2-profiles}{{A.4}{40}{Longitudinal area and \%AS profiles along \texttt {synthetic\_2}}{figure.Alph1.4}{}}
-\newlabel{fig:synthetic2-profiles@cref}{{[figure][4][1]A.4}{[1][40][]40}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {A.5}{\ignorespaces Three-dimensional area and \%AS colormaps for \texttt  {synthetic\_1}.}}{41}{figure.Alph1.5}\protected@file@percent }
-\newlabel{fig:synthetic1-tubes}{{A.5}{41}{Three-dimensional area and \%AS colormaps for \texttt {synthetic\_1}}{figure.Alph1.5}{}}
-\newlabel{fig:synthetic1-tubes@cref}{{[figure][5][1]A.5}{[1][40][]41}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {A.6}{\ignorespaces Three-dimensional area and \%AS colormaps for \texttt  {synthetic\_2}.}}{42}{figure.Alph1.6}\protected@file@percent }
-\newlabel{fig:synthetic2-tubes}{{A.6}{42}{Three-dimensional area and \%AS colormaps for \texttt {synthetic\_2}}{figure.Alph1.6}{}}
-\newlabel{fig:synthetic2-tubes@cref}{{[figure][6][1]A.6}{[1][41][]42}{}{}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {A.4}Extended Dashboard Interfaces}{42}{section.Alph1.4}\protected@file@percent }
-\newlabel{app:extended-dashboard}{{A.4}{42}{Extended Dashboard Interfaces}{section.Alph1.4}{}}
-\newlabel{app:extended-dashboard@cref}{{[section][4][1]A.4}{[1][42][]42}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {A.7}{\ignorespaces Module~1: interactive global RCA and LCA three-dimensional renderings with metric colormaps.}}{42}{figure.Alph1.7}\protected@file@percent }
-\newlabel{fig:interface-global}{{A.7}{42}{Module~1: interactive global RCA and LCA three-dimensional renderings with metric colormaps}{figure.Alph1.7}{}}
-\newlabel{fig:interface-global@cref}{{[figure][7][1]A.7}{[1][42][]42}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {A.8}{\ignorespaces Module~2: patient clinical summary with automated CAD-RADS~2.0 category, SIS, and territory rationale.}}{43}{figure.Alph1.8}\protected@file@percent }
-\newlabel{fig:interface-clinical-summary}{{A.8}{43}{Module~2: patient clinical summary with automated CAD-RADS~2.0 category, SIS, and territory rationale}{figure.Alph1.8}{}}
-\newlabel{fig:interface-clinical-summary@cref}{{[figure][8][1]A.8}{[1][42][]43}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {A.9}{\ignorespaces Module~3: segment-level three-dimensional map and synchronized area and \%AS bar plots.}}{43}{figure.Alph1.9}\protected@file@percent }
-\newlabel{fig:interface-segment}{{A.9}{43}{Module~3: segment-level three-dimensional map and synchronized area and \%AS bar plots}{figure.Alph1.9}{}}
-\newlabel{fig:interface-segment@cref}{{[figure][9][1]A.9}{[1][43][]43}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {A.10}{\ignorespaces Module~3 (continued): segment selection and annotated peak stenosis with reference markers.}}{44}{figure.Alph1.10}\protected@file@percent }
-\newlabel{fig:interface-segment-detail}{{A.10}{44}{Module~3 (continued): segment selection and annotated peak stenosis with reference markers}{figure.Alph1.10}{}}
-\newlabel{fig:interface-segment-detail@cref}{{[figure][10][1]A.10}{[1][43][]44}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {A.11}{\ignorespaces Module~4: branch-level three-dimensional path highlighting and longitudinal metric profiles.}}{44}{figure.Alph1.11}\protected@file@percent }
-\newlabel{fig:interface-branch}{{A.11}{44}{Module~4: branch-level three-dimensional path highlighting and longitudinal metric profiles}{figure.Alph1.11}{}}
-\newlabel{fig:interface-branch@cref}{{[figure][11][1]A.11}{[1][44][]44}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {A.12}{\ignorespaces Module~4 (continued): full-branch area and \%AS profiles in proximal-to-distal order.}}{45}{figure.Alph1.12}\protected@file@percent }
-\newlabel{fig:interface-branch-profiles}{{A.12}{45}{Module~4 (continued): full-branch area and \%AS profiles in proximal-to-distal order}{figure.Alph1.12}{}}
-\newlabel{fig:interface-branch-profiles@cref}{{[figure][12][1]A.12}{[1][44][]45}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {A.1}VMTK Centerline Extraction}{37}{section.Alph1.1}\protected@file@percent }
+\newlabel{app:vmtk-centerlines}{{A.1}{37}{VMTK Centerline Extraction}{section.Alph1.1}{}}
+\newlabel{app:vmtk-centerlines@cref}{{[section][1][1]A.1}{[1][37][]37}{}{}{}}
+\citation{brooke1996}
+\@writefile{toc}{\contentsline {section}{\numberline {A.2}System Usability Scale Questionnaire}{38}{section.Alph1.2}\protected@file@percent }
+\newlabel{app:sus-questionnaire}{{A.2}{38}{System Usability Scale Questionnaire}{section.Alph1.2}{}}
+\newlabel{app:sus-questionnaire@cref}{{[section][2][1]A.2}{[1][38][]38}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {A.3}Extended Pipeline Metrics}{39}{section.Alph1.3}\protected@file@percent }
+\newlabel{app:extended-pipeline-metrics}{{A.3}{39}{Extended Pipeline Metrics}{section.Alph1.3}{}}
+\newlabel{app:extended-pipeline-metrics@cref}{{[section][3][1]A.3}{[1][38][]39}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {A.1}{\ignorespaces Per-patient distribution of detected endpoints for ASOCA and MACS-18 cohorts. Extends the summary statistics in \Cref  {tab:endpoint-summary}.}}{39}{figure.Alph1.1}\protected@file@percent }
+\newlabel{fig:endpoint-distribution}{{A.1}{39}{Per-patient distribution of detected endpoints for ASOCA and MACS-18 cohorts. Extends the summary statistics in \Cref {tab:endpoint-summary}}{figure.Alph1.1}{}}
+\newlabel{fig:endpoint-distribution@cref}{{[figure][1][1]A.1}{[1][39][]39}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {A.2}{\ignorespaces Grouped comparison of OISR and CESR between ASOCA and MACS-18. Visual counterpart to \Cref  {tab:ostium-centerline-comparison}.}}{40}{figure.Alph1.2}\protected@file@percent }
+\newlabel{fig:ostium-centerline-metrics}{{A.2}{40}{Grouped comparison of OISR and CESR between ASOCA and MACS-18. Visual counterpart to \Cref {tab:ostium-centerline-comparison}}{figure.Alph1.2}{}}
+\newlabel{fig:ostium-centerline-metrics@cref}{{[figure][2][1]A.2}{[1][39][]40}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {A.4}Synthetic Geometry Profiles}{40}{section.Alph1.4}\protected@file@percent }
+\newlabel{app:synthetic-profiles}{{A.4}{40}{Synthetic Geometry Profiles}{section.Alph1.4}{}}
+\newlabel{app:synthetic-profiles@cref}{{[section][4][1]A.4}{[1][40][]40}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {A.3}{\ignorespaces Longitudinal area and \%AS profiles along \texttt  {synthetic\_1}.}}{41}{figure.Alph1.3}\protected@file@percent }
+\newlabel{fig:synthetic1-profiles}{{A.3}{41}{Longitudinal area and \%AS profiles along \texttt {synthetic\_1}}{figure.Alph1.3}{}}
+\newlabel{fig:synthetic1-profiles@cref}{{[figure][3][1]A.3}{[1][40][]41}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {A.4}{\ignorespaces Longitudinal area and \%AS profiles along \texttt  {synthetic\_2}.}}{41}{figure.Alph1.4}\protected@file@percent }
+\newlabel{fig:synthetic2-profiles}{{A.4}{41}{Longitudinal area and \%AS profiles along \texttt {synthetic\_2}}{figure.Alph1.4}{}}
+\newlabel{fig:synthetic2-profiles@cref}{{[figure][4][1]A.4}{[1][41][]41}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {A.5}{\ignorespaces Three-dimensional area and \%AS colormaps for \texttt  {synthetic\_1}.}}{42}{figure.Alph1.5}\protected@file@percent }
+\newlabel{fig:synthetic1-tubes}{{A.5}{42}{Three-dimensional area and \%AS colormaps for \texttt {synthetic\_1}}{figure.Alph1.5}{}}
+\newlabel{fig:synthetic1-tubes@cref}{{[figure][5][1]A.5}{[1][41][]42}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {A.6}{\ignorespaces Three-dimensional area and \%AS colormaps for \texttt  {synthetic\_2}.}}{43}{figure.Alph1.6}\protected@file@percent }
+\newlabel{fig:synthetic2-tubes}{{A.6}{43}{Three-dimensional area and \%AS colormaps for \texttt {synthetic\_2}}{figure.Alph1.6}{}}
+\newlabel{fig:synthetic2-tubes@cref}{{[figure][6][1]A.6}{[1][42][]43}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {A.5}Extended Dashboard Interfaces}{43}{section.Alph1.5}\protected@file@percent }
+\newlabel{app:extended-dashboard}{{A.5}{43}{Extended Dashboard Interfaces}{section.Alph1.5}{}}
+\newlabel{app:extended-dashboard@cref}{{[section][5][1]A.5}{[1][43][]43}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {A.7}{\ignorespaces Module~1: interactive global RCA and LCA three-dimensional renderings with metric colormaps.}}{43}{figure.Alph1.7}\protected@file@percent }
+\newlabel{fig:interface-global}{{A.7}{43}{Module~1: interactive global RCA and LCA three-dimensional renderings with metric colormaps}{figure.Alph1.7}{}}
+\newlabel{fig:interface-global@cref}{{[figure][7][1]A.7}{[1][43][]43}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {A.8}{\ignorespaces Module~2: patient clinical summary with automated CAD-RADS~2.0 category, SIS, and territory rationale.}}{44}{figure.Alph1.8}\protected@file@percent }
+\newlabel{fig:interface-clinical-summary}{{A.8}{44}{Module~2: patient clinical summary with automated CAD-RADS~2.0 category, SIS, and territory rationale}{figure.Alph1.8}{}}
+\newlabel{fig:interface-clinical-summary@cref}{{[figure][8][1]A.8}{[1][43][]44}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {A.9}{\ignorespaces Module~3: segment-level three-dimensional map and synchronized area and \%AS bar plots.}}{44}{figure.Alph1.9}\protected@file@percent }
+\newlabel{fig:interface-segment}{{A.9}{44}{Module~3: segment-level three-dimensional map and synchronized area and \%AS bar plots}{figure.Alph1.9}{}}
+\newlabel{fig:interface-segment@cref}{{[figure][9][1]A.9}{[1][44][]44}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {A.10}{\ignorespaces Module~3 (continued): segment selection and annotated peak stenosis with reference markers.}}{45}{figure.Alph1.10}\protected@file@percent }
+\newlabel{fig:interface-segment-detail}{{A.10}{45}{Module~3 (continued): segment selection and annotated peak stenosis with reference markers}{figure.Alph1.10}{}}
+\newlabel{fig:interface-segment-detail@cref}{{[figure][10][1]A.10}{[1][44][]45}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {A.11}{\ignorespaces Module~4: branch-level three-dimensional path highlighting and longitudinal metric profiles.}}{45}{figure.Alph1.11}\protected@file@percent }
+\newlabel{fig:interface-branch}{{A.11}{45}{Module~4: branch-level three-dimensional path highlighting and longitudinal metric profiles}{figure.Alph1.11}{}}
+\newlabel{fig:interface-branch@cref}{{[figure][11][1]A.11}{[1][45][]45}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {A.12}{\ignorespaces Module~4 (continued): full-branch area and \%AS profiles in proximal-to-distal order.}}{46}{figure.Alph1.12}\protected@file@percent }
+\newlabel{fig:interface-branch-profiles}{{A.12}{46}{Module~4 (continued): full-branch area and \%AS profiles in proximal-to-distal order}{figure.Alph1.12}{}}
+\newlabel{fig:interface-branch-profiles@cref}{{[figure][12][1]A.12}{[1][45][]46}{}{}{}}
 \providecommand\NAT@force@numbers{}\NAT@force@numbers
-\@writefile{toc}{\contentsline {chapter}{\numberline {B}{\MakeUppercase    []{ Source Code Access}}}{46}{appendix.Alph2}\protected@file@percent }
+\@writefile{toc}{\contentsline {chapter}{\numberline {B}{\MakeUppercase    []{ Source Code Access}}}{47}{appendix.Alph2}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\newlabel{app:source-code}{{B}{46}{Source Code Access}{appendix.Alph2}{}}
-\newlabel{app:source-code@cref}{{[chapter][2][]B}{[1][46][]46}{}{}{}}
-\gdef \@abspage@last{62}
+\newlabel{app:source-code}{{B}{47}{Source Code Access}{appendix.Alph2}{}}
+\newlabel{app:source-code@cref}{{[chapter][2][]B}{[1][47][]47}{}{}{}}
+\gdef \@abspage@last{63}
