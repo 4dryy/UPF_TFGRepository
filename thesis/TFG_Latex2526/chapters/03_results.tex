@@ -25,7 +25,7 @@ On ASOCA masks, every sample completed Blocks~1--4 without fatal error (ESR = 10
 
 On MACS-18 masks, every sample completed Blocks~1--4 without fatal error (ESR = 100\%, \emph{good}). Mean endpoints per patient increased to 27.7, consistent with the richer distal branching in the refined masks. Ostium success was 73.75\% (OISR, \emph{poor}), and centerline extraction improved to 95.62\% (CESR, \emph{good}). Mean total runtime was 576.2\,s (\emph{neutral}).
 
-The next tables summarize endpoint counts (\Cref{tab:endpoint-summary}), ostium and centerline accuracy (\Cref{tab:ostium-centerline-comparison}), and mean Block~1--4 runtimes (\Cref{tab:runtime-comparison}) for the shared 40-patient ASOCA and MACS-18 cohorts. Extended distribution charts appear in \Cref{app:extended-pipeline-metrics}.
+The next tables summarize endpoint counts (\Cref{tab:endpoint-summary}), ostium and centerline accuracy (\Cref{tab:ostium-centerline-comparison}), and mean Block~1--4 runtimes (\Cref{tab:runtime-comparison}) for the shared 40-patient ASOCA and MACS-18 cohorts. Extended distribution charts appear in \AppCref{app:extended-pipeline-metrics}.
 
 \begin{table}[H]
   \caption{Endpoint summary statistics by cohort and subgroup.}
@@ -117,7 +117,7 @@ Block~2 quantification was verified on the two synthetic vessel models defined i
   \label{fig:synthetic-tubes}
 \end{figure}
 
-As \Cref{tab:synthetic-validation-outcomes} below shows, pipeline execution on both synthetic models yields absolute errors that all fall within the \emph{good} acceptance bands of \Cref{tab:validation-synthetic-thresholds}. For each metric, the analytical ground truth defined in \Cref{subsec:validation-synthetic} is compared against the computed Block~2 output; the largest deviations occur on \texttt{synthetic\_2}, with a maximum \%AS error of 1.31\% and a maximum area error of 4.50\,mm$^2$. Additional visualizations and information about these results, including longitudinal area and \%AS profiles, are provided in \Cref{app:synthetic-profiles}.
+As \Cref{tab:synthetic-validation-outcomes} below shows, pipeline execution on both synthetic models yields absolute errors that all fall within the \emph{good} acceptance bands of \Cref{tab:validation-synthetic-thresholds}. For each metric, the analytical ground truth defined in \Cref{subsec:validation-synthetic} is compared against the computed Block~2 output; the largest deviations occur on \texttt{synthetic\_2}, with a maximum \%AS error of 1.31\% and a maximum area error of 4.50\,mm$^2$. Additional visualizations and information about these results, including longitudinal area and \%AS profiles, are provided in \AppCref{app:synthetic-profiles}.
 
 \begin{table}[H]
   \caption{Synthetic validation outcomes ($W = 10$\,mm reference half-window). \%AS and cross-sectional area errors versus analytical ground truth.}
@@ -148,12 +148,12 @@ As \Cref{tab:synthetic-validation-outcomes} below shows, pipeline execution on b
 \section{Coronary Artery Dashboard Visualization Output}
 \label{sec:results-dashboard}
 
-Running validated pipeline outputs through Block~4 produces the clinical visualization views described in \Cref{sec:methodology-block4}. For representative patient cases, these include global RCA and LCA renderings, the automated CAD-RADS~2.0 report with SIS, and synchronized segment- and branch-level area and \%AS profiles. Static module-by-module screenshots are collected in \Cref{app:extended-dashboard}; to complement them, the Author recorded a screen-capture demonstration video of the live interface, also provided in that appendix, so readers can follow the interactive workflow beyond isolated still images.
+Running validated pipeline outputs through Block~4 produces the clinical visualization views described in \Cref{sec:methodology-block4}. For representative patient cases, these include global RCA and LCA renderings, the automated CAD-RADS~2.0 report with SIS, and synchronized segment- and branch-level area and \%AS profiles. Static module-by-module screenshots are collected in \AppCref{app:extended-dashboard}; to complement them, the Author recorded a screen-capture demonstration video of the live interface, also provided in that appendix, so readers can follow the interactive workflow beyond isolated still images.
 
 \section{User Experience and Interface Usability Evaluation}
 \label{sec:results-ux}
 
-Following \Cref{subsec:validation-ux}, three evaluators at Hospital de la Santa Creu i Sant Pau completed a guided Block~4 session and the standard ten-item System Usability Scale (SUS) questionnaire~\cite{brooke1996}. The group comprised two expert cardiologists and one biomedical engineer. The questionnaire wording appears in \Cref{app:sus-questionnaire}, the item-level responses in \Cref{tab:sus-raw}, and \Cref{tab:sus-summary} below lists the converted SUS score for each participant together with the cohort mean and standard deviation.
+Following \Cref{subsec:validation-ux}, three evaluators at Hospital de la Santa Creu i Sant Pau completed a guided Block~4 session and the standard ten-item System Usability Scale (SUS) questionnaire~\cite{brooke1996}. The group comprised two expert cardiologists and one biomedical engineer. The questionnaire wording appears in \AppCref{app:sus-questionnaire}, the item-level responses in \Cref{tab:sus-raw}, and \Cref{tab:sus-summary} below lists the converted SUS score for each participant together with the cohort mean and standard deviation.
 
 \begin{table}[H]
   \caption{SUS score summary by participant and cohort metrics.}

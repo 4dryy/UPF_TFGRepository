@@ -112,7 +112,7 @@ All remaining endpoints are designated as distal targets. Because these endpoint
 Once mapped, these physical coordinates are projected onto the nearest vertex of the smoothed mesh to ensure the seed points lie exactly on the mathematical manifold.
 
 \paragraph{Phase 3: Centerline Extraction, Topology Labeling, and Branch Packaging}\mbox{}\par\vspace{0.5em}
-With the ostium and distal seeds fixed on the smoothed surface mesh, \texttt{vmtkCenterlines}~\cite{izzo2018,piccinelli2009} is executed to trace the coronary centerlines. For each ostium-to-distal pair, the function extracts the most centered route through the vessel medial axis and resamples it into a regular ordered sequence of 3D points. These 1D curves map the branching coronary structure. At every resampled point, VMTK records the maximum inscribed sphere radius under \texttt{MaximumInscribedSphereRadius} as an initial estimate of local vessel width. The VMTK centerline geometry algorithm underlying this step is described in greater detail in \Cref{app:vmtk-centerlines}.
+With the ostium and distal seeds fixed on the smoothed surface mesh, \texttt{vmtkCenterlines}~\cite{izzo2018,piccinelli2009} is executed to trace the coronary centerlines. For each ostium-to-distal pair, the function extracts the most centered route through the vessel medial axis and resamples it into a regular ordered sequence of 3D points. These 1D curves map the branching coronary structure. At every resampled point, VMTK records the maximum inscribed sphere radius under \texttt{MaximumInscribedSphereRadius} as an initial estimate of local vessel width. The VMTK centerline geometry algorithm underlying this step is described in greater detail in \AppCref{app:vmtk-centerlines}.
 
 Once the centerlines are generated, a labeling step assigns a specific topological point type to every coordinate based on its structural position. To guarantee anatomical validity for downstream stenosis quantification, the centerlines are partitioned into continuous branch paths running directly from the ostium to each distal endpoint. Geometrical artifacts (unintended or anomalous extraction traces) are filtered out by discarding short branches with fewer than 20 points or paths that fail to terminate at a valid distal endpoint. The 20-point minimum was set empirically during pipeline development to remove spurious short traces while retaining the main coronary branches.
 
@@ -132,7 +132,7 @@ Block~2 transforms the Block~1 centerline and surface representations into perce
 
 As illustrated in \Cref{fig:block2-workflow}, Block~2 processes each available artery (RCA and LCA) independently. For every tree, it consumes the paired centerline and smoothed surface meshes produced in \Cref{sec:methodology-block1}.
 
-The computational logic for stenosis quantification and the methodology used to identify local healthy reference values build upon prior internal research by Burrull~\cite{burrull2023}, originally grounded in the standard percentage diameter stenosis (\%DS) framework described by Hideo-Kajita et al.~\cite{hideo_kajita2019}. Rather than reproducing diameter-based scores directly, this pipeline adapts those reference principles to cross-sectional \emph{area} and percentage area stenosis (\%AS).
+The computational logic for stenosis quantification and the methodology used to identify local healthy reference values follow the percentage diameter stenosis (\%DS) reference-window framework described by Hideo-Kajita et al.~\cite{hideo_kajita2019}. Rather than reproducing diameter-based scores directly, this pipeline adapts those reference principles to cross-sectional \emph{area} and percentage area stenosis (\%AS).
 
 In coronary arteries, atherosclerotic plaque frequently develops eccentrically rather than as a perfect concentric ring. Relying solely on one-dimensional diameter estimates, such as the Maximum Inscribed Sphere Radius (MISR), can therefore misrepresent luminal narrowing. In an elliptical or irregularly narrowed vessel, the inscribed sphere captures only the narrowest physical constraint and ignores the lateral space through which blood may still flow.
 
@@ -157,7 +157,7 @@ Stenosis severity is evaluated independently along each individual branch path r
 
 To measure distance along the tortuous 3D vessel, consecutive centerline points are connected by straight segments, and the cumulative sum of these segment lengths defines a one-dimensional geodesic distance ($g_d$). This $g_d$ value is then integrated into the branch dataframe for every discrete coordinate.
 
-To evaluate stenosis at any specific point, the algorithm requires a healthy reference area for comparison. The system first identifies proximal and distal centerline points located at geodesic positions $g_d - W$ and $g_d + W$, respectively. The reference half-window $W$ is a crucial hyperparameter in the pipeline. Based on the geometric stenosis framework introduced by Burrull~\cite{burrull2023} and standard angiographic principles described by Hideo-Kajita et al.~\cite{hideo_kajita2019}, $W$ is set to 10\,mm in this project. However, this 10\,mm threshold is an empirical approximation: there is no universally optimal value, as the ideal reference distance depends on patient-specific anatomy and individual lesion length. Ideally, to maximize clinical accuracy, the system would allow a physician to manually select or adjust proximal and distal reference points based on visual anatomical assessment. Because the computed stenosis varies significantly with the automated window size, this introduces an important methodological limitation that is discussed later.
+To evaluate stenosis at any specific point, the algorithm requires a healthy reference area for comparison. The system first identifies proximal and distal centerline points located at geodesic positions $g_d - W$ and $g_d + W$, respectively. The reference half-window $W$ is a crucial hyperparameter in the pipeline. Based on the geometric stenosis reference-window framework described by Hideo-Kajita et al.~\cite{hideo_kajita2019}, $W$ is set to 10\,mm in this project. However, this 10\,mm threshold is an empirical approximation, since no fixed reference distance is optimal for every anatomy or lesion length. The sensitivity of \%AS to this window size and its methodological implications are discussed in \Cref{sec:discussion-limitations}.
 
 Once the two reference points are identified along the same branch, their corresponding mapped areas ($A_{\mathrm{prox}}$ and $A_{\mathrm{dist}}$) are retrieved. The healthy reference area ($A_{\mathrm{ref}}$) at the evaluation point is then calculated as the arithmetic mean of these bilateral values:
 \begin{equation}
@@ -167,7 +167,7 @@ Once the two reference points are identified along the same branch, their corres
 Because this formula requires both proximal and distal context, percentage area stenosis cannot be calculated for points at the very extremities of branch paths. Consequently, any evaluation point lying within distance $W$ from the ostium or the distal tip is excluded, as it would possess only a one-sided reference. Alongside sensitivity to window size, additional anatomical challenges of this automated baseline (such as unpredictable behavior near major bifurcations) are addressed in \Cref{ch:discussion}.
 
 \paragraph{Phase 4: Percentage Area Stenosis and Patient-Level Aggregation}\mbox{}\par\vspace{0.5em}
-For each qualifying centerline point, the pipeline quantifies stenosis severity. The percentage area stenosis (\%AS) formula, adapted from Burrull~\cite{burrull2023}, compares the local cross-sectional lumen area ($A$) directly against its corresponding healthy reference ($A_{\mathrm{ref}}$):
+For each qualifying centerline point, the pipeline quantifies stenosis severity. The percentage area stenosis (\%AS) formula, adapted from the reference-window framework of Hideo-Kajita et al.~\cite{hideo_kajita2019}, compares the local cross-sectional lumen area ($A$) directly against its corresponding healthy reference ($A_{\mathrm{ref}}$):
 \begin{equation}
   \%\mathrm{AS} = \left(1 - \frac{A}{A_{\mathrm{ref}}}\right) \times 100.
   \label{eq:pct-as}
@@ -175,7 +175,7 @@ For each qualifying centerline point, the pipeline quantifies stenosis severity.
 
 Next, the separate branch tables are merged into a unified patient record. Since all extracted branches trace continuously from the ostium to a distal endpoint, they inherently share identical coordinates along common arterial trunks. When these tables are combined, the system merges overlapping branch data based on rounded $(P_x, P_y, P_z)$ tuples. If multiple entries exist for the same spatial coordinate, the algorithm strictly retains the row with the highest \%AS value. This conservative rule ensures that no maximum stenosis is hidden, preventing clinical underestimation of lesion severity where anatomical paths overlap.
 
-Ultimately, Block~2 yields two structured outputs: the enriched individual branch datasets (containing $g_d$, $A_{\mathrm{prox}}$, $A_{\mathrm{dist}}$, $A_{\mathrm{ref}}$, and \%AS, among others) and the merged global coronary tree dataset. These comprehensive tables constitute the definitive quantitative input consumed by Block~3.
+Ultimately, Block~2 yields two structured outputs: the enriched individual branch datasets (containing $g_d$, $A_{\mathrm{prox}}$, $A_{\mathrm{dist}}$, $A_{\mathrm{ref}}$, and \%AS, among others) and the merged global coronary tree dataset. These comprehensive tables constitute the input consumed by Block~3.
 
 \section{Block 3: Artery Labeling and CAD-RADS 2.0 Scoring}
 \label{sec:methodology-block3}
@@ -247,7 +247,7 @@ Any \texttt{Segment\_ID} present in the input data but outside the SCCT-18 dicti
 
 Patient-level scoring follows the CAD-RADS~2.0 decision principles~\cite{cury2022}. The algorithm first determines the highest segment-level stenosis grade from the aggregated table. This grade is derived from the maximum \%AS observed across all evaluated segments and subsequently classified into the standard luminal categories detailed in \Cref{tab:cad-rads-stenosis}. Total coronary occlusion (category~5) is assigned when any segment reaches 100\% \%AS.
 
-Categories~4A and~4B distinguish high-risk patterns among severe stenoses. As established by the CAD-RADS~2.0 framework~\cite{cury2022}, category~4B is assigned when either (i)~left-main (segment~5) stenosis is at least 50\% \%AS, or (ii)~obstructive disease ($\geq 70\%$ \%AS) is present in each of the three major territories (RCA, LAD, and LCX) defined in \Cref{tab:cad-rads-territories}. If severe stenosis is present but neither of these criteria is met, the patient is classified as CAD-RADS~2.0 category~4A. Categories~0--3 are assigned directly from the highest segment grade when no category~4 or~5 rule overrides the result.
+Categories~4A and~4B distinguish high-risk patterns among severe stenoses. As established by the CAD-RADS~2.0 framework~\cite{cury2022}, category~4B is assigned when either (i)~left-main (segment~5) stenosis is at least 50\% \%AS, or (ii)~obstructive disease ($\geq 70\%$ \%AS) is present in each of the three major territories (RCA, LAD, and LCx) defined in \Cref{tab:cad-rads-territories}. If severe stenosis is present but neither of these criteria is met, the patient is classified as CAD-RADS~2.0 category~4A. Categories~0--3 are assigned directly from the highest segment grade when no category~4 or~5 rule overrides the result.
 
 \begin{table}[H]
   \centering
@@ -294,7 +294,7 @@ Categories~4A and~4B distinguish high-risk patterns among severe stenoses. As es
     Left-main $\geq 50\%$ \%AS triggers CAD-RADS~2.0 category~4B \\
     LAD & 6, 7, 8, 9, 10 &
     Obstructive/severe flags per vessel; contributes to three-vessel 4B rule \\
-    LCX & 11, 12, 13, 14, 15, 18 &
+    LCx & 11, 12, 13, 14, 15, 18 &
     Obstructive/severe flags per vessel; contributes to three-vessel 4B rule \\
     \bottomrule
   \end{tabular}
@@ -352,7 +352,7 @@ The third module focuses on the detailed analysis of individual segments, follow
 \paragraph{Module 4: Branch-Level Analysis}\mbox{}\par\vspace{0.5em}
 The fourth module applies the same dual-visualization principle as Module~3, but expands the scope to the continuous ostium-to-endpoint paths extracted in Block~1. Upon selecting a specific branch, the three-dimensional view highlights its full anatomical trajectory and flags the peak stenosis location. Below this, longitudinal area and \%AS bar plots chart the entire branch length in a strict proximal-to-distal order. Because the stenosis quantification in Block~2 is computed independently along these paths, this view exposes the exact continuous geometric context from which the reference windows and \%AS values were derived.
 
-In Modules~3 and~4, explicitly plotting the peak stenosis alongside its bilateral reference samples guarantees full algorithmic transparency. This design allows cardiologists to rapidly validate the automated findings against their clinical intuition before deeper inspection of the raw CCTA data. Full-page screenshots demonstrating these dashboard interfaces are provided in \Cref{app:extended-dashboard}.
+In Modules~3 and~4, explicitly plotting the peak stenosis alongside its bilateral reference samples guarantees full algorithmic transparency. This design allows cardiologists to rapidly validate the automated findings against their clinical intuition before deeper inspection of the raw CCTA data. Full-page screenshots demonstrating these dashboard interfaces are provided in \AppCref{app:extended-dashboard}.
 
 \section{Experimental Design and Validation Framework}
 \label{sec:methodology-validation}
@@ -438,7 +438,7 @@ The identical pipeline was re-executed on the expert-refined MACS-18 lumen masks
 \subsection{Geometry and Quantification Verification: Synthetic Data}
 \label{subsec:validation-synthetic}
 
-Clinically, stenosis quantification would typically be evaluated by comparing algorithmic CAD-RADS~2.0 categories against expert radiological reports or by assessing the maximum stenosis within specific arterial segments. However, as previously noted, natural anatomical irregularities cause the pipeline's current area-based formula~\cite{burrull2023,hideo_kajita2019} to overestimate stenosis severity, limiting its direct clinical predictive value on real patient cohorts.
+Clinically, stenosis quantification would typically be evaluated by comparing algorithmic CAD-RADS~2.0 categories against expert radiological reports or by assessing the maximum stenosis within specific arterial segments. However, as previously noted, natural anatomical irregularities cause the pipeline's current area-based formula~\cite{hideo_kajita2019} to overestimate stenosis severity, limiting its direct clinical predictive value on real patient cohorts.
 
 Following consultation with clinical supervisors at Hospital de la Santa Creu i Sant Pau, verification was instead conducted in a controlled setting using two programmatically generated vessel models (healthy and diseased). These idealized shapes isolate the formula from anatomical confounders and were processed through the full pipeline with the same 10\,mm reference half-window applied to the clinical cohorts.
 
@@ -488,7 +488,7 @@ with base radius $R_{\mathrm{base}} = 10$\,mm, minimum radius $R_{\min} = 5$\,mm
 
 The third validation tier evaluates the interactive dashboard developed in Block~4 from the end user's perspective. Medical experts at Hospital de la Santa Creu i Sant Pau took part in a pilot System Usability Scale (SUS) study~\cite{brooke1996} of this interface. The study focused on usability, clarity, and overall clinical acceptance.
 
-\textbf{Procedure:} Three medical experts attended individual in-person or online sessions comprising a brief project introduction, hands-on interaction with the full Block~4 dashboard on representative outputs, and the standard 10-item SUS Likert questionnaire (1--5; full wording in \Cref{app:sus-questionnaire}) with optional qualitative feedback. Responses were scored 0--100 using the standard SUS formula~\cite{brooke1996}. The cohort mean and standard deviation are reported in \Cref{sec:results-ux} and interpreted using the score bands in \Cref{tab:validation-sus-thresholds}.
+\textbf{Procedure:} Three participants attended individual in-person or online sessions comprising a brief project introduction, hands-on interaction with the full Block~4 dashboard on representative outputs, and the standard 10-item SUS Likert questionnaire (1--5; full wording in \AppCref{app:sus-questionnaire}) with optional qualitative feedback. Responses were scored 0--100 using the standard SUS formula~\cite{brooke1996}. The cohort mean and standard deviation are reported in \Cref{sec:results-ux} and interpreted using the score bands in \Cref{tab:validation-sus-thresholds}.
 
 \begin{table}[H]
   \caption{SUS score interpretation bands. Adapted from Bangor et al.\ and Brooke~\cite{bangor2009,brooke1996}.}

@@ -37,13 +37,13 @@
 \contentsline {section}{\numberline {2.5}Block 3: Artery Labeling and CAD-RADS 2.0 Scoring}{15}{section.2.5}%
 \contentsline {subsection}{\numberline {2.5.1}Anatomical Context: SCCT-18 Coronary Model}{15}{subsection.2.5.1}%
 \contentsline {subsection}{\numberline {2.5.2}Segment-Level Stenosis Aggregation}{16}{subsection.2.5.2}%
-\contentsline {subsection}{\numberline {2.5.3}Patient-Level CAD-RADS 2.0 Classification}{17}{subsection.2.5.3}%
+\contentsline {subsection}{\numberline {2.5.3}Patient-Level CAD-RADS 2.0 Classification}{16}{subsection.2.5.3}%
 \contentsline {section}{\numberline {2.6}Block 4: Patient Visualization Dashboard}{18}{section.2.6}%
 \contentsline {paragraph}{Module 3: Segment Level Analysis}{19}{section*.11}%
 \contentsline {paragraph}{Module 4: Branch-Level Analysis}{19}{section*.12}%
 \contentsline {section}{\numberline {2.7}Experimental Design and Validation Framework}{19}{section.2.7}%
 \contentsline {subsection}{\numberline {2.7.1}Real-Data Evaluation Metrics and Acceptance Criteria}{20}{subsection.2.7.1}%
-\contentsline {subsection}{\numberline {2.7.2}Workflow Validation on Real Datasets: ASOCA}{21}{subsection.2.7.2}%
+\contentsline {subsection}{\numberline {2.7.2}Workflow Validation on Real Datasets: ASOCA}{20}{subsection.2.7.2}%
 \contentsline {subsection}{\numberline {2.7.3}Workflow Validation on Real Datasets: MACS-18}{21}{subsection.2.7.3}%
 \contentsline {subsection}{\numberline {2.7.4}Geometry and Quantification Verification: Synthetic Data}{21}{subsection.2.7.4}%
 \contentsline {subsection}{\numberline {2.7.5}User Experience and Interface Usability Evaluation}{22}{subsection.2.7.5}%
@@ -55,7 +55,7 @@
 \contentsline {chapter}{\numberline {4}{\MakeUppercase []{ Discussion}}}{26}{chapter.4}%
 \contentsline {section}{\numberline {4.1}Analysis of the Results}{26}{section.4.1}%
 \contentsline {section}{\numberline {4.2}Technical and Anatomical Limitations}{28}{section.4.2}%
-\contentsline {section}{\numberline {4.3}Future Work}{30}{section.4.3}%
+\contentsline {section}{\numberline {4.3}Proposed Future Work}{30}{section.4.3}%
 \contentsline {subsection}{\numberline {4.3.1}Algorithmic and Pipeline Enhancements}{30}{subsection.4.3.1}%
 \contentsline {subsection}{\numberline {4.3.2}Clinical Workflow Integration}{31}{subsection.4.3.2}%
 \contentsline {subsection}{\numberline {4.3.3}Expert Clinical Proposals: Reference Modeling and Dashboard Extensions}{32}{subsection.4.3.3}%
