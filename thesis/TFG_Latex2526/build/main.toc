@@ -35,7 +35,7 @@
 \contentsline {paragraph}{Phase 3: Geodesic Distance and Reference Area Estimation}{14}{section*.9}%
 \contentsline {paragraph}{Phase 4: Percentage Area Stenosis and Patient-Level Aggregation}{14}{section*.10}%
 \contentsline {section}{\numberline {2.5}Block 3: Artery Labeling and CAD-RADS 2.0 Scoring}{15}{section.2.5}%
-\contentsline {subsection}{\numberline {2.5.1}Anatomical Context: AHA 17-Segment Model}{15}{subsection.2.5.1}%
+\contentsline {subsection}{\numberline {2.5.1}Anatomical Context: SCCT-18 Coronary Model}{15}{subsection.2.5.1}%
 \contentsline {subsection}{\numberline {2.5.2}Segment-Level Stenosis Aggregation}{16}{subsection.2.5.2}%
 \contentsline {subsection}{\numberline {2.5.3}Patient-Level CAD-RADS 2.0 Classification}{17}{subsection.2.5.3}%
 \contentsline {section}{\numberline {2.6}Block 4: Patient Visualization Dashboard}{18}{section.2.6}%
@@ -62,8 +62,8 @@
 \contentsline {chapter}{\numberline {5}{\MakeUppercase []{ Conclusions}}}{33}{chapter.5}%
 \contentsline {chapter}{\numberline {A}{\MakeUppercase []{ Supporting Material}}}{37}{appendix.Alph1}%
 \contentsline {section}{\numberline {A.1}VMTK Centerline Extraction}{37}{section.Alph1.1}%
-\contentsline {section}{\numberline {A.2}System Usability Scale Questionnaire}{38}{section.Alph1.2}%
-\contentsline {section}{\numberline {A.3}Extended Pipeline Metrics}{39}{section.Alph1.3}%
-\contentsline {section}{\numberline {A.4}Synthetic Geometry Profiles}{40}{section.Alph1.4}%
-\contentsline {section}{\numberline {A.5}Extended Dashboard Interfaces}{42}{section.Alph1.5}%
-\contentsline {chapter}{\numberline {B}{\MakeUppercase []{ Source Code Access}}}{45}{appendix.Alph2}%
+\contentsline {section}{\numberline {A.2}System Usability Scale Questionnaire}{39}{section.Alph1.2}%
+\contentsline {section}{\numberline {A.3}Extended Pipeline Metrics}{40}{section.Alph1.3}%
+\contentsline {section}{\numberline {A.4}Synthetic Geometry Profiles}{41}{section.Alph1.4}%
+\contentsline {section}{\numberline {A.5}Dashboard Demonstration Video and Interface Screenshots}{43}{section.Alph1.5}%
+\contentsline {chapter}{\numberline {B}{\MakeUppercase []{ Source Code Access}}}{46}{appendix.Alph2}%

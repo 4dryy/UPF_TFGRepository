@@ -69,7 +69,7 @@ In medical image analysis, \emph{segmentation} denotes the partition of a three-
 
 The ASOCA (\emph{Automated Segmentation of Coronary Arteries}) challenge established one of the first large, standardized benchmarks for fully automatic segmentation of complete normal and diseased coronary trees from CCTA~\cite{gharleghi2022asoca}. The resource addresses the difficulty of imaging small, moving vessels. ASOCA is publicly available and provided the original lumen masks for the 40-patient cohort. In this project, those masks served as the working reference during pipeline development and remain the default segmentation supplied to Block~1.
 
-MACS-18 (\emph{Multiclass Anatomical Coronary Segmentation}) is a re-segmentation of the same 40 ASOCA patient volumes, currently in development at Hospital de la Santa Creu i Sant Pau and supervised by C\'{e}sar Acebes Pinilla~\cite{acebes_macs18_wip,acebes2024}. Unlike ASOCA, this resource is not yet publicly available. Widely used public datasets have helped train automatic segmentation methods, but their lumen masks are often evaluated mainly by how well voxels match a reference, not by whether the vessel tree forms a continuous, anatomically plausible path~\cite{acebes_macs18_wip}. When the lumen mask contains breaks or fails to follow the full length of the branches, extracting reliable centerlines and quantifying vessel geometry in Blocks~1 and~2 becomes more difficult. Expert manual refinements in MACS-18 target continuous lumen connectivity from the aortic root to the most distal visible branches, yielding more anatomically faithful masks without altering the underlying imaging data, patient identity, or labeling scheme. In this project, the same AHA segment label volumes are used for both ASOCA and MACS-18 cases.
+MACS-18 (\emph{Multiclass Anatomical Coronary Segmentation}) is a re-segmentation of the same 40 ASOCA patient volumes, currently in development at Hospital de la Santa Creu i Sant Pau and supervised by C\'{e}sar Acebes Pinilla~\cite{acebes_macs18_wip,acebes2024}. Unlike ASOCA, this resource is not yet publicly available. Widely used public datasets have helped train automatic segmentation methods, but their lumen masks are often evaluated mainly by how well voxels match a reference, not by whether the vessel tree forms a continuous, anatomically plausible path~\cite{acebes_macs18_wip}. When the lumen mask contains breaks or fails to follow the full length of the branches, extracting reliable centerlines and quantifying vessel geometry in Blocks~1 and~2 becomes more difficult. Expert manual refinements in MACS-18 target continuous lumen connectivity from the aortic root to the most distal visible branches, yielding more anatomically faithful masks without altering the underlying imaging data, patient identity, or labeling scheme. In this project, both cohorts share the same SCCT-18 segment label volumes~\cite{leipsic2014}.
 
 \subsection{Segmentation and Label Volumes}
 \label{subsec:dataset-formats}
@@ -78,7 +78,7 @@ The previously described clinical datasets (ASOCA and MACS-18) provide two align
 
 The \emph{segmentation annotation} is stored as a voxel grid in NRRD format. Each voxel indicates whether it belongs to the coronary lumen or to background tissue. The pipeline treats this volume as a binary mask.
 
-The \emph{segment label volume} is a separate grid, stored as a compressed NIfTI file, aligned with the segmentation. Instead of a binary lumen flag, each foreground voxel stores an integer class identifier that maps to a standardized coronary segment under the AHA 17-segment model~\cite{austen1975}. Background voxels are assigned zero.
+The \emph{segment label volume} is a separate grid, stored as a compressed NIfTI file, aligned with the segmentation. Instead of a binary lumen flag, each foreground voxel stores an integer class identifier that maps to a standardized coronary segment under the SCCT-18 model~\cite{leipsic2014}. Background voxels are assigned zero.
 
 \section{Block 1: 3D Artery Anatomy Extraction}
 \label{sec:methodology-block1}
@@ -102,7 +102,7 @@ The two independent binary sub-volumes outputted by Phase~1 serve as the direct 
 
 The next step requires placing seed points, which are the explicit starting and ending spatial coordinates required by VMTK to trace the centerlines. To fully automate this placement and eliminate manual user interaction, the system analyzes the overall 3D shape of the voxel mask to automatically find key structural landmarks. The algorithm to obtain these seed points works by iteratively ``peeling'' away the outer layers of the voxel grid (a process known as skeletonization) and was leveraged from prior work~\cite{clapers2025}. The volume is thinned using \texttt{skimage.morphology.skeletonize}, reducing the complex 3D shape down to a one-voxel-wide medial axis. Topological endpoints are then easily identified as voxels that have exactly one neighboring voxel (a node degree of one).
 
-The ostium, where the artery leaves the aorta and centerline tracing must begin, is selected among the skeleton endpoints using the AHA label volume (\Cref{subsec:dataset-formats}). Under the AHA 17-segment model, segment~1 identifies the proximal RCA and segment~5 the proximal LCA~\cite{austen1975}; an endpoint inside either region is designated as the ostium point. If none qualifies, the widest endpoint by maximum inscribed sphere radius is used as a fallback.
+The ostium, where the artery leaves the aorta and centerline tracing must begin, is selected among the skeleton endpoints using the SCCT-18 label volume (\Cref{subsec:dataset-formats}). Under this atlas, segment~1 identifies the proximal RCA and segment~5 the left main~\cite{leipsic2014}; an endpoint inside either region is designated as the ostium point. If none qualifies, the widest endpoint by maximum inscribed sphere radius is used as a fallback.
 
 All remaining endpoints are designated as distal targets. Because these endpoints are initially identified in a discrete voxel grid $(i, j, k)$, they must be mapped to the continuous physical space $(x, y, z)$ to be compatible with the mesh. This is achieved using the image origin $(O_x, O_y, O_z)$ and the voxel spacing $(S_x, S_y, S_z)$ through the following spatial transformation:
 \begin{equation}
@@ -116,7 +116,7 @@ With the ostium and distal seeds fixed on the smoothed surface mesh, \texttt{vmt
 
 Once the centerlines are generated, a labeling step assigns a specific topological point type to every coordinate based on its structural position. To guarantee anatomical validity for downstream stenosis quantification, the centerlines are partitioned into continuous branch paths running directly from the ostium to each distal endpoint. Geometrical artifacts (unintended or anomalous extraction traces) are filtered out by discarding short branches with fewer than 20 points or paths that fail to terminate at a valid distal endpoint. The 20-point minimum was set empirically during pipeline development to remove spurious short traces while retaining the main coronary branches.
 
-Finally, the extracted data is packaged into a structured format. The spatial coordinates ($P_x$, $P_y$, $P_z$), local radius, assigned point type, and corresponding AHA segment identifiers are stored as ordered tables for both the individual branches and the global coronary tree. The generated surface and centerline meshes are also saved in \texttt{.vtp} format for visual rendering. Concluding Block~1, the RCA and LCA tables are concatenated into a unified patient record, providing the exact geometric dataset required for Block~2.
+Finally, the extracted data is packaged into a structured format. The spatial coordinates ($P_x$, $P_y$, $P_z$), local radius, assigned point type, and corresponding SCCT-18 segment identifiers are stored as ordered tables for both the individual branches and the global coronary tree. The generated surface and centerline meshes are saved in \texttt{.vtp} format for visual rendering. Concluding Block~1, the RCA and LCA tables are concatenated into a unified patient record, providing the geometric dataset required for Block~2.
 
 \section{Block 2: Geometric Stenosis Quantification}
 \label{sec:methodology-block2}
@@ -185,51 +185,52 @@ Block~3 translates the quantitative stenosis metrics produced in Block~2 into a 
 \begin{figure}[H]
   \centering
   \includegraphics[width=\linewidth]{{Figure 4. Block 3 Workflow Diagram.pdf}}
-  \caption{Block~3 workflow: segment aggregation based on the American Heart Association (AHA) 17-segment model and automated CAD-RADS~2.0 scoring.}
+  \caption{Block~3 workflow: segment aggregation based on the SCCT-18 coronary model and automated CAD-RADS~2.0 scoring.}
   \label{fig:block3-workflow}
 \end{figure}
 
 As illustrated in \Cref{fig:block3-workflow}, this block ingests the merged patient-level stenosis table from Block~2 together with the anatomical segment labels inherited from Block~1. The pipeline first summarizes the stenosis severity at the individual segment level. These segments are subsequently grouped into the primary coronary territories (RCA, LM, LAD, and LCx), establishing the essential anatomical framework required for the CAD-RADS~2.0 evaluation. Finally, the system applies rule-based logic to derive the overall patient-level CAD-RADS~2.0 category and calculates the Segment Involvement Score (SIS), structuring these findings into the definitive outputs consumed by Block~4.
 
-\subsection{Anatomical Context: AHA 17-Segment Model}
-\label{subsec:block3-aha}
+\subsection{Anatomical Context: SCCT-18 Coronary Model}
+\label{subsec:block3-scct18}
 
-Reliable CAD-RADS~2.0 assignment requires mapping each evaluated centerline point to a recognized coronary territory. The pipeline adopts the 17-segment American Heart Association (AHA) model, a widely used reporting standard for regional coronary anatomy~\cite{austen1975}. This choice is not only clinically established but also technically aligned with the voxel labeling scheme of the primary cohorts used in this thesis: integer labels in the ASOCA annotation volumes~\cite{gharleghi2022asoca} are consumed directly as segment~ID values without intermediate remapping. This direct compatibility preserves pipeline robustness and keeps segment-level aggregation consistent across patients.
+Reliable CAD-RADS~2.0 assignment requires mapping each evaluated centerline point to a recognized coronary territory. The pipeline adopts the 18-segment Society of Cardiovascular Computed Tomography (SCCT) model, the standard regional nomenclature for CCTA interpretation and reporting~\cite{leipsic2014,cury2022}. This choice aligns with the voxel labeling scheme of the clinical cohorts used in this thesis: integer labels in the ASOCA and MACS-18 annotation volumes are consumed directly as segment~ID values without intermediate remapping, preserving pipeline robustness and consistent segment-level aggregation across patients.
 
-Beyond individual anatomical segments, this model maps every branch into one of four primary coronary territories: the Right Coronary Artery (RCA), Left Main (LM), Left Anterior Descending (LAD), and Left Circumflex (LCX). This territorial grouping is a fundamental requirement of the CAD-RADS~2.0 scoring framework, which assigns the patient-level category from the most severe stenosis observed across these vessels~\cite{cury2022}. \Cref{tab:aha_17_segment} summarizes the complete segment-to-territory dictionary used throughout Block~3 and the clinical dashboard. Background voxels are encoded as segment~0 and are subsequently excluded from stenosis aggregation.
+Beyond individual anatomical segments, the atlas maps branches into four primary coronary territories used for CAD-RADS~2.0 triage: the Right Coronary Artery (RCA), Left Main (LM), Left Anterior Descending (LAD), and Left Circumflex (LCx)~\cite{cury2022}. \Cref{tab:scct18_segment} summarizes the complete segment-to-territory dictionary used throughout Block~3 and the clinical dashboard. Background voxels are encoded as segment~0 and excluded from stenosis aggregation. Ramus intermedius (segment~17), when present, is reported at segment level but excluded from the automated three-vessel category~4B rule~\cite{cury2022,leipsic2014}.
 
 \begin{table}[H]
   \centering
-  \caption{AHA 17-segment dictionary used for anatomical labeling and CAD-RADS~2.0 territory grouping across RCA, LCA, left anterior descending (LAD), left circumflex (LCx), and left main (LM) territories. Adapted from Austen et al.~\cite{austen1975}.}
-  \label{tab:aha_17_segment}
+  \caption{SCCT-18 segment dictionary used for anatomical labeling and CAD-RADS~2.0 territory grouping across RCA, LCA, left anterior descending (LAD), left circumflex (LCx), and left main (LM) territories. Adapted from Leipsic et al.~\cite{leipsic2014}.}
+  \label{tab:scct18_segment}
   \vspace{0.5em}
-  \footnotesize
+  \small
   \renewcommand{\arraystretch}{1.25}
-  \setlength{\tabcolsep}{5pt}
+  \setlength{\tabcolsep}{6pt}
   \begin{tabular}{@{}c >{\raggedright\arraybackslash}p{0.14\linewidth} l l@{}}
     \toprule
     \cellcolor{gray!12}\textbf{ID} &
     \cellcolor{gray!12}\textbf{Abbreviation} &
-    \cellcolor{gray!12}\textbf{Anatomical name} &
+    \cellcolor{gray!12}\textbf{Anatomical Name} &
     \cellcolor{gray!12}\textbf{Territory} \\
     \midrule
     1 & pRCA & Proximal RCA & RCA \\
     2 & mRCA & Mid RCA & RCA \\
     3 & dRCA & Distal RCA & RCA \\
     4 & rPDA & Right PDA & RCA \\
+    16 & R-PLB & Right Posterolateral Branch & RCA \\
     5 & LM & Left Main & LM \\
     6 & pLAD & Proximal LAD & LAD \\
     7 & mLAD & Mid LAD & LAD \\
     8 & dLAD & Distal LAD & LAD \\
-    9 & D1 & First diagonal & LAD \\
-    10 & D2 & Second diagonal & LAD \\
-    11 & pLCX & Proximal LCX & LCX \\
-    12 & OM1 & First obtuse marginal & LCX \\
-    13 & dLCX & Distal LCX & LCX \\
-    14 & OM2 & Second obtuse marginal & LCX \\
-    15 & lPDA & Left coronary PDA & LCX \\
-    16 & L-ILB & LCX inferolateral branch & LCX \\
-    17 & L-PLB & LCX posterolateral branch & LCX \\
+    9 & D1 & First Diagonal (D1) & LAD \\
+    10 & D2 & Second Diagonal (D2) & LAD \\
+    11 & pLCx & Proximal LCx & LCx \\
+    12 & OM1 & First Obtuse Marginal (OM1) & LCx \\
+    13 & dLCx & Distal LCx & LCx \\
+    14 & OM2 & Second Obtuse Marginal (OM2) & LCx \\
+    15 & lPDA & Left Coronary PDA & LCx \\
+    18 & L-PLB & Left Posterolateral Branch & LCx \\
+    17 & RI & Ramus Intermedius (RI) & RI \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -239,7 +240,7 @@ Beyond individual anatomical segments, this model maps every branch into one of 
 
 For each patient, all centerline rows in the Block~2 merged table that carry a valid \texttt{Segment\_ID} are grouped by segment identifier using tabular aggregation. Within each segment, the algorithm retains the absolute maximum \%AS, ensuring that focal lesions are not underestimated when multiple samples exist along the same anatomical region. Each segment is then assigned a discrete stenosis severity grade aligned with the CAD-RADS~2.0 luminal stenosis bins (see \Cref{tab:cad-rads-stenosis}).
 
-Any \texttt{Segment\_ID} present in the input data but outside the 1--17 dictionary (for example, labels introduced by extended annotation schemes) is flagged as \emph{unmapped}. These rows may still appear in exploratory outputs, but they are excluded from the standard territory groupings used for CAD-RADS~2.0 triage, preventing execution failure while making non-standard labels explicit.
+Any \texttt{Segment\_ID} present in the input data but outside the SCCT-18 dictionary (for example, labels introduced by extended annotation schemes) is flagged as \emph{unmapped}. These rows may still appear in exploratory outputs, but they are excluded from the standard territory groupings used for CAD-RADS~2.0 triage, preventing execution failure while making non-standard labels explicit.
 
 \subsection{Patient-Level CAD-RADS 2.0 Classification}
 \label{subsec:block3-cad-rads}
@@ -275,7 +276,7 @@ Categories~4A and~4B distinguish high-risk patterns among severe stenoses. As es
 
 \begin{table}[H]
   \centering
-  \caption{CAD-RADS~2.0 triage territories per AHA 17-segment model. Adapted from Austen et al.\ and Cury et al.~\cite{austen1975,cury2022}.}
+  \caption{CAD-RADS~2.0 triage territories per SCCT-18 model. Adapted from Leipsic et al.\ and Cury et al.~\cite{leipsic2014,cury2022}.}
   \label{tab:cad-rads-territories}
   \vspace{0.5em}
   \small
@@ -287,24 +288,24 @@ Categories~4A and~4B distinguish high-risk patterns among severe stenoses. As es
     \cellcolor{gray!12}\textbf{Segment IDs} &
     \cellcolor{gray!12}\textbf{Role in automated scoring} \\
     \midrule
-    RCA & 1, 2, 3, 4 &
+    RCA & 1, 2, 3, 4, 16 &
     Obstructive/severe flags per vessel; contributes to three-vessel 4B rule \\
     LM & 5 &
     Left-main $\geq 50\%$ \%AS triggers CAD-RADS~2.0 category~4B \\
     LAD & 6, 7, 8, 9, 10 &
     Obstructive/severe flags per vessel; contributes to three-vessel 4B rule \\
-    LCX & 11, 12, 13, 14, 15, 16, 17 &
+    LCX & 11, 12, 13, 14, 15, 18 &
     Obstructive/severe flags per vessel; contributes to three-vessel 4B rule \\
     \bottomrule
   \end{tabular}
 \end{table}
 
-Finally, the system calculates the Segment Involvement Score (SIS), defined as the absolute number of assessable coronary segments exhibiting any measurable atherosclerotic plaque~\cite{cury2022}. Block~3 concludes by exporting a comprehensive set of structured outputs: a segment-level stenosis summary, a patient-level CAD-RADS~2.0 report (detailing the assigned category, classification rationale, highest lesion location, territory flags, and SIS), and the geometrically enriched branch tables. All these generated metrics and records are specifically formatted to serve as the direct quantitative input for the interactive clinical visualization dashboard detailed in Block~4.
+Finally, the system calculates the Segment Involvement Score (SIS) as defined in \Cref{subsec:cad-rads}. The SIS denominator is 16 segments by default, or 17 when Ramus intermedius (segment~17) is present, following the SCCT-18 atlas convention~\cite{leipsic2014,cury2022}. Block~3 concludes by exporting a comprehensive set of structured outputs: a segment-level stenosis summary, a patient-level CAD-RADS~2.0 report (detailing the assigned category, classification rationale, highest lesion location, territory flags, and SIS), and the geometrically enriched branch tables. All these generated metrics and records are specifically formatted to serve as the direct quantitative input for the interactive clinical visualization dashboard detailed in Block~4.
 
 \section{Block 4: Patient Visualization Dashboard}
 \label{sec:methodology-block4}
 
-Block~4 constitutes the final user-facing layer of the automated workflow, functioning as an interactive clinical decision-support interface built with the Streamlit framework~\cite{streamlit}. Whereas the preceding blocks operate as fully automated processing stages, this final block translates their geometric meshes and tabular records into an explorable visual environment. Specifically, the dashboard ingests the extracted centerline coordinates, cross-sectional areas, percentage area stenosis profiles, AHA segment labels, segment-level summaries, and the patient-level CAD-RADS~2.0 report.
+Block~4 constitutes the final user-facing layer of the automated workflow, functioning as an interactive clinical decision-support interface built with the Streamlit framework~\cite{streamlit}. Whereas the preceding blocks operate as fully automated processing stages, this final block translates their geometric meshes and tabular records into an explorable visual environment. Specifically, the dashboard ingests the extracted centerline coordinates, cross-sectional areas, percentage area stenosis profiles, SCCT-18 segment labels, segment-level summaries, and the patient-level CAD-RADS~2.0 report.
 
 Conceived as a rapid evaluation pop-up rather than a standalone diagnostic system, the interface synthesizes these artifacts into a single exploration session. The design attempts to avoid ``black-box'' behavior, recognizing that medical professionals highly value the transparency and explainability of automated tools. Consequently, every displayed score remains directly traceable to the underlying geometric measurements.
 
@@ -346,7 +347,7 @@ Within the clinical workflow of Hospital de la Santa Creu i Sant Pau, this dashb
 As illustrated in \Cref{fig:block4-interaction-flow}, the Streamlit dashboard is organized into four vertically stacked modules that guide the clinical review process from global anatomy to vessel-level metrics. Module~1 opens the session with interactive three-dimensional renderings of the global RCA and LCA, which can be colored by either \%AS or cross-sectional area. Module~2 immediately follows with the patient clinical summary, reporting the automated CAD-RADS~2.0 category, the Segment Involvement Score (SIS), and the territory-level rationale~\cite{cury2022}. Below these high-level overviews, Modules~3 and~4 offer dedicated segment-level and branch-level exploration. In both layers, localized three-dimensional anatomical views are shown alongside their corresponding two-dimensional metric profiles, allowing a comprehensive evaluation of the affected vessels.
 
 \paragraph{Module 3: Segment Level Analysis}\mbox{}\par\vspace{0.5em}
-The third module focuses on the detailed analysis of individual segments, following the standard AHA 17-segment framework. The three-dimensional view initially displays the entire artery colored by segment identity. When a user selects a specific segment from either the RCA or LCA, the three-dimensional map highlights this selection so the user clearly sees the region under analysis. Concurrently, two synchronized two-dimensional bar plots update to display the cross-sectional area and \%AS profiles. This allows the user to visualize exactly how the area and stenosis behave along the length of the chosen segment. To ensure the severity calculations are transparent and easy to verify, the charts explicitly mark the point of maximum stenosis alongside the reference areas used in \Cref{eq:area-reference}. This combination of three-dimensional models and two-dimensional charts is supported by visualization research~\cite{borkin2011}. The three-dimensional anatomy provides clear spatial context, while the two-dimensional profiles eliminate visual overlap, making it significantly easier to locate lesions and accurately read the metrics.
+The third module focuses on the detailed analysis of individual segments, following the SCCT-18 regional framework~\cite{leipsic2014}. The three-dimensional view initially displays the entire artery colored by segment identity. When a user selects a specific segment from either the RCA or LCA, the three-dimensional map highlights this selection so the user clearly sees the region under analysis. Concurrently, two synchronized two-dimensional bar plots update to display the cross-sectional area and \%AS profiles. This allows the user to visualize exactly how the area and stenosis behave along the length of the chosen segment. To ensure the severity calculations are transparent and easy to verify, the charts explicitly mark the point of maximum stenosis alongside the reference areas used in \Cref{eq:area-reference}. This combination of three-dimensional models and two-dimensional charts is supported by visualization research~\cite{borkin2011}. The three-dimensional anatomy provides clear spatial context, while the two-dimensional profiles eliminate visual overlap, making it significantly easier to locate lesions and accurately read the metrics.
 
 \paragraph{Module 4: Branch-Level Analysis}\mbox{}\par\vspace{0.5em}
 The fourth module applies the same dual-visualization principle as Module~3, but expands the scope to the continuous ostium-to-endpoint paths extracted in Block~1. Upon selecting a specific branch, the three-dimensional view highlights its full anatomical trajectory and flags the peak stenosis location. Below this, longitudinal area and \%AS bar plots chart the entire branch length in a strict proximal-to-distal order. Because the stenosis quantification in Block~2 is computed independently along these paths, this view exposes the exact continuous geometric context from which the reference windows and \%AS values were derived.

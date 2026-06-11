@@ -1,7 +1,7 @@
 \chapter{Supporting Material}
 \label{app:supporting-material}
 
-This appendix collects supplementary material referenced from \Cref{ch:methods,ch:results}: VMTK centerline extraction (\Cref{app:vmtk-centerlines}), the SUS questionnaire (\Cref{app:sus-questionnaire}), extended pipeline distribution charts (\Cref{app:extended-pipeline-metrics}), synthetic validation visualizations (\Cref{app:synthetic-profiles}), and Block~4 dashboard screenshots (\Cref{app:extended-dashboard}).
+This appendix collects supplementary material referenced from \Cref{ch:methods,ch:results}: VMTK centerline extraction (\Cref{app:vmtk-centerlines}), the SUS questionnaire (\Cref{app:sus-questionnaire}), extended pipeline distribution charts (\Cref{app:extended-pipeline-metrics}), synthetic validation visualizations (\Cref{app:synthetic-profiles}), and Block~4 dashboard visual material: a demonstration video and interface screenshots (\Cref{app:extended-dashboard}).
 
 \section{VMTK Centerline Extraction}
 \label{app:vmtk-centerlines}
@@ -18,10 +18,11 @@ Each interior Voronoi vertex acts as the center of a maximal inscribed sphere (t
 
 \noindent\textbf{Outputs And Role In The Pipeline:} The selected route is first represented as an ordered but irregularly spaced set of points along the medial axis. VMTK therefore resamples it into a regular sequence of 3D coordinates so that the exported centerline can be stored and processed consistently in later pipeline stages. This step is necessary because skeleton vertices are not uniformly distributed in space, whereas downstream branch packaging and Block~2 quantification require a stable ordered point sequence along each vessel path. At every resampled point, VMTK stores \texttt{MaximumInscribedSphereRadius} (the radius of the largest sphere centered on that point that remains inside the lumen surface). Intuitively, this value provides an initial estimate of local vessel width at each centerline station. Block~1 exports these curves as centerline meshes and tabular records. Subsequent topology labeling, branch filtering, and Block~2 cross-sectional quantification operate on this VMTK output rather than on the internal Voronoi representation.
 
+\clearpage
 \section{System Usability Scale Questionnaire}
 \label{app:sus-questionnaire}
 
-\Cref{sec:results-ux} reports the raw Likert responses in \Cref{tab:sus-raw} and the computed scores in \Cref{tab:sus-summary}. The table rows labeled Question~1--Question~10 correspond to the ten standard SUS items listed below, administered after a guided Block~4 session (\Cref{subsec:validation-ux}). Each statement was rated on a five-point Likert scale (1 = strongly disagree, 5 = strongly agree). Item wording follows the standard SUS format~\cite{brooke1996}.
+\Cref{sec:results-ux} reports the converted SUS scores in \Cref{tab:sus-summary}. The ten standard SUS items listed below were administered after a guided Block~4 session (\Cref{subsec:validation-ux}). Each statement was rated on a five-point Likert scale (1 = strongly disagree, 5 = strongly agree). Item wording follows the standard SUS format~\cite{brooke1996}.
 
 \begin{enumerate}
   \item I think that I would like to use this coronary viewer frequently in clinical practice.
@@ -41,8 +42,40 @@ Each interior Voronoi vertex acts as the center of a maximal inscribed sphere (t
   Do you have any additional comments, suggestions for improvement, or features you would like to see in the future?
 \end{quote}
 
+\Cref{tab:sus-raw} lists raw Likert responses by item and participant (P1--P3). \Cref{tab:sus-summary} reports the corresponding SUS scores.
+
+\begin{table}[H]
+  \centering
+  \caption{SUS raw Likert responses (1--5). P1--P3 denote participants 1--3 in \Cref{sec:results-ux}.}
+  \label{tab:sus-raw}
+  \vspace{0.5em}
+  \small
+  \renewcommand{\arraystretch}{1.25}
+  \setlength{\tabcolsep}{6pt}
+  \begin{tabular}{@{}lrrr@{}}
+    \toprule
+    \cellcolor{gray!12}\textbf{Item} &
+    \cellcolor{gray!12}\textbf{P1} &
+    \cellcolor{gray!12}\textbf{P2} &
+    \cellcolor{gray!12}\textbf{P3} \\
+    \midrule
+    Question~1 & 4 & 5 & 4 \\
+    Question~2 & 1 & 3 & 1 \\
+    Question~3 & 3 & 5 & 4 \\
+    Question~4 & 3 & 3 & 1 \\
+    Question~5 & 3 & 4 & 4 \\
+    Question~6 & 3 & 2 & 2 \\
+    Question~7 & 2 & 4 & 4 \\
+    Question~8 & 3 & 2 & 1 \\
+    Question~9 & 3 & 3 & 4 \\
+    Question~10 & 3 & 2 & 1 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
 Scores were computed using the standard SUS conversion described in \Cref{subsec:validation-ux} and interpreted with the bands in \Cref{tab:validation-sus-thresholds}.
 
+\clearpage
 \section{Extended Pipeline Metrics}
 \label{app:extended-pipeline-metrics}
 
@@ -62,6 +95,7 @@ Scores were computed using the standard SUS conversion described in \Cref{subsec
   \label{fig:ostium-centerline-metrics}
 \end{figure}
 
+\clearpage
 \section{Synthetic Geometry Profiles}
 \label{app:synthetic-profiles}
 
@@ -100,10 +134,16 @@ Three-dimensional area and \%AS colormaps on the reconstructed tube surfaces:
   \label{fig:synthetic2-tubes}
 \end{figure}
 
-\section{Extended Dashboard Interfaces}
+\clearpage
+\section{Dashboard Demonstration Video and Interface Screenshots}
 \label{app:extended-dashboard}
 
-\Cref{sec:results-dashboard} describes the Block~4 visualization output produced when validated pipeline results are loaded into the dashboard. The six screenshots below follow the clinical review workflow from the landing view through Modules~1--4, from global anatomy to branch-level metric inspection.
+\Cref{sec:results-dashboard} describes the Block~4 visualization output produced when validated pipeline results are loaded into the dashboard. To show the interface in use, the Author prepared a screen-capture demonstration video hosted in the project repository. The recording walks through the same clinical review workflow as the static figures below, from the landing view through Modules~1--4, and is available at:
+
+\noindent\url{https://github.com/4dryy/UPF_TFGRepository/blob/main/TFG%20INTERFACE%20DEMO.mp4}
+
+\noindent
+The six screenshots that follow complement the video with full-page still captures of each major view, from global anatomy to branch-level metric inspection.
 
 \begin{figure}[H]
   \centering
@@ -122,7 +162,7 @@ Three-dimensional area and \%AS colormaps on the reconstructed tube surfaces:
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.80\linewidth]{{Figures/3 Interface Output/Figure 14. Interface 3.png}}
-  \caption{Modules~2 and~3 (initial view). Module~2 reports the automated patient clinical summary, including the CAD-RADS~2.0 category, segment involvement score (SIS), and territory rationale. Module~3 adds the selected segment label, artery-level context, and interactive segment-selection buttons; the three-dimensional artery view is colored by AHA segment, with each segment color matching its corresponding button. A table summarizes key segment metrics: maximum \%AS, area at the peak stenosis, proximal and distal reference areas, and the reference half-window $W$ used for quantification.}
+  \caption{Modules~2 and~3 (initial view). Module~2 reports the automated patient clinical summary, including the CAD-RADS~2.0 category, segment involvement score (SIS), and territory rationale. Module~3 adds the selected segment label, artery-level context, and interactive segment-selection buttons; the three-dimensional artery view is colored by SCCT-18 segment, with each segment color matching its corresponding button. A table summarizes key segment metrics: maximum \%AS, area at the peak stenosis, proximal and distal reference areas, and the reference half-window $W$ used for quantification.}
   \label{fig:interface-segment}
 \end{figure}
 

@@ -19,14 +19,6 @@ C.~Acebes~Pinilla et~al.
   vulnerable plaque.
 \newblock \url{https://www.artrya.com/}, 2024.
 
-\bibitem{austen1975}
-W.~G. Austen, J.~E. Edwards, R.~L. Frye, G.~G. Gensini, V.~L. Gott, L.~S.
-  Griffith, D.~C. McGoon, M.~L. Murphy, and B.~B. Roe.
-\newblock A reporting system on patients evaluated for coronary artery disease.
-  {Report} of the {Ad Hoc Committee} for grading of coronary artery disease,
-  {Council} on {Cardiovascular Surgery}, {American Heart Association}.
-\newblock {\em Circulation}, 51(4 Suppl):5--40, 1975.
-
 \bibitem{bangor2009}
 Aaron Bangor, Philip Kortum, and James Miller.
 \newblock Determining what individual {SUS} scores mean: Adding an adjective
@@ -147,6 +139,16 @@ J.~Knuuti, W.~Wijns, A.~Saraste, D.~Capodanno, E.~Barbato, C.~Funck-Brentano,
 \newblock 2019 {ESC} guidelines for the diagnosis and management of chronic
   coronary syndromes.
 \newblock {\em European Heart Journal}, 41(3):407--477, 2020.
+
+\bibitem{leipsic2014}
+Jonathon Leipsic, Suhny Abbara, Stephan Achenbach, Ricardo Cury, James~P.
+  Earls, G.~B.~John Mancini, Koen Nieman, Gianluca Pontone, and Gilbert~L.
+  Raff.
+\newblock {SCCT} guidelines for the interpretation and reporting of coronary
+  {CT} angiography: A report of the society of cardiovascular computed
+  tomography guidelines committee.
+\newblock {\em Journal of Cardiovascular Computed Tomography}, 8(5):342--358,
+  2014.
 
 \bibitem{litjens2017}
 G.~Litjens, T.~Kooi, B.~E. Bejnordi, A.~A.~A. Setio, F.~Ciompi, M.~Ghafoorian,

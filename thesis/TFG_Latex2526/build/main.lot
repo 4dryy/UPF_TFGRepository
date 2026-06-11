@@ -8,9 +8,9 @@
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \contentsline {table}{\numberline {2.1}{\ignorespaces Overview of the four pipeline blocks: processing role, primary inputs, and principal outputs per patient case. Block~2 yields \%AS profiles; Block~3 produces the CAD-RADS~2.0 report.}}{9}{table.2.1}%
-\contentsline {table}{\numberline {2.2}{\ignorespaces AHA 17-segment dictionary used for anatomical labeling and CAD-RADS~2.0 territory grouping across RCA, LCA, left anterior descending (LAD), left circumflex (LCx), and left main (LM) territories. Adapted from Austen et al.~\cite {austen1975}.}}{16}{table.2.2}%
+\contentsline {table}{\numberline {2.2}{\ignorespaces SCCT-18 segment dictionary used for anatomical labeling and CAD-RADS~2.0 territory grouping across RCA, LCA, left anterior descending (LAD), left circumflex (LCx), and left main (LM) territories. Adapted from Leipsic et al.~\cite {leipsic2014}.}}{16}{table.2.2}%
 \contentsline {table}{\numberline {2.3}{\ignorespaces CAD-RADS~2.0 luminal stenosis categories applied to maximum segment-level \%AS. Adapted from Cury et al.~\cite {cury2022}.}}{17}{table.2.3}%
-\contentsline {table}{\numberline {2.4}{\ignorespaces CAD-RADS~2.0 triage territories per AHA 17-segment model. Adapted from Austen et al.\ and Cury et al.~\cite {austen1975,cury2022}.}}{17}{table.2.4}%
+\contentsline {table}{\numberline {2.4}{\ignorespaces CAD-RADS~2.0 triage territories per SCCT-18 model. Adapted from Leipsic et al.\ and Cury et al.~\cite {leipsic2014,cury2022}.}}{17}{table.2.4}%
 \contentsline {table}{\numberline {2.5}{\ignorespaces Real-data evaluation metrics used in \Cref {subsec:validation-asoca,subsec:validation-macs}.}}{20}{table.2.5}%
 \contentsline {table}{\numberline {2.6}{\ignorespaces Acceptance bands for real-data pipeline metrics (ESR, OISR, CESR, and EISR as defined in \Cref {tab:validation-real-metrics}).}}{20}{table.2.6}%
 \contentsline {table}{\numberline {2.7}{\ignorespaces Acceptance thresholds for synthetic model verification.}}{22}{table.2.7}%
@@ -20,9 +20,9 @@
 \contentsline {table}{\numberline {3.2}{\ignorespaces OISR and CESR by ASOCA and MACS-18 cohort and subgroup (\%).}}{24}{table.3.2}%
 \contentsline {table}{\numberline {3.3}{\ignorespaces Mean pipeline runtimes for ASOCA and MACS-18 by block (seconds).}}{24}{table.3.3}%
 \contentsline {table}{\numberline {3.4}{\ignorespaces Synthetic validation outcomes ($W = 10$\,mm reference half-window). \%AS and cross-sectional area errors versus analytical ground truth.}}{25}{table.3.4}%
-\contentsline {table}{\numberline {3.5}{\ignorespaces SUS raw Likert responses (1--5). P1--P3 denote participants 1--3.}}{25}{table.3.5}%
-\contentsline {table}{\numberline {3.6}{\ignorespaces SUS score summary by participant and metrics.}}{25}{table.3.6}%
+\contentsline {table}{\numberline {3.5}{\ignorespaces SUS score summary by participant and cohort metrics.}}{25}{table.3.5}%
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }
+\contentsline {table}{\numberline {A.1}{\ignorespaces SUS raw Likert responses (1--5). P1--P3 denote participants 1--3 in \Cref {sec:results-ux}.}}{39}{table.Alph1.1}%
 \addvspace {10\p@ }

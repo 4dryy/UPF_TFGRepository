@@ -148,71 +148,36 @@ As \Cref{tab:synthetic-validation-outcomes} below shows, pipeline execution on b
 \section{Coronary Artery Dashboard Visualization Output}
 \label{sec:results-dashboard}
 
-Running validated pipeline outputs through Block~4 produces the clinical visualization views described in \Cref{sec:methodology-block4}. For representative patient cases, these include global RCA and LCA renderings, the automated CAD-RADS~2.0 report with SIS, and synchronized segment- and branch-level area and \%AS profiles. Full module-by-module screenshots are collected in \Cref{app:extended-dashboard}.
+Running validated pipeline outputs through Block~4 produces the clinical visualization views described in \Cref{sec:methodology-block4}. For representative patient cases, these include global RCA and LCA renderings, the automated CAD-RADS~2.0 report with SIS, and synchronized segment- and branch-level area and \%AS profiles. Static module-by-module screenshots are collected in \Cref{app:extended-dashboard}; to complement them, the Author recorded a screen-capture demonstration video of the live interface, also provided in that appendix, so readers can follow the interactive workflow beyond isolated still images.
 
 \section{User Experience and Interface Usability Evaluation}
 \label{sec:results-ux}
 
-Following the medical expert evaluation in \Cref{subsec:validation-ux}, \Cref{tab:sus-raw,tab:sus-summary} report the raw Likert responses and computed SUS scores (questionnaire wording in \Cref{app:sus-questionnaire}).
+Following \Cref{subsec:validation-ux}, three evaluators at Hospital de la Santa Creu i Sant Pau completed a guided Block~4 session and the standard ten-item System Usability Scale (SUS) questionnaire~\cite{brooke1996}. The group comprised two expert cardiologists and one biomedical engineer. The questionnaire wording appears in \Cref{app:sus-questionnaire}, the item-level responses in \Cref{tab:sus-raw}, and \Cref{tab:sus-summary} below lists the converted SUS score for each participant together with the cohort mean and standard deviation.
 
-\vspace{-1.5em}
-\noindent
-\begin{minipage}[t]{0.52\textwidth}
-  \begin{table}[H]
-    \caption{SUS raw Likert responses (1--5). P1--P3 denote participants 1--3.}
-    \label{tab:sus-raw}
-    \vspace{0.5em}
-    \centering
-    \small
-    \renewcommand{\arraystretch}{1.2}
-    \setlength{\tabcolsep}{4pt}
-    \begin{tabular}{@{}lrrr@{}}
-      \toprule
-      \cellcolor{gray!12}\textbf{Item} &
-      \cellcolor{gray!12}\textbf{P1} &
-      \cellcolor{gray!12}\textbf{P2} &
-      \cellcolor{gray!12}\textbf{P3} \\
-      \midrule
-      Question~1 & 4 & 5 & 4 \\
-      Question~2 & 1 & 3 & 1 \\
-      Question~3 & 3 & 5 & 4 \\
-      Question~4 & 3 & 3 & 1 \\
-      Question~5 & 3 & 4 & 4 \\
-      Question~6 & 3 & 2 & 2 \\
-      Question~7 & 2 & 4 & 4 \\
-      Question~8 & 3 & 2 & 1 \\
-      Question~9 & 3 & 3 & 4 \\
-      Question~10 & 3 & 2 & 1 \\
-      \bottomrule
-    \end{tabular}
-  \end{table}
-\end{minipage}\hfill
-\begin{minipage}[t]{0.42\textwidth}
-  \begin{table}[H]
-    \caption{SUS score summary by participant and metrics.}
-    \label{tab:sus-summary}
-    \vspace{0.5em}
-    \centering
-    \small
-    \renewcommand{\arraystretch}{1.2}
-    \setlength{\tabcolsep}{4pt}
-    \begin{tabular}{@{}lr@{}}
-      \toprule
-      \cellcolor{gray!12}\textbf{Participant} &
-      \cellcolor{gray!12}\textbf{Score} \\
-      \midrule
-      Participant 1 & 55.0 \\
-      Participant 2 & 72.5 \\
-      Participant 3 & 85.0 \\
-      \midrule
-      Mean & 70.83 \\
-      Std.\ dev. & 15.07 \\
-      \bottomrule
-    \end{tabular}
-  \end{table}
-\end{minipage}
+\begin{table}[H]
+  \caption{SUS score summary by participant and cohort metrics.}
+  \label{tab:sus-summary}
+  \vspace{0.5em}
+  \centering
+  \small
+  \renewcommand{\arraystretch}{1.35}
+  \setlength{\tabcolsep}{6pt}
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.46\linewidth}r@{}}
+    \toprule
+    \cellcolor{gray!12}\textbf{Participant} &
+    \cellcolor{gray!12}\textbf{SUS Score} \\
+    \midrule
+    Expert Cardiologist & 55.0 \\
+    Biomedical Engineer & 72.5 \\
+    Expert Cardiologist & 85.0 \\
+    \midrule
+    Mean & 70.83 \\
+    Std.\ dev. & 15.07 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
 
-\vspace{0.75em}
 The mean SUS score was 70.83 (SD = 15.07), placing the dashboard in the \emph{Good} band ($\geq$68) of \Cref{tab:validation-sus-thresholds}.
 
 % Restore default paragraph spacing for subsequent chapters

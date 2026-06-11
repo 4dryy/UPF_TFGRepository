@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.5.29)  11 JUN 2026 15:49
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.5.29)  11 JUN 2026 21:15
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -961,15 +961,10 @@ l.119 \clearpage
 ] (frontmatter/abstracts.tex
 LaTeX Info: Redefining \. on input line 14.
 LaTeX Info: Redefining \% on input line 14.
-)
-Overfull \hbox (5.99658pt too wide) in paragraph at lines 28--138
-\OT1/ptm/m/n/10.95 (CAD-RADS 2.0), Steno-sis Quan-tifi-ca-tion, Per-cent-age Ar
-ea Steno-sis (%AS), Vas-cu-lar Cen-ter-lines, Three-
- []
+) [5
 
-[5
-
-] [6
+]
+[6
 
 ] (frontmatter/preface.tex
 LaTeX Font Info:    External font `cmex10' loaded for size
@@ -1003,14 +998,9 @@ LaTeX Info: Redefining \. on input line 2.
 LaTeX Info: Redefining \% on input line 2.
 LaTeX Info: Redefining \. on input line 5.
 LaTeX Info: Redefining \% on input line 5.
-
-Overfull \hbox (1.7065pt too wide) in paragraph at lines 18--18
- [][] [][]\OT1/ptm/m/n/10.95 Block 3 work-flow: seg-ment ag-gre-ga-tion based o
-n the Amer-i-can Heart As-so-ci-a-tion (AHA) 
- []
-
 LaTeX Font Info:    Trying to load font information for OT1+pcr on input line 2
 2.
+
 (C:\Users\adria\AppData\Local\Programs\MiKTeX\tex/latex/psnfss\ot1pcr.fd
 File: ot1pcr.fd 2001/06/04 font definitions for OT1/pcr.
 )
@@ -1035,7 +1025,7 @@ LaTeX Info: Redefining \% on input line 5.
 
 ] (chapters/01_introduction.tex
 Chapter 1.
-<figures and tables/1_Introduction/Figure 1. Coronary Arteries.png, id=531, 224
+<figures and tables/1_Introduction/Figure 1. Coronary Arteries.png, id=532, 224
 3.38126pt x 1442.38875pt>
 File: figures and tables/1_Introduction/Figure 1. Coronary Arteries.png Graphic
  file (type png)
@@ -1057,7 +1047,7 @@ l.27
 
  <./figures and tables/1_Introduction/Figure 1. Coronary Arteries.png>]
 <figures and tables/1_Introduction/Figure 2. Coronary Artery Disease.png, id=54
-7, 544.0325pt x 347.2975pt>
+8, 544.0325pt x 347.2975pt>
 File: figures and tables/1_Introduction/Figure 2. Coronary Artery Disease.png G
 raphic file (type png)
 <use figures and tables/1_Introduction/Figure 2. Coronary Artery Disease.png>
@@ -1067,7 +1057,7 @@ rtery Disease.png  used on input line 37.
 [2 <./figures and tables/1_Introduction/Figure 2. Coronary Artery Disease.png (
 PNG copy)>] [3]
 <figures and tables/1_Introduction/Figure 3. Current CAD Diagnostic Workflow HS
-P (2).pdf, id=584, 721.08398pt x 326.68047pt>
+P (2).pdf, id=586, 721.08398pt x 326.68047pt>
 File: figures and tables/1_Introduction/Figure 3. Current CAD Diagnostic Workfl
 ow HSP (2).pdf Graphic file (type pdf)
 <use figures and tables/1_Introduction/Figure 3. Current CAD Diagnostic Workflo
@@ -1078,7 +1068,7 @@ D Diagnostic Workflow HSP (2).pdf  used on input line 76.
  [4 <./figures and tables/1_Introduction/Figure 3. Current CAD Diagnostic Workf
 low HSP (2).pdf>]
 <figures and tables/1_Introduction/Figure 4. Current Image Analysis and Reporti
-ng Workflow HSP (2).pdf, id=608, 722.7pt x 312.88895pt>
+ng Workflow HSP (2).pdf, id=610, 722.7pt x 312.88895pt>
 File: figures and tables/1_Introduction/Figure 4. Current Image Analysis and Re
 porting Workflow HSP (2).pdf Graphic file (type pdf)
 <use figures and tables/1_Introduction/Figure 4. Current Image Analysis and Rep
@@ -1089,7 +1079,7 @@ age Analysis and Reporting Workflow HSP (2).pdf  used on input line 92.
  [5 <./figures and tables/1_Introduction/Figure 4. Current Image Analysis and R
 eporting Workflow HSP (2).pdf>]
 <figures and tables/1_Introduction/Figure 5. Proposed Image Analysis and Report
-ing Workflow HSP (2).pdf, id=659, 722.07768pt x 293.44632pt>
+ing Workflow HSP (2).pdf, id=662, 722.07768pt x 293.44632pt>
 File: figures and tables/1_Introduction/Figure 5. Proposed Image Analysis and R
 eporting Workflow HSP (2).pdf Graphic file (type pdf)
 <use figures and tables/1_Introduction/Figure 5. Proposed Image Analysis and Re
@@ -1101,7 +1091,7 @@ mage Analysis and Reporting Workflow HSP (2).pdf  used on input line 123.
 (chapters/02_methodology.tex [7 <./figures and tables/1_Introduction/Figure 5. 
 Proposed Image Analysis and Reporting Workflow HSP (2).pdf>]
 Chapter 2.
-<figures and tables/2_Methodology/Figure 1. E2E Workflow Diagram.pdf, id=693, 6
+<figures and tables/2_Methodology/Figure 1. E2E Workflow Diagram.pdf, id=696, 6
 88.0305pt x 401.69072pt>
 File: figures and tables/2_Methodology/Figure 1. E2E Workflow Diagram.pdf Graph
 ic file (type pdf)
@@ -1118,8 +1108,8 @@ LaTeX Font Info:    External font `cmex10' loaded for size
 (Font)              <5> on input line 35.
 
 [9]
-<figures and tables/2_Methodology/Figure 2. Block 1 Workflow Diagram.pdf, id=74
-6, 722.7pt x 394.39346pt>
+<figures and tables/2_Methodology/Figure 2. Block 1 Workflow Diagram.pdf, id=75
+0, 722.7pt x 394.39346pt>
 File: figures and tables/2_Methodology/Figure 2. Block 1 Workflow Diagram.pdf G
 raphic file (type pdf)
 <use figures and tables/2_Methodology/Figure 2. Block 1 Workflow Diagram.pdf>
@@ -1129,7 +1119,7 @@ kflow Diagram.pdf  used on input line 90.
  [10 <./figures and tables/2_Methodology/Figure 2. Block 1 Workflow Diagram.pdf
 >] [11]
 <figures and tables/2_Methodology/Figure 3. Block 2 Workflow Diagram.pdf, id=80
-1, 722.7pt x 391.26173pt>
+5, 722.7pt x 391.26173pt>
 File: figures and tables/2_Methodology/Figure 3. Block 2 Workflow Diagram.pdf G
 raphic file (type pdf)
 <use figures and tables/2_Methodology/Figure 3. Block 2 Workflow Diagram.pdf>
@@ -1146,19 +1136,16 @@ onal
 
 [13] [14]
 <figures and tables/2_Methodology/Figure 4. Block 3 Workflow Diagram.pdf, id=86
-4, 722.28848pt x 385.85155pt>
+8, 713.90714pt x 380.84283pt>
 File: figures and tables/2_Methodology/Figure 4. Block 3 Workflow Diagram.pdf G
 raphic file (type pdf)
 <use figures and tables/2_Methodology/Figure 4. Block 3 Workflow Diagram.pdf>
 Package pdftex.def Info: figures and tables/2_Methodology/Figure 4. Block 3 Wor
 kflow Diagram.pdf  used on input line 187.
-(pdftex.def)             Requested size: 455.24411pt x 243.19373pt.
+(pdftex.def)             Requested size: 455.24411pt x 242.86108pt.
  [15 <./figures and tables/2_Methodology/Figure 4. Block 3 Workflow Diagram.pdf
->]
-LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <9> on input line 209.
- [16] [17] [18] [19] [20]
-Overfull \hbox (3.16136pt too wide) in paragraph at lines 440--441
+>] [16] [17] [18] [19] [20]
+Overfull \hbox (3.16136pt too wide) in paragraph at lines 441--442
 []\OT1/ptm/m/n/10.95 Clinically, steno-sis quan-tifi-ca-tion would typ-i-cally 
 be eval-u-ated by com-par-ing al-go-rith-mic CAD-RADS 2.0
  []
@@ -1166,7 +1153,7 @@ be eval-u-ated by com-par-ing al-go-rith-mic CAD-RADS 2.0
 [21]) (chapters/03_results.tex [22]
 Chapter 3.
 <figures and tables/3_Results/Figures/1 Pipeline Execution ASOCA vs. MACS-18/Fi
-gure 1 and 2 Merged.pdf, id=1000, 707.75415pt x 186.025pt>
+gure 1 and 2 Merged.pdf, id=1009, 707.75415pt x 186.025pt>
 File: figures and tables/3_Results/Figures/1 Pipeline Execution ASOCA vs. MACS-
 18/Figure 1 and 2 Merged.pdf Graphic file (type pdf)
 <use figures and tables/3_Results/Figures/1 Pipeline Execution ASOCA vs. MACS-1
@@ -1179,7 +1166,7 @@ ion ASOCA vs. MACS-18/Figure 1 and 2 Merged.pdf  used on input line 17.
  <./figures and tables/3_Results/Figures/1 Pipeline Execution ASOCA vs. MACS-18
 /Figure 1 and 2 Merged.pdf>]
 <figures and tables/3_Results/Figures/2 Synthetic Samples/Figure 6. Synthetic T
-ubes with Centerline.pdf, id=1031, 704.12057pt x 98.82922pt>
+ubes with Centerline.pdf, id=1040, 704.12057pt x 98.82922pt>
 File: figures and tables/3_Results/Figures/2 Synthetic Samples/Figure 6. Synthe
 tic Tubes with Centerline.pdf Graphic file (type pdf)
 <use figures and tables/3_Results/Figures/2 Synthetic Samples/Figure 6. Synthet
@@ -1195,7 +1182,7 @@ Chapter 4.
 
 ] [27]
 <figures and tables/4_Discussions/Figure 11. Bifurcation Stenosis v2.pdf, id=10
-89, 694.11322pt x 334.19858pt>
+99, 694.11322pt x 334.19858pt>
 File: figures and tables/4_Discussions/Figure 11. Bifurcation Stenosis v2.pdf G
 raphic file (type pdf)
 <use figures and tables/4_Discussions/Figure 11. Bifurcation Stenosis v2.pdf>
@@ -1210,13 +1197,13 @@ Chapter 5.
 2526\build\_compile\main.bbl [33
 
 ]
-Underfull \hbox (badness 10000) in paragraph at lines 74--80
+Underfull \hbox (badness 10000) in paragraph at lines 66--72
 []\OT1/ptm/m/n/10.95 Cleveland Clinic.  Coro-nary ar-ter-ies: Anatomy and func-
 tion.  []$\OT1/pcr/m/n/10.95 https : / / my .
  []
 
 
-Underfull \hbox (badness 1675) in paragraph at lines 74--80
+Underfull \hbox (badness 1675) in paragraph at lines 66--72
 \OT1/pcr/m/n/10.95 clevelandclinic . org / health / body / 22973-[]coronary-[]a
 rteries$[]\OT1/ptm/m/n/10.95 , 2024.  Ac-
  []
@@ -1228,9 +1215,11 @@ Appendix A.
 [37
 
 
-] [38]
+] [38] [39
+
+]
 <figures and tables/3_Results/Figures/1 Pipeline Execution ASOCA vs. MACS-18/Fi
-gure 3. Distribution Of Detected Endpoints ASOCA vs. MACS18.png, id=1195, 640.7
+gure 3. Distribution Of Detected Endpoints ASOCA vs. MACS18.png, id=1212, 640.7
 94pt x 387.849pt>
 File: figures and tables/3_Results/Figures/1 Pipeline Execution ASOCA vs. MACS-
 18/Figure 3. Distribution Of Detected Endpoints ASOCA vs. MACS18.png Graphic fi
@@ -1239,73 +1228,76 @@ le (type png)
 8/Figure 3. Distribution Of Detected Endpoints ASOCA vs. MACS18.png>
 Package pdftex.def Info: figures and tables/3_Results/Figures/1 Pipeline Execut
 ion ASOCA vs. MACS-18/Figure 3. Distribution Of Detected Endpoints ASOCA vs. MA
-CS18.png  used on input line 53.
+CS18.png  used on input line 86.
 (pdftex.def)             Requested size: 341.43307pt x 206.65974pt.
 <figures and tables/3_Results/Figures/1 Pipeline Execution ASOCA vs. MACS-18/Fi
-gure 4. Ostium Centerline Metrics.png, id=1198, 466.6233pt x 387.849pt>
+gure 4. Ostium Centerline Metrics.png, id=1215, 466.6233pt x 387.849pt>
 File: figures and tables/3_Results/Figures/1 Pipeline Execution ASOCA vs. MACS-
 18/Figure 4. Ostium Centerline Metrics.png Graphic file (type png)
 <use figures and tables/3_Results/Figures/1 Pipeline Execution ASOCA vs. MACS-1
 8/Figure 4. Ostium Centerline Metrics.png>
 Package pdftex.def Info: figures and tables/3_Results/Figures/1 Pipeline Execut
 ion ASOCA vs. MACS-18/Figure 4. Ostium Centerline Metrics.png  used on input li
-ne 60.
+ne 93.
 (pdftex.def)             Requested size: 341.43307pt x 283.80798pt.
+ [40
 
-Overfull \hbox (1.89264pt too wide) in paragraph at lines 68--69
+ <./figures and tables/3_Results/Figures/1 Pipeline Execution ASOCA vs. MACS-18
+/Figure 3. Distribution Of Detected Endpoints ASOCA vs. MACS18.png> <./figures 
+and tables/3_Results/Figures/1 Pipeline Execution ASOCA vs. MACS-18/Figure 4. O
+stium Centerline Metrics.png>]
+Overfull \hbox (1.89264pt too wide) in paragraph at lines 102--103
 \OT1/ptm/m/n/10.95 ure []3.2[]. The fig-ures be-low pro-vide the ex-tended vi-s
 ual ev-i-dence for the same two mod-els: \OT1/pcr/m/n/10.95 synthetic[]1
  []
 
-[39 <./figures and tables/3_Results/Figures/1 Pipeline Execution ASOCA vs. MACS
--18/Figure 3. Distribution Of Detected Endpoints ASOCA vs. MACS18.png> <./figur
-es and tables/3_Results/Figures/1 Pipeline Execution ASOCA vs. MACS-18/Figure 4
-. Ostium Centerline Metrics.png>]
 <figures and tables/3_Results/Figures/2 Synthetic Samples/Figure 7. Synthetic 1
- Profiles.pdf, id=1211, 702.26367pt x 324.79341pt>
+ Profiles.pdf, id=1227, 702.26367pt x 324.79341pt>
 File: figures and tables/3_Results/Figures/2 Synthetic Samples/Figure 7. Synthe
 tic 1 Profiles.pdf Graphic file (type pdf)
 <use figures and tables/3_Results/Figures/2 Synthetic Samples/Figure 7. Synthet
 ic 1 Profiles.pdf>
 Package pdftex.def Info: figures and tables/3_Results/Figures/2 Synthetic Sampl
-es/Figure 7. Synthetic 1 Profiles.pdf  used on input line 74.
+es/Figure 7. Synthetic 1 Profiles.pdf  used on input line 108.
 (pdftex.def)             Requested size: 455.24411pt x 210.54822pt.
 <figures and tables/3_Results/Figures/2 Synthetic Samples/Figure 8. Synthetic 2
- Profiles.pdf, id=1212, 701.64134pt x 322.29408pt>
+ Profiles.pdf, id=1228, 701.64134pt x 322.29408pt>
 File: figures and tables/3_Results/Figures/2 Synthetic Samples/Figure 8. Synthe
 tic 2 Profiles.pdf Graphic file (type pdf)
 <use figures and tables/3_Results/Figures/2 Synthetic Samples/Figure 8. Synthet
 ic 2 Profiles.pdf>
 Package pdftex.def Info: figures and tables/3_Results/Figures/2 Synthetic Sampl
-es/Figure 8. Synthetic 2 Profiles.pdf  used on input line 81.
+es/Figure 8. Synthetic 2 Profiles.pdf  used on input line 115.
 (pdftex.def)             Requested size: 455.24411pt x 209.1149pt.
- [40 <./figures and tables/3_Results/Figures/2 Synthetic Samples/Figure 7. Synt
-hetic 1 Profiles.pdf> <./figures and tables/3_Results/Figures/2 Synthetic Sampl
-es/Figure 8. Synthetic 2 Profiles.pdf
+[41
+
+ <./figures and tables/3_Results/Figures/2 Synthetic Samples/Figure 7. Syntheti
+c 1 Profiles.pdf> <./figures and tables/3_Results/Figures/2 Synthetic Samples/F
+igure 8. Synthetic 2 Profiles.pdf
 
 pdfTeX warning: pdflatex (file ./figures and tables/3_Results/Figures/2 Synthet
 ic Samples/Figure 8. Synthetic 2 Profiles.pdf): PDF inclusion: multiple pdfs wi
 th page group included in a single page
 >]
 <figures and tables/3_Results/Figures/2 Synthetic Samples/Figure 9. Synthetic 1
- Area and Stenosis Tubes.pdf, id=1226, 450.8243pt x 393.7611pt>
+ Area and Stenosis Tubes.pdf, id=1242, 450.8243pt x 393.7611pt>
 File: figures and tables/3_Results/Figures/2 Synthetic Samples/Figure 9. Synthe
 tic 1 Area and Stenosis Tubes.pdf Graphic file (type pdf)
 <use figures and tables/3_Results/Figures/2 Synthetic Samples/Figure 9. Synthet
 ic 1 Area and Stenosis Tubes.pdf>
 Package pdftex.def Info: figures and tables/3_Results/Figures/2 Synthetic Sampl
-es/Figure 9. Synthetic 1 Area and Stenosis Tubes.pdf  used on input line 91.
+es/Figure 9. Synthetic 1 Area and Stenosis Tubes.pdf  used on input line 125.
 (pdftex.def)             Requested size: 341.43307pt x 298.22209pt.
 <figures and tables/3_Results/Figures/2 Synthetic Samples/Figure 10. Synthetic 
-2 Area and Stenosis Tubes.pdf, id=1227, 472.76625pt x 396.90283pt>
+2 Area and Stenosis Tubes.pdf, id=1243, 472.76625pt x 396.90283pt>
 File: figures and tables/3_Results/Figures/2 Synthetic Samples/Figure 10. Synth
 etic 2 Area and Stenosis Tubes.pdf Graphic file (type pdf)
 <use figures and tables/3_Results/Figures/2 Synthetic Samples/Figure 10. Synthe
 tic 2 Area and Stenosis Tubes.pdf>
 Package pdftex.def Info: figures and tables/3_Results/Figures/2 Synthetic Sampl
-es/Figure 10. Synthetic 2 Area and Stenosis Tubes.pdf  used on input line 98.
+es/Figure 10. Synthetic 2 Area and Stenosis Tubes.pdf  used on input line 132.
 (pdftex.def)             Requested size: 341.43307pt x 286.64796pt.
- [41
+ [42
 
  <./figures and tables/3_Results/Figures/2 Synthetic Samples/Figure 9. Syntheti
 c 1 Area and Stenosis Tubes.pdf> <./figures and tables/3_Results/Figures/2 Synt
@@ -1315,72 +1307,79 @@ pdfTeX warning: pdflatex (file ./figures and tables/3_Results/Figures/2 Synthet
 ic Samples/Figure 10. Synthetic 2 Area and Stenosis Tubes.pdf): PDF inclusion: 
 multiple pdfs with page group included in a single page
 >]
+Overfull \hbox (44.07529pt too wide) in paragraph at lines 143--144
+[]$\OT1/pcr/m/n/10.95 https : / / github . com / 4dryy / UPF _ TFGRepository / 
+blob / main / TFG % 20INTERFACE % 20DEMO .
+ []
+
 <figures and tables/3_Results/Figures/3 Interface Output/Figure 12. Interface 1
-.png, id=1258, 1401.73688pt x 278.54062pt>
+.png, id=1275, 1401.73688pt x 278.54062pt>
 File: figures and tables/3_Results/Figures/3 Interface Output/Figure 12. Interf
 ace 1.png Graphic file (type png)
 <use figures and tables/3_Results/Figures/3 Interface Output/Figure 12. Interfa
 ce 1.png>
 Package pdftex.def Info: figures and tables/3_Results/Figures/3 Interface Outpu
-t/Figure 12. Interface 1.png  used on input line 110.
+t/Figure 12. Interface 1.png  used on input line 150.
 (pdftex.def)             Requested size: 364.19667pt x 72.36784pt.
 <figures and tables/3_Results/Figures/3 Interface Output/Figure 13. Interface 2
-.png, id=1259, 1396.4672pt x 676.77844pt>
+.png, id=1276, 1396.4672pt x 676.77844pt>
 File: figures and tables/3_Results/Figures/3 Interface Output/Figure 13. Interf
 ace 2.png Graphic file (type png)
 <use figures and tables/3_Results/Figures/3 Interface Output/Figure 13. Interfa
 ce 2.png>
 Package pdftex.def Info: figures and tables/3_Results/Figures/3 Interface Outpu
-t/Figure 13. Interface 2.png  used on input line 117.
+t/Figure 13. Interface 2.png  used on input line 157.
 (pdftex.def)             Requested size: 364.19667pt x 176.50555pt.
 <figures and tables/3_Results/Figures/3 Interface Output/Figure 14. Interface 3
-.png, id=1260, 1395.71437pt x 680.5425pt>
+.png, id=1277, 1395.71437pt x 680.5425pt>
 File: figures and tables/3_Results/Figures/3 Interface Output/Figure 14. Interf
 ace 3.png Graphic file (type png)
 <use figures and tables/3_Results/Figures/3 Interface Output/Figure 14. Interfa
 ce 3.png>
 Package pdftex.def Info: figures and tables/3_Results/Figures/3 Interface Outpu
-t/Figure 14. Interface 3.png  used on input line 124.
+t/Figure 14. Interface 3.png  used on input line 164.
 (pdftex.def)             Requested size: 364.19667pt x 177.58069pt.
- [42 <./figures and tables/3_Results/Figures/3 Interface Output/Figure 12. Inte
-rface 1.png> <./figures and tables/3_Results/Figures/3 Interface Output/Figure 
-13. Interface 2.png>]
+[43
+
+ <./figures and tables/3_Results/Figures/3 Interface Output/Figure 12. Interfac
+e 1.png> <./figures and tables/3_Results/Figures/3 Interface Output/Figure 13. 
+Interface 2.png>]
 <figures and tables/3_Results/Figures/3 Interface Output/Figure 15. Interface 4
-.png, id=1267, 1395.71437pt x 663.22781pt>
+.png, id=1285, 1395.71437pt x 663.22781pt>
 File: figures and tables/3_Results/Figures/3 Interface Output/Figure 15. Interf
 ace 4.png Graphic file (type png)
 <use figures and tables/3_Results/Figures/3 Interface Output/Figure 15. Interfa
 ce 4.png>
 Package pdftex.def Info: figures and tables/3_Results/Figures/3 Interface Outpu
-t/Figure 15. Interface 4.png  used on input line 131.
+t/Figure 15. Interface 4.png  used on input line 171.
 (pdftex.def)             Requested size: 364.19667pt x 173.0626pt.
 <figures and tables/3_Results/Figures/3 Interface Output/Figure 16. Interface 5
-.png, id=1268, 1400.98407pt x 664.73344pt>
+.png, id=1286, 1400.98407pt x 664.73344pt>
 File: figures and tables/3_Results/Figures/3 Interface Output/Figure 16. Interf
 ace 5.png Graphic file (type png)
 <use figures and tables/3_Results/Figures/3 Interface Output/Figure 16. Interfa
 ce 5.png>
 Package pdftex.def Info: figures and tables/3_Results/Figures/3 Interface Outpu
-t/Figure 16. Interface 5.png  used on input line 138.
+t/Figure 16. Interface 5.png  used on input line 178.
 (pdftex.def)             Requested size: 364.19667pt x 172.79619pt.
- [43 <./figures and tables/3_Results/Figures/3 Interface Output/Figure 14. Inte
+ [44 <./figures and tables/3_Results/Figures/3 Interface Output/Figure 14. Inte
 rface 3.png> <./figures and tables/3_Results/Figures/3 Interface Output/Figure 
 15. Interface 4.png>]
 <figures and tables/3_Results/Figures/3 Interface Output/Figure 17. Interface 6
-.png, id=1275, 1407.00656pt x 692.5875pt>
+.png, id=1293, 1407.00656pt x 692.5875pt>
 File: figures and tables/3_Results/Figures/3 Interface Output/Figure 17. Interf
 ace 6.png Graphic file (type png)
 <use figures and tables/3_Results/Figures/3 Interface Output/Figure 17. Interfa
 ce 6.png>
 Package pdftex.def Info: figures and tables/3_Results/Figures/3 Interface Outpu
-t/Figure 17. Interface 6.png  used on input line 145.
+t/Figure 17. Interface 6.png  used on input line 185.
 (pdftex.def)             Requested size: 364.19667pt x 179.26532pt.
 )
-(chapters/07_appendix_source_code.tex [44 <./figures and tables/3_Results/Figur
+(chapters/07_appendix_source_code.tex [45 <./figures and tables/3_Results/Figur
 es/3 Interface Output/Figure 16. Interface 5.png> <./figures and tables/3_Resul
 ts/Figures/3 Interface Output/Figure 17. Interface 6.png>]
 Appendix B.
-) [45
+) [46
 
 ]
 (C:/Users\adria\OneDrive\Escriptori\UPF'\TFG\UPF_TFGRepository\thesis\TFG_Latex
@@ -1395,14 +1394,14 @@ LaTeX2e <2025-11-01>
 L3 programming layer <2025-12-24>
  ***********
 Package rerunfilecheck Info: File `main.out' has not changed.
-(rerunfilecheck)             Checksum: 783965318C3E0B561D9F88684CF98116;12963.
+(rerunfilecheck)             Checksum: B69DB8CA110F39E4F2F38BBA114B0026;13112.
  ) 
 Here is how much of TeX's memory you used:
- 26086 strings out of 467871
- 518668 string characters out of 5418376
+ 26074 strings out of 467871
+ 518522 string characters out of 5418376
  922375 words of memory out of 5000000
- 54269 multiletter control sequences out of 15000+600000
- 668525 words of font info for 100 fonts, out of 8000000 for 9000
+ 54261 multiletter control sequences out of 15000+600000
+ 664402 words of font info for 93 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  84i,17n,94p,1280b,843s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <C:/Users/adria/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/
@@ -1423,9 +1422,9 @@ fb><C:/Users/adria/AppData/Local/Programs/MiKTeX/fonts/type1/urw/times/utmr8a.p
 fb><C:/Users/adria/AppData/Local/Programs/MiKTeX/fonts/type1/urw/times/utmri8a.
 pfb>
 Output written on C:/Users\adria\OneDrive\Escriptori\UPF'\TFG\UPF_TFGRepository
-\thesis\TFG_Latex2526\build\_compile\main.pdf (61 pages, 7495133 bytes).
+\thesis\TFG_Latex2526\build\_compile\main.pdf (62 pages, 7501421 bytes).
 PDF statistics:
- 1398 PDF objects out of 1440 (max. 8388607)
- 213 named destinations out of 1000 (max. 500000)
+ 1416 PDF objects out of 1440 (max. 8388607)
+ 214 named destinations out of 1000 (max. 500000)
  577 words of extra memory for PDF output out of 10000 (max. 10000000)
 
