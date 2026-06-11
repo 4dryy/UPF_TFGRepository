@@ -1333,7 +1333,7 @@ def main() -> None:
                         "<hr class='section-divider-branch-viz' aria-hidden='true'>",
                         unsafe_allow_html=True,
                     )
-                    # --- CAD-RADS 2.0 + AHA segment viewer (Block 3 exports) ---
+                    # --- CAD-RADS 2.0 + SCCT-18 segment viewer (Block 3 exports) ---
                     _cad = load_block3_cad_rads_patient_report_row(PROJECT_ROOT, patient_id)
                     if _cad is not None:
                         _cat_raw = _cad.get("CAD_RADS_Category")

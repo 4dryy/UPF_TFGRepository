@@ -7,7 +7,7 @@ Patient IDs encode the dataset (no extra metadata tag is needed in results):
 - ``Synthetic_1``, ``Synthetic_2`` — synthetic phantoms
 
 All three cohorts share input formats (segmentation mask ``.nrrd`` with two RCA/LCA labels +
-AHA-segment volume ``.nii.gz``), so Blocks 1-4 run with the *same* methodology on all of them.
+SCCT-18 segment label volume ``.nii.gz``), so Blocks 1-4 run with the *same* methodology on all of them.
 The only thing that changes per cohort is where on disk the files live; that is what this
 module encapsulates.
 """
@@ -153,7 +153,7 @@ def resolve_mask_nrrd_path(patient_id: str) -> Path:
 
 
 def resolve_segment_label_path(patient_id: str) -> Path | None:
-    """Return AHA segment label ``.nii.gz`` if present (``None`` for synthetic cases)."""
+    """Return SCCT-18 segment label ``.nii.gz`` if present (``None`` for synthetic cases)."""
     pid = str(patient_id).strip()
     if patient_cohort(pid) == "synthetic":
         return None

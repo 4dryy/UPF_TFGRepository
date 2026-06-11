@@ -19,6 +19,8 @@ from plotly.colors import qualitative as plotly_qualitative
 from plotly.subplots import make_subplots
 import pyvista as pv
 
+from src.segment_atlas import segment_id_to_name, segment_name_map
+
 def _window_mm_from_block2_source() -> float | None:
     """Parse active ``WINDOW_MM = …`` from disk (ignores commented-out alternatives)."""
     from src.blocks import _02_stenosis as block2
@@ -102,26 +104,8 @@ def _discrete_plotly_color_list() -> tuple[str, ...]:
 
 _DISCRETE_SEGMENT_COLORS: tuple[str, ...] = _discrete_plotly_color_list()
 
-# AHA 17-segment names (aligned with Block 3; unmapped IDs get a fallback label).
-_SEGMENT_ID_TO_NAME: dict[int, str] = {
-    1: "Proximal RCA",
-    2: "Mid RCA",
-    3: "Distal RCA",
-    4: "Right PDA",
-    5: "Left Main",
-    6: "Proximal LAD",
-    7: "Mid LAD",
-    8: "Distal LAD",
-    9: "First diagonal (D1)",
-    10: "Second diagonal (D2)",
-    11: "Proximal LCX",
-    12: "First obtuse marginal (OM1)",
-    13: "Distal LCX",
-    14: "Second obtuse marginal (OM2)",
-    15: "Left coronary PDA",
-    16: "LCX inferolateral branch",
-    17: "LCX posterolateral branch",
-}
+# SCCT-18 segment names (``src.segment_atlas``; unmapped IDs get a fallback label).
+_SEGMENT_ID_TO_NAME: dict[int, str] = segment_name_map()
 
 
 def _segment_label(sid: Any) -> str:
@@ -131,7 +115,8 @@ def _segment_label(sid: Any) -> str:
         return "—"
     if i == 0:
         return "Unassigned"
-    return _SEGMENT_ID_TO_NAME.get(i, f"Unmapped segment {i}")
+    name = segment_id_to_name(i)
+    return name if name is not None else f"Unmapped segment {i}"
 
 
 def _mesh_to_mesh3d_traces(
@@ -2146,7 +2131,7 @@ def segment_pct_as_peak_reference_summary(
     window_mm: float | None = None,
 ) -> dict[str, Any]:
     """
-    For one AHA ``segment_id``, on the ordered segment polyline: index of **max finite %AS**,
+    For one SCCT-18 ``segment_id``, on the ordered segment polyline: index of **max finite %AS**,
     **Area** at that point, and **Area** at proximal / distal references.
 
     When the table includes Block 2 columns ``Area_prox`` / ``Area_dist`` (e.g. ``total_df`` from
@@ -2159,7 +2144,7 @@ def segment_pct_as_peak_reference_summary(
 
     Boolean flags ``prox_ref_on_segment_bar`` / ``dist_ref_on_segment_bar`` indicate whether each
     reference area is represented on this segment's Area bars (same Area as a row in the segment
-    subset). If ``False``, the reference cross-section typically lies on another AHA segment along
+    subset). If ``False``, the reference cross-section typically lies on another SCCT-18 segment along
     the branch; the value is still the one used for ``pct_AS`` at the peak.
     """
     w = float(reference_window_mm() if window_mm is None else window_mm)
@@ -2448,7 +2433,7 @@ def create_segment_centerline_metric_bars(
     artery: str,
 ) -> go.Figure:
     """
-    Same layout as ``create_branch_centerline_metric_bars`` for **one AHA segment** (all points
+    Same layout as ``create_branch_centerline_metric_bars`` for **one SCCT-18 segment** (all points
     with that ``Segment_ID`` in the artery table), ordered along the tree. **Area** bars are
     symmetric about ``y=0`` (``-A/2`` … ``+A/2``). Purple marks max %AS
     on both Area and %AS rows. **Green** on the **Area** row only marks proximal / distal reference

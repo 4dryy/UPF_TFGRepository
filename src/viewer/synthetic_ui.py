@@ -504,7 +504,7 @@ def render_synthetic_dashboard(
         "<div class='cad-rads-summary-panel'>"
         f"<h3 class='cad-rads-main-title'>Patient CAD-RADS 2.0: {_na_label}</h3>"
         "<p><strong>Mode</strong>: Synthetic single-tube validation — clinical CAD-RADS, "
-        "SIS, and AHA segment scoring are not applicable.</p>"
+        "SIS, and SCCT-18 segment scoring are not applicable.</p>"
         "<p>Use the validation metrics and geodesic profile below to compare measured "
         "<strong>%AS</strong> and <strong>Area</strong> against the known ground truth "
         "of the phantom.</p>"

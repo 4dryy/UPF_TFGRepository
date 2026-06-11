@@ -28,6 +28,7 @@ from scipy.spatial import cKDTree
 from skimage.morphology import skeletonize
 from src.pipeline_log import configure_logging, footer_block, phase, short_path, sub
 from src.pipeline_metrics import Block1ExtractionMetrics
+from src.segment_atlas import TARGET_SEGMENT_BY_ARTERY
 from src.synthetic_profile import (
     SYNTHETIC_ARTERY,
     apply_synthetic_metadata,
@@ -68,9 +69,6 @@ def _record_artery_extraction_metrics(
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DATA_ROOT = PROJECT_ROOT / "data"
 RESULTS_ROOT = PROJECT_ROOT / "results" / "block1_results"
-
-TARGET_SEGMENT_BY_ARTERY: dict[str, int] = {"RCA": 1, "LCA": 5}
-
 
 def _physical_to_volume_voxels(
     world_xyz: np.ndarray, origin: np.ndarray, spacing: np.ndarray
@@ -1080,7 +1078,7 @@ def _run_block1_synthetic(
     t_start: float,
     extraction_metrics: Block1ExtractionMetrics,
 ) -> Block1Result:
-    """Single-tube synthetic mask: one centerline, no RCA/LCA split or AHA segments."""
+    """Single-tube synthetic mask: one centerline, no RCA/LCA split or SCCT-18 segments."""
     sub(logger, "Synthetic mode: %s", short_path(nrrd_path))
     artery_mask, spacing, origin = _load_single_mask(nrrd_path)
 

@@ -227,7 +227,7 @@ Shared helpers in **`src/pipeline_log.py`** (`configure_logging`, banners, phase
 Block 3 consumes Block 2 outputs and creates the patient-level clinical summary package:
 
 - **Label phase:** consolidates per-branch stenosis-labelled dataframes and exports patient-level tree tables.
-- **Segment stenosis phase:** aggregates stenosis metrics at segment level (AHA mapping), including handling of unmapped Segment IDs.
+- **Segment stenosis phase:** aggregates stenosis metrics at segment level using the **SCCT-18** atlas (`src/segment_atlas.py`), including handling of unmapped Segment IDs.
 - **CAD-RADS phase:** applies the rule-based CAD-RADS 2.0 logic and exports:
   - `patient_report_<Patient_ID>.xlsx`
   - `patient_id_card_<Patient_ID>.png`
@@ -381,6 +381,7 @@ UPF_TFGRepository/
 ├── src/
 │   ├── _pipeline.py                  # Main entrypoint — chains all blocks + shared log style
 │   ├── cohort_paths.py               # Cohort-aware input resolution (ASOCA/MACS-18/Synthetic)
+│   ├── segment_atlas.py              # SCCT-18 segment dictionary, territories, and SIS denominator rules
 │   ├── pipeline_log.py               # Concise banners / phase lines / footers for terminal logs
 │   ├── pipeline_metrics.py           # Per-sample metrics workbook + resilient write retries
 │   ├── viewer/
@@ -423,7 +424,7 @@ The pipeline supports three cohorts with the same end-to-end workflow:
 - **MACS-18** (re-annotated ASOCA): `MACS_Normal_1..20`, `MACS_Diseased_1..20`
 - **Synthetic validation**: `Synthetic_1`, `Synthetic_2`
 
-Input format is consistent across clinical cohorts (`.nrrd` lumen mask + optional `.nii.gz` segment labels), so methodology is identical; only path resolution changes by patient ID prefix.
+Input format is consistent across clinical cohorts (`.nrrd` lumen mask + optional `.nii.gz` segment labels encoded with the **SCCT-18** integer atlas), so methodology is identical; only path resolution changes by patient ID prefix.
 
 ### Cohort prefixes
 
@@ -468,3 +469,4 @@ This keeps the repository lightweight while preserving reproducible outputs and 
 | **%DS** | Percentage Diameter Stenosis |
 | **%AS** | Percentage Area Stenosis |
 | **ASOCA** | Automated Segmentation of Coronary Arteries (MICCAI 2020) |
+| **SCCT** | Society of Cardiovascular Computed Tomography (18-segment coronary model used in production) |

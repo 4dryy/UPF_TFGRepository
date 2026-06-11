@@ -2,7 +2,7 @@
 Block 3: label-enriched exports, segment-wise stenosis aggregation, and CAD-RADS 2.0.
 
 Phase 1 mirrors Block 2 stenosis under ``label/`` and emits segment QC figures.
-Phase 2 aggregates ``pct_AS`` by ``Segment_ID`` (AHA 17-atlas) to ``segment stenosis/``.
+Phase 2 aggregates ``pct_AS`` by ``Segment_ID`` (SCCT-18 atlas) to ``segment stenosis/``.
 Phase 3 scores CAD-RADS 2.0 and writes ``cad-rads/`` report + patient ID card.
 """
 
@@ -30,6 +30,13 @@ import pyvista as pv
 import seaborn as sns
 
 from src.pipeline_log import footer_block, phase, short_path, sub
+from src.segment_atlas import (
+    KNOWN_SCCT18_SEGMENT_IDS,
+    LEFT_MAIN_SEGMENT_ID,
+    TERRITORY_SEGMENTS,
+    build_scct18_segment_dictionary,
+    sis_denominator_for_segment_summary,
+)
 from src.synthetic_profile import (
     SYNTHETIC_ARTERY,
     SYNTHETIC_CAD_RADS_LABEL,
@@ -56,18 +63,6 @@ BLOCK3_LABELS_ALT = PROJECT_ROOT / "results" / "block3_results" / "labels"
 BLOCK3_SEGMENT_STENOSIS_ROOT = PROJECT_ROOT / "results" / "block3_results" / "segment stenosis"
 BLOCK3_CADRADS_ROOT = PROJECT_ROOT / "results" / "block3_results" / "cad-rads"
 
-# JCCT 2022 CAD-RADS 2.0 — territory groupings (17-segment AHA-style atlas used in notebooks).
-LEFT_MAIN_SEGMENT_ID = 5
-TERRITORY_SEGMENTS: dict[str, set[int]] = {
-    "RCA": {1, 2, 3, 4},
-    "LAD": {6, 7, 8, 9, 10},
-    "LCX": {11, 12, 13, 14, 15, 16, 17},
-}
-KNOWN_CADRADS_SEGMENTS: set[int] = set().union(*TERRITORY_SEGMENTS.values(), {LEFT_MAIN_SEGMENT_ID})
-
-# SIS denominator: one count per analyzable plaque-bearing segment in the 17-segment model (notebook parity).
-EXPECTED_SIS_SEGMENT_COUNT = 17
-
 RISK_PRIORITY_MAP: dict[str, dict[str, object]] = {
     "0": {"Priority_Risk_Score": 0, "Priority_Risk_Label": "Very low priority"},
     "1": {"Priority_Risk_Score": 1, "Priority_Risk_Label": "Low priority"},
@@ -87,32 +82,6 @@ class Block3Outputs(NamedTuple):
     patient_report_path: Path
     patient_id_card_path: Path
     final_cad_rads_code: str
-
-
-def build_aha17_segment_dictionary() -> pd.DataFrame:
-    """
-    Full 17-segment coronary map (RCA 1–4; LM 5; LAD 6–10; LCX 11–17), aligned with the Block 3 notebooks.
-    """
-    rows: list[dict[str, object]] = [
-        {"Segment_ID": 1, "Segment_Name": "Proximal RCA", "Artery_Type": "RCA", "Specific_Artery": "RCA"},
-        {"Segment_ID": 2, "Segment_Name": "Mid RCA", "Artery_Type": "RCA", "Specific_Artery": "RCA"},
-        {"Segment_ID": 3, "Segment_Name": "Distal RCA", "Artery_Type": "RCA", "Specific_Artery": "RCA"},
-        {"Segment_ID": 4, "Segment_Name": "Right PDA", "Artery_Type": "RCA", "Specific_Artery": "RCA"},
-        {"Segment_ID": 5, "Segment_Name": "Left Main", "Artery_Type": "LCA", "Specific_Artery": "LCA"},
-        {"Segment_ID": 6, "Segment_Name": "Proximal LAD", "Artery_Type": "LCA", "Specific_Artery": "LAD"},
-        {"Segment_ID": 7, "Segment_Name": "Mid LAD", "Artery_Type": "LCA", "Specific_Artery": "LAD"},
-        {"Segment_ID": 8, "Segment_Name": "Distal LAD", "Artery_Type": "LCA", "Specific_Artery": "LAD"},
-        {"Segment_ID": 9, "Segment_Name": "First diagonal (D1)", "Artery_Type": "LCA", "Specific_Artery": "LAD"},
-        {"Segment_ID": 10, "Segment_Name": "Second diagonal (D2)", "Artery_Type": "LCA", "Specific_Artery": "LAD"},
-        {"Segment_ID": 11, "Segment_Name": "Proximal LCX", "Artery_Type": "LCA", "Specific_Artery": "LCX"},
-        {"Segment_ID": 12, "Segment_Name": "First obtuse marginal (OM1)", "Artery_Type": "LCA", "Specific_Artery": "LCX"},
-        {"Segment_ID": 13, "Segment_Name": "Distal LCX", "Artery_Type": "LCA", "Specific_Artery": "LCX"},
-        {"Segment_ID": 14, "Segment_Name": "Second obtuse marginal (OM2)", "Artery_Type": "LCA", "Specific_Artery": "LCX"},
-        {"Segment_ID": 15, "Segment_Name": "Left coronary PDA", "Artery_Type": "LCA", "Specific_Artery": "LCX"},
-        {"Segment_ID": 16, "Segment_Name": "LCX inferolateral branch", "Artery_Type": "LCA", "Specific_Artery": "LCX"},
-        {"Segment_ID": 17, "Segment_Name": "LCX posterolateral branch", "Artery_Type": "LCA", "Specific_Artery": "LCX"},
-    ]
-    return pd.DataFrame(rows).sort_values("Segment_ID")
 
 
 def resolve_global_tree_path(sample_name: str) -> Path:
@@ -367,7 +336,7 @@ def run_block3_phase1(patient_id: str, *, emit_footer: bool = True) -> Path:
 def run_segment_stenosis_phase(patient_id: str, segment_dictionary: pd.DataFrame) -> tuple[pd.DataFrame, Path]:
     """Aggregate by segment; write ``stenosis_summary_{id}.xlsx`` (_07 notebook parity)."""
     sample_name = patient_id
-    phase(logger, "3b", "Segment stenosis · AHA aggregation")
+    phase(logger, "3b", "Segment stenosis · SCCT-18 aggregation")
 
     tree_path = resolve_global_tree_path(sample_name)
     total_df_merged = pd.read_excel(tree_path)
@@ -386,7 +355,7 @@ def run_segment_stenosis_phase(patient_id: str, segment_dictionary: pd.DataFrame
     unmapped_present = sorted(present - defined)
     if unmapped_present:
         logger.warning(
-            "Segment_ID values in data not listed in the 17-segment dictionary: %s — "
+            "Segment_ID values in data not listed in the SCCT-18 dictionary: %s — "
             "they will be summarized as unmapped segments.",
             unmapped_present,
         )
@@ -575,10 +544,10 @@ def compute_cad_rads_patient_level(segment_summary: pd.DataFrame) -> dict[str, A
     lm_max_pct = lm_df["Max_pct_AS_Clipped"].max() if not lm_df.empty else np.nan
     lm_stenosis_50plus = bool(pd.notna(lm_max_pct) and float(lm_max_pct) >= 50)
 
-    unmapped_for_territories = ss.loc[~ss["Segment_ID"].isin(KNOWN_CADRADS_SEGMENTS)].copy()
+    unmapped_for_territories = ss.loc[~ss["Segment_ID"].isin(KNOWN_SCCT18_SEGMENT_IDS)].copy()
     if not unmapped_for_territories.empty:
         logger.warning(
-            "Segments included in global maximum/SIS but not in RCA/LAD/LCX/LM territory sets: %s",
+            "Segment_ID values not in the SCCT-18 atlas: %s",
             sorted(unmapped_for_territories["Segment_ID"].dropna().unique().tolist()),
         )
 
@@ -615,6 +584,7 @@ def compute_cad_rads_patient_level(segment_summary: pd.DataFrame) -> dict[str, A
 
     plaque_segments = ss.loc[ss["Max_pct_AS_Clipped"] > 0].copy()
     sis_score = int(plaque_segments["Segment_ID"].nunique())
+    sis_denominator = sis_denominator_for_segment_summary(ss)
 
     if sis_score == 0:
         plaque_modifier = None
@@ -643,7 +613,7 @@ def compute_cad_rads_patient_level(segment_summary: pd.DataFrame) -> dict[str, A
     sis_mod = f", {plaque_modifier}" if plaque_modifier else ""
     clinical_interpretation = (
         f"{cad_rads_rationale}\n\n"
-        f"Plaque burden: {plaque_category} (SIS {sis_score} / {EXPECTED_SIS_SEGMENT_COUNT}{sis_mod}). "
+        f"Plaque burden: {plaque_category} (SIS {sis_score} / {sis_denominator}{sis_mod}). "
         "Automated CAD-RADS 2.0 triage from CCTA-derived segment stenosis; confirm clinically."
     )
 
@@ -661,7 +631,7 @@ def compute_cad_rads_patient_level(segment_summary: pd.DataFrame) -> dict[str, A
                 "Left_Main_50plus": lm_stenosis_50plus,
                 "Three_Vessel_Severe_70plus": three_vessel_severe_70,
                 "SIS_Score": sis_score,
-                "SIS_Denominator": EXPECTED_SIS_SEGMENT_COUNT,
+                "SIS_Denominator": sis_denominator,
                 "Plaque_Modifier": plaque_modifier if plaque_modifier else "Not required",
                 "Plaque_Category": plaque_category,
                 "Priority_Risk_Score": priority_risk_score,
@@ -681,6 +651,7 @@ def compute_cad_rads_patient_level(segment_summary: pd.DataFrame) -> dict[str, A
         "highest_stenosis_location": highest_stenosis_location,
         "highest_stenosis_pct": highest_stenosis_pct,
         "sis_score": sis_score,
+        "sis_denominator": sis_denominator,
         "plaque_modifier": plaque_modifier,
         "plaque_category": plaque_category,
         "clinical_interpretation": clinical_interpretation,
@@ -886,7 +857,7 @@ def run_cad_rads_export_phase(patient_id: str, segment_summary: pd.DataFrame) ->
         plaque_modifier=cad["plaque_modifier"] if cad["plaque_modifier"] else None,
         plaque_category=str(cad["plaque_category"]),
         sis_score=int(cad["sis_score"]),
-        sis_denominator=int(EXPECTED_SIS_SEGMENT_COUNT),
+        sis_denominator=int(cad["sis_denominator"]),
         top_segments=top_n,
         cad_rads_rationale=str(cad["cad_rads_rationale"]),
         highest_location=str(cad["highest_stenosis_location"]),
@@ -1067,7 +1038,7 @@ def run_block3(patient_id: str, *, is_synthetic: bool = False) -> Block3Outputs:
     t0 = time.perf_counter()
     sample_name = patient_id
 
-    segment_dictionary = build_aha17_segment_dictionary()
+    segment_dictionary = build_scct18_segment_dictionary()
 
     label_dir = run_block3_phase1(patient_id, emit_footer=False)
     seg_summary, st_path = run_segment_stenosis_phase(patient_id, segment_dictionary)
@@ -1101,5 +1072,5 @@ __all__ = [
     "run_block3",
     "run_block3_phase1",
     "Block3Outputs",
-    "build_aha17_segment_dictionary",
+    "build_scct18_segment_dictionary",
 ]

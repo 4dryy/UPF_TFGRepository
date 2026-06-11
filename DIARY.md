@@ -507,6 +507,26 @@ Every work session must be recorded using the following structure:
 
 ---
 
+### 2026-06-11 — SCCT-18 documentation sync (non-thesis)
+
+* **🎯 Objectives:** Align repository documentation and exploratory notebooks with the production **SCCT-18** segment atlas (`src/segment_atlas.py`), leaving thesis sources unchanged for a later pass.
+
+* **✅ Progress & Tasks Completed:**
+  * **`README.md`:** Block 3 segment-stenosis wording, project tree (`segment_atlas.py`), cohort label encoding, and acronym legend updated to SCCT-18.
+  * **`CONTEXT.md`:** Pipeline blocks, ASOCA labels, synthetic bypass notes, acronym legend, and new **§6.3 MACS-18** dataset section updated.
+  * **Block 3 notebooks:** `_06_segment_labeling`, `_07_segment_stenosis`, and `_08_cad-rads_scoring` now reference SCCT-18; `_07`/`_08` import territory/dictionary helpers from `src.segment_atlas` (dynamic SIS denominator in `_08`).
+  * **CMPR experiment notebook:** RCA segment filter renamed/documented as SCCT-18 segments 1–4.
+
+* **💡 Key Decisions:**
+  * **Single source of truth** — notebooks mirror production imports rather than duplicating inline segment tables.
+  * **Thesis deferred** — `thesis/TFG_Latex2526/` intentionally untouched until thesis correction session.
+
+* **⏭️ Next Steps:**
+  * Update thesis methodology/results text and figures from AHA-17 to SCCT-18.
+  * Re-run Block 3 notebooks on a MACS sample to refresh stale output cells if needed for figures.
+
+---
+
 ## Acronym Legend
 
 | Acronym | Definition |
@@ -527,3 +547,5 @@ Every work session must be recorded using the following structure:
 | **MIS** | Maximum Inscribed Sphere (radius) |
 | **QA** | Quality Assurance (visual/numeric sanity checking) |
 | **ASOCA** | Automated Segmentation of Coronary Arteries (MICCAI 2020) |
+| **SCCT** | Society of Cardiovascular Computed Tomography (18-segment coronary model; `src/segment_atlas.py`) |
+| **MACS-18** | Multiclass Anatomical Coronary Segmentation — re-annotated ASOCA cohort at Sant Pau |
