@@ -55,13 +55,16 @@ def reference_window_mm() -> float:
     return live
 
 
+# Translucent lumen surface in Plotly 3D views (white scene background; keep centerline readable).
+_SURFACE_MESH_OPACITY = 0.50
+
 # Branch viewer colors (match Streamlit dashboard + extrema highlights).
 _BRANCH_PROFILE_ORANGE = "#f57c00"
 _BRANCH_PROFILE_BLUE = "#0092c7"
 PROFILE_QUANTIFIED_AREA_BLUE = _BRANCH_PROFILE_BLUE
 _BRANCH_EXTREMA_PURPLE = "#a855f7"
 _BRANCH_REF_WINDOW_GREEN = "#2e7d32"
-_BRANCH_UNQUANTIFIED_BLACK = "#1a1a1a"  # %AS profile row: outside ±window reference (matches 3D unquantified)
+_BRANCH_UNQUANTIFIED_BLACK = "#6b7280"  # %AS profile row: outside ±window reference (visible on dark UI)
 _BRANCH_UNQUANTIFIED_AREA_GREY = "#9ca3af"  # Area profile row only: outside ±window (visible on dark background)
 PROFILE_AREA_OUTSIDE_REFERENCE_GREY = _BRANCH_UNQUANTIFIED_AREA_GREY
 _SEGMENT_3D_SELECTED_PATH = "#1c1c1c"  # selected segment overlay (line + markers; dark, not amber)
@@ -621,7 +624,7 @@ def create_3d_mesh_branch_path_highlight(
         j=mj,
         k=mk,
         color="lightgrey",
-        opacity=0.2,
+        opacity=_SURFACE_MESH_OPACITY,
         flatshading=True,
         lighting=dict(ambient=0.85, diffuse=0.4, specular=0.15),
         hoverinfo="skip",
@@ -876,7 +879,7 @@ def create_3d_artery_plot(
         j=mj,
         k=mk,
         color="lightgrey",
-        opacity=0.2,
+        opacity=_SURFACE_MESH_OPACITY,
         flatshading=True,
         lighting=dict(ambient=0.85, diffuse=0.4, specular=0.15),
         hoverinfo="skip",
@@ -1283,14 +1286,14 @@ def _create_centerline_profile_bars_figure(
         col=1,
     )
 
-    # Light Streamlit shell: dark axes/titles on transparent plot background.
-    _axis_title_font = dict(color="#1a1a1a", size=13)
-    _axis_tick_font = dict(color="#333333", size=11)
+    # Dark Streamlit shell: light axes/titles on transparent plot background.
+    _axis_title_font = dict(color="#e8e8e8", size=13)
+    _axis_tick_font = dict(color="#c4c4c4", size=11)
     grid_kw: dict[str, Any] = dict(
         showgrid=True,
-        gridcolor="rgba(0, 0, 0, 0.12)",
+        gridcolor="rgba(255, 255, 255, 0.12)",
         zeroline=True,
-        zerolinecolor="rgba(0, 0, 0, 0.28)",
+        zerolinecolor="rgba(255, 255, 255, 0.28)",
         zerolinewidth=1,
     )
     fig.update_xaxes(
@@ -1299,7 +1302,7 @@ def _create_centerline_profile_bars_figure(
         tickfont=_axis_tick_font,
         tickangle=-60 if n > 35 else -45,
         showline=True,
-        linecolor="rgba(0, 0, 0, 0.35)",
+        linecolor="rgba(255, 255, 255, 0.35)",
         mirror=True,
         **grid_kw,
         row=2,
@@ -1311,7 +1314,7 @@ def _create_centerline_profile_bars_figure(
         title_font=_axis_title_font,
         tickfont=_axis_tick_font,
         showline=True,
-        linecolor="rgba(0, 0, 0, 0.35)",
+        linecolor="rgba(255, 255, 255, 0.35)",
         mirror=True,
         **grid_kw,
         row=1,
@@ -1322,25 +1325,25 @@ def _create_centerline_profile_bars_figure(
         title_font=_axis_title_font,
         tickfont=_axis_tick_font,
         showline=True,
-        linecolor="rgba(0, 0, 0, 0.35)",
+        linecolor="rgba(255, 255, 255, 0.35)",
         mirror=True,
         **grid_kw,
         row=2,
         col=1,
     )
     fig.update_layout(
-        template="plotly_white",
+        template="plotly_dark",
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
-        font=dict(color="#1a1a1a", family="Inter, Segoe UI, system-ui, sans-serif", size=12),
+        font=dict(color="#e8e8e8", family="Inter, Segoe UI, system-ui, sans-serif", size=12),
         margin=dict(t=88, r=24, b=56, l=64),
         hovermode="closest",
-        hoverlabel=dict(bgcolor="#ffffff", font_color="#1a1a1a", font_size=12),
+        hoverlabel=dict(bgcolor="#262730", font_color="#fafafa", font_size=12),
         showlegend=False,
         height=800,
         bargap=0.22,
     )
-    fig.update_annotations(font=dict(color="#1a1a1a", size=13))
+    fig.update_annotations(font=dict(color="#e8e8e8", size=13))
     # Nudge the lower subplot title up so it does not sit on the %AS grid.
     if len(fig.layout.annotations) >= 2:
         ann_pct = fig.layout.annotations[1]
@@ -2258,7 +2261,7 @@ def create_3d_mesh_segment_path_highlight(
         j=mj,
         k=mk,
         color="lightgrey",
-        opacity=0.2,
+        opacity=_SURFACE_MESH_OPACITY,
         flatshading=True,
         lighting=dict(ambient=0.85, diffuse=0.4, specular=0.15),
         hoverinfo="skip",

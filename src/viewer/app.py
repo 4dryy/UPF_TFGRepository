@@ -183,8 +183,9 @@ def _segment_pick_button_style_block(
 ) -> str:
     """Per-segment Streamlit button colors (matches 3D discrete segment palette)."""
     art = str(artery).strip().upper()
-    sel_bg = "#f5f5f5"
-    sel_bg_hover = "#ebebeb"
+    sel_bg = _UI_BG_ELEVATED
+    sel_bg_hover = "#353945"
+    sel_text = _UI_TEXT
     chunks: list[str] = []
     for sid, _name, _mx in seg_rows:
         key_fragment = f"seg_pick_btn_{art}_{int(sid)}"
@@ -201,9 +202,9 @@ def _segment_pick_button_style_block(
             f"border-color:rgba(0,0,0,0.35)!important;}}"
             f"{base} button[kind=\"primary\"]{{background-color:{sel_bg}!important;"
             f"background-image:none!important;border:2px solid {bc}!important;"
-            f"box-shadow:inset 0 0 0 1px rgba(0,0,0,0.12)!important;color:#1a1a1a!important;}}"
+            f"box-shadow:inset 0 0 0 1px rgba(255,255,255,0.12)!important;color:{sel_text}!important;}}"
             f"{base} button[kind=\"primary\"] p,{base} button[kind=\"primary\"] span,"
-            f"{base} button[kind=\"primary\"] div{{color:#1a1a1a!important;}}"
+            f"{base} button[kind=\"primary\"] div{{color:{sel_text}!important;}}"
             f"{base} button[kind=\"primary\"]:hover{{background-color:{sel_bg_hover}!important;"
             f"filter:none!important;border-color:{bc}!important;}}"
         )
@@ -243,7 +244,11 @@ def _logo_data_uri(path: Path) -> str:
 AUTHOR_NAME = "Adrià Cortés Cugat"
 DEGREE_NAME = "Mathematical Engineering in Data Science"
 
-# Typography: Inter via Google Fonts; global CSS sets a white app shell.
+# Dark UI tokens for segment-picker button CSS (aligned with .streamlit/config.toml).
+_UI_BG_ELEVATED = "#262730"
+_UI_TEXT = "#fafafa"
+
+# Typography: Inter via Google Fonts; global CSS sets a dark app shell.
 _APP_STYLE = """
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -251,13 +256,13 @@ _APP_STYLE = """
 <style>
     html, body {
         font-family: 'Inter', 'Segoe UI', system-ui, sans-serif !important;
-        background-color: #ffffff !important;
-        color: #1a1a1a !important;
+        background-color: #0e1117 !important;
+        color: #fafafa !important;
     }
     [class*="css"] {
         font-family: 'Inter', 'Segoe UI', system-ui, sans-serif !important;
     }
-    /* White shell (overrides Streamlit theme tint on main blocks) */
+    /* Dark shell (overrides Streamlit theme tint on main blocks) */
     .stApp,
     [data-testid="stAppViewContainer"],
     [data-testid="stAppViewContainer"] > div,
@@ -267,19 +272,25 @@ _APP_STYLE = """
     .block-container,
     [data-testid="stVerticalBlock"],
     [data-testid="stHorizontalBlock"] {
-        background-color: #ffffff !important;
-        color: #1a1a1a !important;
+        background-color: #0e1117 !important;
+        color: #fafafa !important;
     }
     header[data-testid="stHeader"] {
-        background-color: #ffffff !important;
+        background-color: #0e1117 !important;
     }
     [data-testid="stSidebar"],
     [data-testid="stSidebar"] > div {
-        background-color: #ffffff !important;
+        background-color: #262730 !important;
     }
     [data-testid="stToolbar"],
     [data-testid="stDecoration"] {
-        background-color: #ffffff !important;
+        background-color: #0e1117 !important;
+    }
+    [data-testid="stMarkdownContainer"] p,
+    [data-testid="stMarkdownContainer"] li,
+    [data-testid="stMarkdownContainer"] span,
+    .stAlert p {
+        color: #c4c4c4 !important;
     }
     /* Header logos: raw HTML row (not st.columns) so UPF truly hugs the right edge */
     .header-logo-row {
@@ -314,7 +325,7 @@ _APP_STYLE = """
     hr.title-above-rule,
     hr.title-below-rule {
         border: none !important;
-        border-top: 1px solid #e0e0e0 !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.14) !important;
         height: 0 !important;
         background: transparent !important;
     }
@@ -337,7 +348,7 @@ _APP_STYLE = """
     }
     hr.section-divider-branch-viz {
         border: none !important;
-        border-top: 1px solid #e0e0e0 !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.14) !important;
         height: 0 !important;
         background: transparent !important;
         margin: 1.35rem 0 1.85rem 0 !important;
@@ -356,7 +367,7 @@ _APP_STYLE = """
         font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
         font-size: 0.875rem;
         line-height: 1.45;
-        color: #525252 !important;
+        color: #a3a3a3 !important;
         margin: 0;
         max-width: none;
         width: 100%;
@@ -381,12 +392,12 @@ _APP_STYLE = """
         letter-spacing: 0.04em;
         margin: 0 0 0.5rem 0 !important;
         font-size: clamp(1.35rem, 1rem + 1.1vw, 1.65rem);
-        color: #1a1a1a !important;
+        color: #fafafa !important;
     }
     p.branch-viz-window-line {
         font-family: 'Inter', 'Segoe UI', system-ui, sans-serif !important;
         font-size: clamp(0.8rem, 0.72rem + 0.3vw, 0.9rem) !important;
-        color: #6b6b6b !important;
+        color: #9ca3af !important;
         line-height: 1.5 !important;
         margin: 0 !important;
         padding: 0 !important;
@@ -397,8 +408,8 @@ _APP_STYLE = """
     }
     p.branch-viz-window-line code {
         font-size: inherit !important;
-        color: #333333 !important;
-        background: rgba(0,0,0,0.06);
+        color: #d4d4d8 !important;
+        background: rgba(255, 255, 255, 0.08);
         padding: 0.08rem 0.3rem;
         border-radius: 0.25rem;
     }
@@ -435,11 +446,11 @@ _APP_STYLE = """
         line-height: 1.5;
         overflow-wrap: anywhere;
         word-wrap: break-word;
-        color: #525252 !important;
+        color: #a3a3a3 !important;
     }
     .branch-viz-legend-col-wrap .branch-viz-legend-col-text strong,
     .branch-viz-legend-col-wrap .branch-viz-legend-col-text em {
-        color: #525252 !important;
+        color: #a3a3a3 !important;
     }
     /* Streamlit column markdown wrappers often cap width; stretch only our legend blocks */
     div[data-testid="column"] [data-testid="stMarkdownContainer"]:has(.branch-viz-legend-col-wrap),
@@ -454,8 +465,8 @@ _APP_STYLE = """
     }
     .branch-viz-legend code {
         font-size: 0.82em;
-        color: #333333 !important;
-        background: rgba(0,0,0,0.06);
+        color: #d4d4d8 !important;
+        background: rgba(255, 255, 255, 0.08);
         padding: 0.1rem 0.35rem;
         border-radius: 0.25rem;
     }
@@ -488,7 +499,7 @@ _APP_STYLE = """
         margin-top: 0.35rem;
         margin-bottom: 0 !important;
         padding-bottom: 0.45rem !important;
-        color: #111111 !important;
+        color: #fafafa !important;
         /* Large, responsive headline */
         font-size: clamp(2.5rem, 5.5vw, 4.25rem) !important;
     }
@@ -516,7 +527,7 @@ _APP_STYLE = """
         max-width: none !important;
         box-sizing: border-box !important;
         text-align: center;
-        color: #525252 !important;
+        color: #a3a3a3 !important;
         font-size: clamp(0.95rem, 0.82rem + 0.45vw, 1.08rem) !important;
     }
     /* Gap below lower title rule before colormap buttons */
@@ -538,7 +549,7 @@ _APP_STYLE = """
         letter-spacing: 0.04em;
         margin: 0 0 0.75rem 0;
         font-size: clamp(1.35rem, 1rem + 1.1vw, 1.65rem);
-        color: #1a1a1a !important;
+        color: #fafafa !important;
     }
     /* Same size as section plot titles; left-aligned for branch picker column */
     h3.artery-plot-title.branch-panel-heading {
@@ -593,10 +604,10 @@ _APP_STYLE = """
         font-size: 0.95rem !important;
         min-height: 3.75rem !important;
         padding: 1rem 1.25rem !important;
-        color: #525252 !important;
-        border: 1px solid #cccccc !important;
+        color: #a3a3a3 !important;
+        border: 1px solid #52525b !important;
         border-radius: 0.5rem !important;
-        background-color: #eeeeee !important;
+        background-color: #31333f !important;
         background-image: none !important;
         box-shadow: none !important;
         outline: none !important;
@@ -652,7 +663,7 @@ _APP_STYLE = """
         text-transform: uppercase !important;
         line-height: 1.12 !important;
         font-size: clamp(0.95rem, 0.52rem + 1.35vw, 1.15rem) !important;
-        color: #525252 !important;
+        color: #a3a3a3 !important;
     }
     [class*="st-key-"][class*="color_btn_pct_as"] button[kind="primary"]:hover,
     [class*="st-key-"][class*="color_btn_area"] button[kind="primary"]:hover,
@@ -674,9 +685,9 @@ _APP_STYLE = """
     [class*="st-key-"][class*="seg_viz_btn_lca"] button[kind="secondary"]:hover,
     [class*="st-key-"][class*="seg_viz_btn_rca"] button[kind="secondary"]:hover {
         filter: none !important;
-        background-color: #e0e0e0 !important;
-        border-color: #9e9e9e !important;
-        color: #1a1a1a !important;
+        background-color: #3f3f46 !important;
+        border-color: #71717a !important;
+        color: #fafafa !important;
         box-shadow: none !important;
         outline: none !important;
     }
@@ -698,7 +709,7 @@ _APP_STYLE = """
     [class*="st-key-"][class*="seg_viz_btn_lca"] button[kind="secondary"]:focus-visible,
     [class*="st-key-"][class*="seg_viz_btn_rca"] button[kind="secondary"]:focus-visible {
         filter: none !important;
-        background-color: #e0e0e0 !important;
+        background-color: #3f3f46 !important;
         outline: none !important;
         box-shadow: none !important;
     }
@@ -721,7 +732,7 @@ _APP_STYLE = """
     [class*="st-key-"][class*="seg_viz_btn_lca"] button[kind="secondary"]:active,
     [class*="st-key-"][class*="seg_viz_btn_rca"] button[kind="secondary"]:active {
         filter: none !important;
-        background-color: #d5d5d5 !important;
+        background-color: #52525b !important;
         color: #ffffff !important;
         box-shadow: none !important;
         outline: none !important;
@@ -769,17 +780,17 @@ _APP_STYLE = """
         box-shadow: 0 0 0 2px rgba(255, 183, 77, 0.45) !important;
     }
     [class*="st-key-"][class*="seg_pick_btn_"] button[kind="primary"] {
-        color: #1a1a1a !important;
-        border: 1px solid rgba(0, 0, 0, 0.22) !important;
-        background-color: #ffffff !important;
+        color: #fafafa !important;
+        border: 1px solid rgba(255, 255, 255, 0.22) !important;
+        background-color: #262730 !important;
         background-image: none !important;
-        box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12) !important;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12) !important;
     }
     [class*="st-key-"][class*="branch_pick_btn_"] button[kind="secondary"],
     [class*="st-key-"][class*="seg_pick_btn_"] button[kind="secondary"] {
-        color: #525252 !important;
-        border: 1px solid #cccccc !important;
-        background-color: #eeeeee !important;
+        color: #a3a3a3 !important;
+        border: 1px solid #52525b !important;
+        background-color: #31333f !important;
         background-image: none !important;
         box-shadow: none !important;
     }
@@ -792,18 +803,18 @@ _APP_STYLE = """
     [class*="st-key-"][class*="seg_pick_btn_"] button[kind="primary"] p,
     [class*="st-key-"][class*="seg_pick_btn_"] button[kind="primary"] span,
     [class*="st-key-"][class*="seg_pick_btn_"] button[kind="primary"] div {
-        color: #1a1a1a !important;
+        color: #fafafa !important;
     }
     [class*="st-key-"][class*="branch_pick_btn_"] button[kind="secondary"] p,
     [class*="st-key-"][class*="branch_pick_btn_"] button[kind="secondary"] span,
     [class*="st-key-"][class*="branch_pick_btn_"] button[kind="secondary"] div {
-        color: #525252 !important;
+        color: #a3a3a3 !important;
         font-weight: 700 !important;
     }
     [class*="st-key-"][class*="seg_pick_btn_"] button[kind="secondary"] p,
     [class*="st-key-"][class*="seg_pick_btn_"] button[kind="secondary"] span,
     [class*="st-key-"][class*="seg_pick_btn_"] button[kind="secondary"] div {
-        color: #525252 !important;
+        color: #a3a3a3 !important;
     }
     [class*="st-key-"][class*="seg_pick_btn_"] button[kind="primary"] p,
     [class*="st-key-"][class*="seg_pick_btn_"] button[kind="primary"] span,
@@ -820,15 +831,15 @@ _APP_STYLE = """
         box-shadow: 0 0 0 2px rgba(255, 224, 178, 0.55) !important;
     }
     [class*="st-key-"][class*="seg_pick_btn_"] button[kind="primary"]:hover {
-        background-color: #f5f5f5 !important;
-        border-color: rgba(0, 0, 0, 0.35) !important;
-        box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08) !important;
+        background-color: #353945 !important;
+        border-color: rgba(255, 255, 255, 0.35) !important;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08) !important;
     }
     [class*="st-key-"][class*="branch_pick_btn_"] button[kind="secondary"]:hover,
     [class*="st-key-"][class*="seg_pick_btn_"] button[kind="secondary"]:hover {
-        background-color: #e0e0e0 !important;
-        border-color: #9e9e9e !important;
-        color: #1a1a1a !important;
+        background-color: #3f3f46 !important;
+        border-color: #71717a !important;
+        color: #fafafa !important;
     }
     [class*="st-key-"][class*="branch_pick_btn_"] button[kind="primary"]:focus-visible,
     [class*="st-key-"][class*="branch_pick_btn_"] button[kind="secondary"]:focus-visible,
@@ -841,12 +852,12 @@ _APP_STYLE = """
         box-shadow: none !important;
     }
     [class*="st-key-"][class*="seg_pick_btn_"] button[kind="primary"]:active {
-        background-color: #ebebeb !important;
-        box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18) !important;
+        background-color: #3f3f46 !important;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18) !important;
     }
     [class*="st-key-"][class*="branch_pick_btn_"] button[kind="secondary"]:active,
     [class*="st-key-"][class*="seg_pick_btn_"] button[kind="secondary"]:active {
-        background-color: #d5d5d5 !important;
+        background-color: #52525b !important;
         color: #ffffff !important;
     }
     /* Reset view (LCA/RCA/branch / segment viz): Sant Pau–style cyan blue, bold label */
@@ -956,23 +967,23 @@ _APP_STYLE = """
         max-width: 100%;
         margin: 0.25rem 0 0.75rem 0;
         padding: 0.55rem 0.9rem 0.65rem 0.9rem;
-        border: 1px solid #e0e0e0;
+        border: 1px solid rgba(255, 255, 255, 0.14);
         border-radius: 0.45rem;
-        background: #f7f7f7;
+        background: #1c1f26;
         box-sizing: border-box;
     }
     .seg-ref-summary-panel p {
         font-family: 'Inter', 'Segoe UI', system-ui, sans-serif !important;
         font-size: 0.88rem !important;
         line-height: 1.5 !important;
-        color: #424242 !important;
+        color: #d4d4d8 !important;
         margin: 0.28rem 0 !important;
     }
     p.seg-viz-section-intro {
         font-family: 'Inter', 'Segoe UI', system-ui, sans-serif !important;
         font-size: clamp(1.02rem, 0.92rem + 0.55vw, 1.2rem) !important;
         line-height: 1.52 !important;
-        color: #333333 !important;
+        color: #d4d4d8 !important;
         margin: 0.2rem 0 1rem 0 !important;
         max-width: none !important;
         width: 100% !important;
@@ -989,7 +1000,7 @@ _APP_STYLE = """
     .seg-ref-summary-panel ul.seg-ref-metrics li {
         font-size: clamp(0.98rem, 0.88rem + 0.4vw, 1.08rem) !important;
         line-height: 1.52 !important;
-        color: #2a2a2a !important;
+        color: #e4e4e7 !important;
         margin: 0.4rem 0 !important;
         padding: 0 !important;
     }
@@ -1012,7 +1023,7 @@ _APP_STYLE = """
     .footer-app-meta p {
         margin: 0.2rem 0 !important;
         padding: 0 !important;
-        color: #6b6b6b !important;
+        color: #9ca3af !important;
         font-size: 0.875rem !important;
         line-height: 1.45 !important;
         font-family: 'Inter', 'Segoe UI', system-ui, sans-serif !important;

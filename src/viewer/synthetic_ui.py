@@ -90,7 +90,7 @@ def _render_colored_metric_tile(
     """
     title_attr = f" title=\"{html.escape(help_text, quote=True)}\"" if help_text else ""
     delta_html = (
-        "<div style='font-size: 0.82rem; color: rgba(0,0,0,0.55); "
+        "<div style='font-size: 0.82rem; color: rgba(255,255,255,0.55); "
         f"margin-top: 0.25rem;'>{html.escape(delta_text)}</div>"
         if delta_text
         else ""
@@ -121,7 +121,7 @@ def _render_colored_metric_tile(
         "<div style='padding: 0.25rem 0;'>"
         f"<div style='font-size: 0.875rem; color: {color}; font-weight: 600;'{title_attr}>"
         f"{html.escape(label)}</div>"
-        "<div style='font-size: 2.0rem; color: #1a1a1a; font-weight: 600; "
+        "<div style='font-size: 2.0rem; color: #fafafa; font-weight: 600; "
         "line-height: 1.1; margin-top: 0.15rem;'>"
         f"{html.escape(value_text)}{arrow_html}</div>"
         f"{delta_html}"
